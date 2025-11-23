@@ -1,0 +1,51 @@
+{
+  "home": {
+    "activities": {
+      "description": "Discover amazing experiences and adventures in paradise",
+      "label": "Explore",
+      "noActivities": {
+        "description": "Amazing activities are coming soon. Check back later!",
+        "title": "No activities available yet"
+      },
+      "title": "Top Activities in The Maldives",
+      "viewAll": "View All Activities",
+      "viewDetails": "View Details"
+    },
+    "hero": {
+      "badge": "Your Gateway to Paradise",
+      "badgeCta": "Learn More",
+      "cta": {
+        "primary": "Explore Activities",
+        "secondary": "View Services"
+      },
+      "description": "Plan your perfect Maldives vacation with our easy-to-use trip planner. Explore top activities, find the best accommodations, and create a personalized itinerary.",
+      "title": "Trip Planning Made Easy"
+    },
+    "partners": {
+      "description": "Join thousands of satisfied customers who have explored the Maldives with us",
+      "label": "Partners",
+      "title": "Trusted by travelers worldwide"
+    },
+    "services": {
+      "description": "We provide comprehensive services to make your Maldives journey seamless and unforgettable",
+      "fastTrack": {
+        "description": "Get fast tracked through immigration and customs at the airport. Save time and start your vacation sooner.",
+        "title": "Airport Fast Tracking"
+      },
+      "imuga": {
+        "description": "We help you fill the Imuga form for your visa application, ensuring a smooth entry process.",
+        "title": "Imuga Form Filling"
+      },
+      "label": "Services",
+      "sim": {
+        "description": "Get best eSIM deals from local providers for your Maldives trip. Stay connected throughout your vacation.",
+        "title": "Tourist SIM Card"
+      },
+      "title": "Everything you need to visit the Maldives",
+      "transport": {
+        "description": "Book your domestic transport in Maldives with ease. Speedboats, seaplanes, and ferries all in one place.",
+        "title": "Domestic Transport Booking"
+      }
+    }
+  }
+}

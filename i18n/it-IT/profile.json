@@ -1,0 +1,43 @@
+{
+  "profile": {
+    "addAccount": "",
+    "backToSite": "",
+    "browseActivities": "",
+    "cancel": "",
+    "currency": "",
+    "dateOfBirth": "",
+    "email": "",
+    "emailNote": "",
+    "emailNotifications": "",
+    "emailSignIn": "",
+    "firstName": "",
+    "language": "",
+    "lastName": "",
+    "linkNewAccount": "",
+    "linkedAccounts": "",
+    "linkedAccountsDesc": "",
+    "myBookings": "",
+    "name": "",
+    "nationality": "",
+    "nav": {
+      "accounts": "",
+      "bookings": "",
+      "preferences": "",
+      "profile": ""
+    },
+    "noBookings": "",
+    "noBookingsDesc": "",
+    "phone": "",
+    "preferences": "",
+    "profileInfo": "",
+    "saveChanges": "",
+    "savePreferences": "",
+    "selectNationality": "",
+    "socialSignIn": "",
+    "unlink": "",
+    "unlinkAccount": "",
+    "unlinkConfirm": "",
+    "unlinkWarning": "",
+    "welcome": ""
+  }
+}

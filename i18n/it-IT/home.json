@@ -1,0 +1,51 @@
+{
+  "home": {
+    "activities": {
+      "description": "Scopri esperienze e avventure straordinarie in paradiso",
+      "label": "Esplora",
+      "noActivities": {
+        "description": "Attività straordinarie in arrivo presto. Torna a controllare!",
+        "title": "Nessuna attività disponibile ancora"
+      },
+      "title": "Migliori Attività alle Maldive",
+      "viewAll": "Vedi Tutte le Attività",
+      "viewDetails": "Vedi Dettagli"
+    },
+    "hero": {
+      "badge": "Il Tuo Portale per il Paradiso",
+      "badgeCta": "Scopri di più",
+      "cta": {
+        "primary": "Esplora Attività",
+        "secondary": "Vedi Servizi"
+      },
+      "description": "Pianifica la tua vacanza perfetta alle Maldive con il nostro pianificatore di viaggio facile da usare. Esplora le migliori attività, trova le migliori sistemazioni e crea un itinerario personalizzato.",
+      "title": "Pianificazione del Viaggio Facile"
+    },
+    "partners": {
+      "description": "Unisciti a migliaia di clienti soddisfatti che hanno esplorato le Maldive con noi",
+      "label": "Partner",
+      "title": "Fidato da viaggiatori in tutto il mondo"
+    },
+    "services": {
+      "description": "Offriamo servizi completi per rendere il tuo viaggio alle Maldive fluido e indimenticabile",
+      "fastTrack": {
+        "description": "Ottieni il fast track attraverso l'immigrazione e la dogana all'aeroporto. Risparmia tempo e inizia prima la tua vacanza.",
+        "title": "Fast Track Aeroportuale"
+      },
+      "imuga": {
+        "description": "Ti aiutiamo a compilare il modulo Imuga per la tua domanda di visto, garantendo un processo di ingresso senza intoppi.",
+        "title": "Compilazione Modulo Imuga"
+      },
+      "label": "Servizi",
+      "sim": {
+        "description": "Ottieni le migliori offerte eSIM dai fornitori locali per il tuo viaggio alle Maldive. Rimani connesso durante tutta la tua vacanza.",
+        "title": "Scheda SIM Turistica"
+      },
+      "title": "Tutto ciò di cui hai bisogno per visitare le Maldive",
+      "transport": {
+        "description": "Prenota i tuoi trasporti domestici alle Maldive con facilità. Motoscafi, idrovolanti e traghetti tutto in un unico posto.",
+        "title": "Prenotazione Trasporti Domestici"
+      }
+    }
+  }
+}

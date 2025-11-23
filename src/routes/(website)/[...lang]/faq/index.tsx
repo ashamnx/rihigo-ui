@@ -1,0 +1,162 @@
+import {component$, useSignal} from '@builder.io/qwik';
+import type {DocumentHead} from "@builder.io/qwik-city";
+import {routeLoader$} from "@builder.io/qwik-city";
+import {apiClient} from "~/utils/api-client";
+import {inlineTranslate} from "qwik-speak";
+import {ErrorState} from "~/components/error-state/error-state";
+
+// Define the FAQ type based on the API response
+interface FAQ {
+    id: string;
+    category: string;
+    published: boolean;
+    display_order: number;
+    created_at: string;
+    updated_at: string;
+    // API returns flat structure, not nested translations
+    question?: string;
+    answer?: string;
+}
+
+// Loader to fetch all published FAQs
+export const useFAQs = routeLoader$(async () => {
+    // Fetch FAQs from the API (public endpoint, no auth needed)
+    const response = await apiClient.faqs.list(1, 100); // Fetch up to 100 FAQs
+
+    if (!response.success) {
+        console.error('Failed to fetch FAQs:', response.error_message);
+        return {
+            success: false,
+            error: response.error_message || 'Failed to load FAQs',
+            data: {}
+        };
+    }
+
+    const faqs = response.data || [];
+
+    // Filter only published FAQs (API might return all)
+    const publishedFaqs = faqs.filter((faq: FAQ) => faq.published);
+
+    // Group FAQs by category
+    const groupedFaqs = publishedFaqs.reduce((acc: Record<string, FAQ[]>, faq: FAQ) => {
+        const category = faq.category || 'General';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(faq);
+        return acc;
+    }, {});
+
+    return {
+        success: true,
+        error: null,
+        data: groupedFaqs
+    };
+});
+
+export default component$(() => {
+    const t = inlineTranslate();
+    const faqsResponse = useFAQs();
+
+    return (
+        <div class="bg-white">
+            <div class="bg-white px-6 py-24 sm:py-32 lg:px-8">
+                <div class="mx-auto max-w-2xl text-center">
+                    <p class="text-base/7 font-semibold text-secondary">{t('app.faq.getToKnow@@Get to know')}</p>
+                    <h2 class="mt-2 text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
+                        {t('app.faq.title@@Frequently asked questions')}
+                    </h2>
+                    <p class="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">
+                        {t('app.faq.description@@We\'re here to help. If you have any questions, please don\'t hesitate to reach out.')}
+                    </p>
+                </div>
+            </div>
+
+            <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-40">
+                {faqsResponse.value.error ? (
+                    <ErrorState
+                        title={t('app.faq.error.title@@Unable to load FAQs')}
+                        message={faqsResponse.value.error}
+                        variant="warning"
+                    />
+                ) : Object.keys(faqsResponse.value.data).length === 0 ? (
+                    <div class="text-center">
+                        <p>{t('app.faq.noQuestionsFound@@No questions found.')}</p>
+                    </div>
+                ) : (
+                    Object.keys(faqsResponse.value.data).map((category) => (
+                        <div key={category} class="mx-auto max-w-4xl mb-16">
+                            <h2 class="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{category}</h2>
+                            <dl class="mt-16 divide-y divide-gray-900/10">
+                                {faqsResponse.value.data[category].map((faq: any) => (
+                                    <Question
+                                        key={faq.id}
+                                        faq={faq}
+                                    />
+                                ))}
+                            </dl>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+});
+
+const Question = component$((props: { faq: FAQ }) => {
+    const isExpanded = useSignal(false);
+    const t = inlineTranslate();
+    const {faq} = props;
+
+    // API returns flat structure with question/answer directly
+    const question = faq.question || t('app.faq.noQuestionAvailable@@No question available');
+    const answer = faq.answer || t('app.faq.noAnswerAvailable@@No answer available');
+    const questionId = `faq-${faq.id}`;
+
+    return (
+        <div class="py-6 first:pt-0 last:pb-0">
+            <dt>
+                <button
+                    onClick$={() => isExpanded.value = !isExpanded.value}
+                    type="button"
+                    class="flex w-full items-start justify-between text-left text-gray-900 cursor-pointer"
+                    aria-controls={questionId}
+                    aria-expanded={isExpanded.value}>
+                    <span class="text-base/7 font-semibold">{question}</span>
+                    <span class="ml-6 flex h-7 items-center">
+                        <svg class="hidden size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" aria-hidden="true" data-slot="icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/>
+                </svg>
+                        {
+                            !isExpanded.value ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M5 13v-1h6V6h1v6h6v1h-6v6h-1v-6z"/>
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M5 13v-1h13v1z"/>
+                                </svg>
+                            )
+                        }
+                    </span>
+                </button>
+            </dt>
+            {isExpanded.value && (
+                <dd class="mt-2 pr-12" id={questionId}>
+                    <p class="text-base/7 text-gray-600">{answer}</p>
+                </dd>
+            )}
+        </div>
+    )
+})
+
+export const head: DocumentHead = {
+    title: "FAQ • Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Frequently asked questions",
+        },
+    ],
+};

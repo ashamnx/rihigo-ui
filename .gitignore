@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+
+# Build outputs
+dist/
+server/
+tmp/
+.vite/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+test-results/
+playwright-report/
+playwright/.cache/
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Qwik specific
+qwik-speak-inline.log
+.qwik/
+
+# Screenshots (optional - uncomment if you don't want to commit screenshots)
+# *.png
+# *.jpg
+# *.jpeg

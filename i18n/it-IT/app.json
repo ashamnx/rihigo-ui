@@ -1,0 +1,78 @@
+{
+  "app": {
+    "admin": {
+      "faq": {
+        "addNew": "Aggiungi FAQ",
+        "backToFaqs": "Torna alle FAQ",
+        "cancel": "Annulla",
+        "createFaq": "Crea FAQ",
+        "delete": "Elimina FAQ",
+        "deleteConfirmation": "Sei sicuro di voler eliminare questa FAQ? Questa azione non può essere annullata.",
+        "description": "Gestisci le domande frequenti",
+        "edit": "Modifica FAQ",
+        "errorCreating": "Si è verificato un errore durante la creazione della FAQ",
+        "errorUpdating": "Si è verificato un errore durante l'aggiornamento della FAQ",
+        "faqCreated": "FAQ creata con successo",
+        "faqDeleted": "FAQ eliminata con successo",
+        "faqNotFound": "La FAQ che stai cercando non esiste",
+        "faqStatusUpdated": "Stato della FAQ aggiornato con successo",
+        "faqUpdated": "FAQ aggiornata con successo",
+        "fields": {
+          "answer": "Risposta",
+          "category": "Categoria",
+          "displayOrder": "Ordine di visualizzazione",
+          "draft": "Bozza",
+          "languages": "Lingue",
+          "makeVisible": "Rendi questa FAQ visibile agli utenti",
+          "published": "Pubblicato",
+          "question": "Domanda",
+          "status": "Stato"
+        },
+        "noFaqsFound": "Nessuna FAQ trovata. Clicca su \"Aggiungi FAQ\" per crearne una.",
+        "sections": {
+          "information": "Informazioni FAQ",
+          "translations": "Traduzioni"
+        },
+        "title": "FAQ",
+        "updateFaq": "Aggiorna FAQ"
+      }
+    },
+    "changeLocale": "Cambia lingua",
+    "currency": {
+      "USD": "USD",
+      "EUR": "EUR"
+    },
+    "faq": {
+      "description": "Siamo qui per aiutarti. Se hai domande, non esitare a contattarci.",
+      "getToKnow": "Scopri di più",
+      "noAnswerAvailable": "Nessuna risposta disponibile",
+      "noQuestionAvailable": "Nessuna domanda disponibile",
+      "noQuestionsFound": "Nessuna domanda trovata.",
+      "title": "Domande frequenti"
+    },
+    "footer": {
+      "about": "Chi siamo",
+      "accessibility": "Accessibilità",
+      "blog": "Blog",
+      "copyright": "Diritto d'autore",
+      "jobs": "Lavora con noi",
+      "partners": "Partner",
+      "press": "Stampa"
+    },
+    "language": {
+      "it": "Italiano"
+    },
+    "nav": {
+      "aboutUs": "Chi siamo",
+      "admin": "",
+      "bookings": "",
+      "explore": "Esplora",
+      "faq": "FAQ",
+      "login": "Accedi",
+      "profile": "",
+      "services": "Servizi",
+      "signOut": "",
+      "signup": ""
+    }
+  }
+}

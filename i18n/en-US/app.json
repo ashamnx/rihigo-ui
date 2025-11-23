@@ -1,0 +1,79 @@
+{
+  "app": {
+    "admin": {
+      "faq": {
+        "addNew": "Add FAQ",
+        "backToFaqs": "Back to FAQs",
+        "cancel": "Cancel",
+        "createFaq": "Create FAQ",
+        "delete": "Delete FAQ",
+        "deleteConfirmation": "Are you sure you want to delete this FAQ? This action cannot be undone.",
+        "description": "Manage frequently asked questions",
+        "edit": "Edit FAQ",
+        "errorCreating": "An error occurred while creating the FAQ",
+        "errorUpdating": "An error occurred while updating the FAQ",
+        "faqCreated": "FAQ created successfully",
+        "faqDeleted": "FAQ deleted successfully",
+        "faqNotFound": "The FAQ you are looking for does not exist",
+        "faqStatusUpdated": "FAQ status updated successfully",
+        "faqUpdated": "FAQ updated successfully",
+        "fields": {
+          "answer": "Answer",
+          "category": "Category",
+          "displayOrder": "Display Order",
+          "draft": "Draft",
+          "languages": "Languages",
+          "makeVisible": "Make this FAQ visible to users",
+          "published": "Published",
+          "question": "Question",
+          "status": "Status"
+        },
+        "noFaqsFound": "No FAQs found. Click \"Add FAQ\" to create one.",
+        "sections": {
+          "information": "FAQ Information",
+          "translations": "Translations"
+        },
+        "title": "FAQs",
+        "updateFaq": "Update FAQ"
+      }
+    },
+    "changeLocale": "Change locale",
+    "faq": {
+      "description": "We're here to help. If you have any questions, please don't hesitate to reach out.",
+      "getToKnow": "Get to know",
+      "noAnswerAvailable": "No answer available",
+      "noQuestionAvailable": "No question available",
+      "noQuestionsFound": "No questions found.",
+      "title": "Frequently asked questions"
+    },
+    "footer": {
+      "about": "About",
+      "accessibility": "Accessibility",
+      "blog": "Blog",
+      "copyright": "© 2025 All rights reserved",
+      "jobs": "Jobs",
+      "partners": "Partners",
+      "press": "Press"
+    },
+    "language": {
+      "": "",
+      "en": "English"
+    },
+    "nav": {
+      "aboutUs": "About Us",
+      "admin": "Admin",
+      "bookings": "Bookings",
+      "explore": "Explore",
+      "faq": "FAQ",
+      "login": "Login",
+      "profile": "Profile",
+      "services": "Services",
+      "signOut": "Sign Out",
+      "signup": "Sign Up"
+    },
+    "currency": {
+      "USD": "USD",
+      "EUR": "EUR"
+    }
+  }
+}
