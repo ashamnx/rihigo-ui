@@ -1,5 +1,5 @@
 import {component$} from '@builder.io/qwik';
-import type {PageComponent} from '~/types/activity';
+import type { Activity, PageComponent } from "~/types/activity";
 import {HeroComponent} from './components/HeroComponent';
 import {ActivityHeroComponent} from './components/ActivityHeroComponent';
 import {ItineraryComponent} from './components/ItineraryComponent';
@@ -12,6 +12,7 @@ import {PricingComponent} from './components/PricingComponent';
 
 interface PageRendererProps {
     components: PageComponent[];
+    activity: Activity;
 }
 
 export const PageRenderer = component$<PageRendererProps>((props) => {
@@ -27,7 +28,7 @@ export const PageRenderer = component$<PageRendererProps>((props) => {
 
                 switch (comp.type) {
                     case 'hero':
-                        return <HeroComponent key={index} {...componentProps} />;
+                        return <HeroComponent key={index} {...props.activity.seo_metadata } />;
                     case 'activity-hero':
                         return <ActivityHeroComponent key={index} {...componentProps} />;
                     case 'itinerary':

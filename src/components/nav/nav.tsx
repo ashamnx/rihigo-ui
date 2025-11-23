@@ -6,7 +6,7 @@ export interface NavProps {}
 
 export const Nav = component$<NavProps>(() => {
   return (
-    <div data-theme="light" class="min-h-screen bg-base-100 text-base-content">
+    <div class="min-h-screen front" data-theme="light">
       <svg width="0" height="0" style="display: none;">
         <symbol id="rihigo-logo" viewBox="0 0 1031 182">
           <path

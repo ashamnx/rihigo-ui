@@ -156,7 +156,7 @@ export default component$(() => {
     ];
 
     return (
-        <div class="drawer lg:drawer-open" data-theme="dark">
+        <div class="drawer lg:drawer-open front" data-theme="dark">
             <input
                 id="admin-drawer"
                 type="checkbox"

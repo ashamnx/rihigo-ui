@@ -2,7 +2,8 @@
 
 @plugin "daisyui" {
     /* Explicitly load the themes you want */
-    themes: light, dark;
+    themes: light --default, dark --prefersdark;
+    root: ":root";
 }
 
 /* --- 1. LIGHT THEME (Default / Frontend) --- */

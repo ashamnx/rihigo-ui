@@ -102,7 +102,7 @@ export interface PageComponent {
 
 export interface HeroComponentProps {
     title?: string;
-    subtitle?: string;
+    description?: string;
     backgroundImage?: string;
     overlayOpacity?: number;
 }
