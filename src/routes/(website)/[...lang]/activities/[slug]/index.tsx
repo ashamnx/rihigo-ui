@@ -53,12 +53,10 @@ export default component$(() => {
 
     const activity = activityDataResponse.value.data;
     const title = activity.translations?.[lang]?.title || activity.seo_metadata?.title || activity.slug;
-    const description = activity.translations?.[lang]?.description || activity.seo_metadata?.description || '';
 
     // Get images from activity
     const images = Array.isArray(activity.images) ? activity.images :
                    typeof activity.images === 'string' && activity.images ? JSON.parse(activity.images) : [];
-    const mainImage = images[0] || '/assets/images/cover.jpeg';
 
     return (
         <div class="min-h-screen bg-white">

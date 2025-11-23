@@ -130,7 +130,7 @@ export default component$(() => {
     if (!activityDataResponse.value.success || !activityDataResponse.value.data) {
         return (
             <div class="min-h-screen bg-gray-50">
-                <div class="container mx-auto px-4 py-12">
+                <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                     <div class="text-center">
                         <h1 class="text-2xl font-bold text-gray-800 mb-4">{t('booking.error.title@@Activity Not Found')}</h1>
                         <p class="text-gray-600 mb-6">{activityDataResponse.value.error}</p>
@@ -203,7 +203,7 @@ export default component$(() => {
         <div class="min-h-screen bg-gray-50">
             {/* Header */}
             <div class="bg-white border-b border-gray-200">
-                <div class="container mx-auto px-4 py-4">
+                <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                     <div class="flex items-center justify-between">
                         <h1 class="text-2xl font-bold text-gray-800">{t('booking.title@@Complete Your Booking')}</h1>
                         <button
@@ -216,7 +216,7 @@ export default component$(() => {
                 </div>
             </div>
 
-            <div class="container mx-auto px-4 py-8">
+            <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Form */}
                     <div class="lg:col-span-2">

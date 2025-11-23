@@ -353,8 +353,6 @@ export default component$(() => {
 
 const ActivityCard = component$<{ activity: any; locale: string }>(
   ({ activity, locale }) => {
-    const t = inlineTranslate();
-
     // Get the first image or use placeholder
     const image =
       activity.images && activity.images.length > 0
