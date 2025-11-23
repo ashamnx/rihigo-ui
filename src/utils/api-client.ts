@@ -1,5 +1,6 @@
 import type {RequestEventAction, RequestEventLoader} from '@builder.io/qwik-city';
 import type {ApiResponse, PaginatedResponse} from '~/types/api';
+import { Activity, Currency } from "~/types/activity";
 
 /**
  * API client utility for making requests to the Go API
@@ -86,11 +87,11 @@ export const apiClient = {
      * Activities
      */
     activities: {
-        async list(page = 1, pageSize = 20): Promise<PaginatedResponse> {
+        async list(page = 1, pageSize = 20): Promise<PaginatedResponse<Activity[]>> {
             return apiRequest(`/api/activities?page=${page}&page_size=${pageSize}`);
         },
 
-        async getTop(lang = 'en'): Promise<ApiResponse> {
+        async getTop(lang = 'en'): Promise<ApiResponse<Activity[]>> {
             return apiRequest(`/api/activities/top?lang=${lang}`);
         },
 
@@ -323,6 +324,11 @@ export const apiClient = {
             }, token);
         },
     },
+    currency: {
+        async listAll(): Promise<ApiResponse<Currency[]>> {
+            return apiRequest('/api/currencies');
+        },
+    }
 };
 
 /**

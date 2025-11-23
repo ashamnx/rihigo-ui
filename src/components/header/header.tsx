@@ -3,6 +3,7 @@ import {Link} from "@builder.io/qwik-city";
 import { LocaleSelector } from '~/components/locale-selector/locale-selector';
 import {inlineTranslate, localizePath, useSpeakLocale} from 'qwik-speak';
 import { useSession } from "~/routes/plugin@auth";
+import { NavLink } from "~/components/nav/nav-link";
 
 export interface HeaderProps {
 
@@ -51,10 +52,10 @@ export const Header = component$<HeaderProps>(() => {
         <header class="bg-white">
             <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
                 <div class="flex lg:flex-1">
-                    <a href="/" class="-m-1.5 p-1.5 text-cyan-400">
+                    <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5 text-cyan-400">
                         <span class="sr-only">Rihigo</span>
                         <img src="/assets/logo.svg" alt="Rihigo Logo" class="h-8"/>
-                    </a>
+                    </Link>
                 </div>
                 <div class="flex lg:hidden">
                     <button type="button"
@@ -70,9 +71,10 @@ export const Header = component$<HeaderProps>(() => {
                 <div class="hidden lg:flex lg:gap-x-12">
                     {nav.map((item, index) => item.children ?
                         (<NestedNav item={item} key={index}/>)
-                        : (<Link href={`/${locale.lang || "en-US"}${item.link}`}
-                                 class={`text-sm/6 font-semibold text-gray-900 hover:text-secondary transition-colors duration-300`}
-                                 key={index}>{item.label}</Link>)
+                        : (<NavLink href={`/${locale.lang || "en-US"}${item.link}`}
+                                    activeClass="text-primary"
+                                 class={`text-sm/6 font-semibold text-gray-900 hover:text-primary transition-colors duration-300`}
+                                 key={index}>{item.label}</NavLink>)
                     )}
                 </div>
                 <div class="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
@@ -120,10 +122,10 @@ export const Header = component$<HeaderProps>(() => {
                     ) : (
                         /* Not Authenticated */
                         <div class="flex items-center gap-2">
-                            <Link href={getPath('/auth/sign-in', locale.lang || "en-US")} class="text-sm/6 font-semibold text-gray-900 hover:text-secondary">
+                            <Link href={getPath('/auth/sign-in', locale.lang || "en-US")} class="text-sm/6 font-semibold text-gray-900 hover:text-primary">
                                 {t('app.nav.login') || 'Sign In'}
                             </Link>
-                            <Link href={getPath('/auth/signup', locale.lang || "en-US")} class="text-sm/6 font-semibold text-white bg-secondary px-3 py-1.5 rounded-md hover:bg-secondary/60">
+                            <Link href={getPath('/auth/signup', locale.lang || "en-US")} class="text-sm/6 font-semibold text-white bg-primary px-3 py-1.5 rounded-md hover:bg-primary/60">
                                 {t('app.nav.signup') || 'Sign Up'}
                             </Link>
                         </div>
@@ -262,7 +264,7 @@ const NestedNav = component$(({item}: any) => {
                                          key={index}>
                                         <div
                                             class="mt-1 flex size-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
-                                            <svg class="size-6 text-gray-600 group-hover:text-secondary" fill="none"
+                                            <svg class="size-6 text-gray-600 group-hover:text-primary" fill="none"
                                                  viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                                                  aria-hidden="true" data-slot="icon">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -272,10 +274,10 @@ const NestedNav = component$(({item}: any) => {
                                             </svg>
                                         </div>
                                         <div class="flex-auto">
-                                            <a href="#" class="block font-semibold text-gray-900">
+                                            <NavLink href="#" class="block font-semibold text-gray-900">
                                                 {child.label}
                                                 <span class="absolute inset-0"></span>
-                                            </a>
+                                            </NavLink>
                                             <p class="mt-1 text-gray-600">{child.description}</p>
                                         </div>
                                     </div>

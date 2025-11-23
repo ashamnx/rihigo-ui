@@ -353,7 +353,7 @@ export default component$(() => {
               </div>
               <div class="stat">
                 <div class="stat-title">Packages</div>
-                <div class="stat-value text-secondary">{packageCount}</div>
+                <div class="stat-value text-primary">{packageCount}</div>
                 <div class="stat-desc">
                   <Link href={`/admin/activities/${activity.id}/packages`} class="link">
                     Manage packages

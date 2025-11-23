@@ -1,20 +1,41 @@
 @import "tailwindcss";
 
-@plugin "daisyui";
+@plugin "daisyui" {
+    /* Explicitly load the themes you want */
+    themes: light, dark;
+}
 
-:root {
-    --color-primary: #ef4426;
-    --color-secondary: #14afa1;
-    --color-base-content: oklch(20.8% 0.042 265.755);
+/* --- 1. LIGHT THEME (Default / Frontend) --- */
+:root, [data-theme="light"] {
+    /* DaisyUI specific semantic variables */
+    --primary: #ef4426;
+    --primary-content: oklch(95.4% 0.038 75.164);
+    --secondary: #14afa1;
+
+    /* Optional: Adjust light theme background if needed */
+    --base-100: #ffffff;
+    --base-content: oklch(20.8% 0.042 265.755);
+
     font-family: 'Nunito Sans', sans-serif;
 }
 
-.dark {
-    --color-base-content: oklch(96.8% 0.007 247.896);
+/* --- 2. DARK THEME (Admin) --- */
+[data-theme="dark"] {
+    /* You can reuse the same primary color, or tweak it for dark mode */
+    --primary: #ef4426;
+    --primary-content: oklch(95.4% 0.038 75.164);
+    --secondary: #14afa1;
+
+    /* Dark theme specific background */
+    --base-100: oklch(20.8% 0.042 265.755); /* Dark BG */
+    --base-content: oklch(96.8% 0.007 247.896); /* Light Text */
 }
 
-
+/* --- 3. LINK TAILWIND UTILITIES --- */
+/* This ensures classes like 'text-primary' use the variables defined above */
 @theme {
-    --color-primary: var(--color-primary);
-    --color-secondary: var(--color-secondary);
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-base-100: var(--base-100);
+    --color-base-content: var(--base-content);
 }

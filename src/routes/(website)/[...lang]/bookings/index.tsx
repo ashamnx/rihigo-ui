@@ -223,7 +223,7 @@ export default component$(() => {
                           </div>
                           <div>
                             <p class="text-gray-600">{t('bookings.card.total@@Total')}</p>
-                            <p class="font-semibold text-lg text-secondary">
+                            <p class="font-semibold text-lg text-primary">
                               {booking.currency === 'USD' ? '$' : booking.currency}
                               {booking.total_price.toFixed(2)}
                             </p>

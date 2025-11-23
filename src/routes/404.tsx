@@ -12,7 +12,7 @@ export default component$(() => {
                     </h1>
                     <div class="absolute inset-0 flex items-center justify-center">
                         <div class="bg-white rounded-full p-8 shadow-lg">
-                            <svg class="w-24 h-24 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-24 h-24 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
@@ -31,7 +31,7 @@ export default component$(() => {
                 <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
                     <a
                         href="/en-US/"
-                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-secondary px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary transition-colors"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -53,19 +53,19 @@ export default component$(() => {
                 <div class="border-t border-gray-200 pt-8">
                     <p class="text-sm text-gray-500 mb-4">Quick Links</p>
                     <div class="flex flex-wrap gap-4 justify-center text-sm">
-                        <a href="/en-US/about-us" class="text-secondary hover:text-indigo-500 font-medium transition-colors">
+                        <a href="/en-US/about-us" class="text-primary hover:text-indigo-500 font-medium transition-colors">
                             About Us
                         </a>
                         <span class="text-gray-300">•</span>
-                        <a href="/en-US/faq" class="text-secondary hover:text-indigo-500 font-medium transition-colors">
+                        <a href="/en-US/faq" class="text-primary hover:text-indigo-500 font-medium transition-colors">
                             FAQs
                         </a>
                         <span class="text-gray-300">•</span>
-                        <a href="/auth/sign-in" class="text-secondary hover:text-indigo-500 font-medium transition-colors">
+                        <a href="/auth/sign-in" class="text-primary hover:text-indigo-500 font-medium transition-colors">
                             Sign In
                         </a>
                         <span class="text-gray-300">•</span>
-                        <a href="/admin" class="text-secondary hover:text-indigo-500 font-medium transition-colors">
+                        <a href="/admin" class="text-primary hover:text-indigo-500 font-medium transition-colors">
                             Admin Dashboard
                         </a>
                     </div>

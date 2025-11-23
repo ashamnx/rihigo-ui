@@ -406,7 +406,7 @@ export default component$(() => {
                                 {/* Total */}
                                 <div class="flex justify-between items-center">
                                     <span class="text-lg font-bold">{t('booking.summary.total@@Total')}</span>
-                                    <span class="text-2xl font-bold text-secondary">${getPrice().toFixed(2)}</span>
+                                    <span class="text-2xl font-bold text-primary">${getPrice().toFixed(2)}</span>
                                 </div>
 
                                 {/* Cancellation Policy */}

@@ -37,7 +37,7 @@ export default component$(() => {
     if (!activityDataResponse.value.success || !activityDataResponse.value.data) {
         return (
             <div class="min-h-screen bg-gray-50">
-                <div class="container mx-auto px-4 py-12">
+                <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                     <ErrorState
                         title={t('activity.error.title@@Activity Not Found')}
                         message={activityDataResponse.value.error || t('activity.error.message@@The activity you\'re looking for doesn\'t exist or has been removed.')}
@@ -64,11 +64,11 @@ export default component$(() => {
         <div class="min-h-screen bg-white">
             {/* Breadcrumbs */}
             <div class="bg-gray-50 border-b border-gray-200">
-                <div class="container mx-auto px-4 py-3">
+                <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                     <nav class="flex" aria-label="Breadcrumb">
                         <ol class="inline-flex items-center space-x-1 md:space-x-3">
                             <li class="inline-flex items-center">
-                                <Link href={`/${lang}`} class="text-sm text-gray-700 hover:text-secondary">
+                                <Link href={`/${lang}`} class="text-sm text-gray-700 hover:text-primary">
                                     {t('breadcrumb.home@@Home')}
                                 </Link>
                             </li>
@@ -77,7 +77,7 @@ export default component$(() => {
                                     <svg class="w-3 h-3 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <Link href={`/${lang}/activities`} class="text-sm text-gray-700 hover:text-secondary">
+                                    <Link href={`/${lang}/activities`} class="text-sm text-gray-700 hover:text-primary">
                                         {t('breadcrumb.activities@@Activities')}
                                     </Link>
                                 </div>
@@ -106,7 +106,7 @@ export default component$(() => {
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-                    <div class="container mx-auto">
+                    <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                         <div class="flex items-center gap-2 mb-3">
                             {activity.category && (
                                 <span class="badge badge-primary badge-lg">{activity.category.name}</span>
@@ -137,7 +137,7 @@ export default component$(() => {
             </div>
 
             {/* Main Content Area */}
-            <div class="container mx-auto px-4 py-12">
+            <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - Main Content */}
                     <div class="lg:col-span-2 space-y-8">
@@ -177,7 +177,7 @@ export default component$(() => {
                                 <div class="bg-gray-50 rounded-lg p-6">
                                     <div class="flex items-start gap-4">
                                         <div class="bg-indigo-100 p-3 rounded-lg">
-                                            <svg class="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                                             </svg>
@@ -200,7 +200,7 @@ export default component$(() => {
                         <div class="sticky top-4">
                             {/* Package Selection Card */}
                             {activity.packages && activity.packages.length > 0 ? (
-                                <div class="card bg-white shadow-xl shadow-secondary/20 border-2 border-secondary">
+                                <div class="card bg-white shadow-xl shadow-primary/20 border-2 border-primary">
                                     <div class="card-body">
                                         <h3 class="text-xl font-bold mb-4">{t('activity.choosePackage@@Choose Your Package')}</h3>
 
@@ -215,7 +215,7 @@ export default component$(() => {
                                                     <div
                                                         key={pkg.id}
                                                         class={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                                                            isSelected ? 'border-secondary bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
+                                                            isSelected ? 'border-primary bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
                                                         }`}
                                                         onClick$={() => selectedPackage.value = pkg.id}
                                                     >
@@ -256,7 +256,7 @@ export default component$(() => {
 
                                                         {price && (
                                                             <div class="flex items-baseline gap-2">
-                                                                <span class="text-2xl font-bold text-secondary">
+                                                                <span class="text-2xl font-bold text-primary">
                                                                     {price.currency?.symbol || '$'}{price.amount.toFixed(2)}
                                                                 </span>
                                                                 <span class="text-sm text-gray-500">
@@ -281,15 +281,6 @@ export default component$(() => {
                                             {t('activity.bookNow@@Book Now')}
                                         </Link>
 
-                                        {/* Free cancellation notice */}
-                                        <div class="mt-4 p-3 bg-green-50 rounded-lg">
-                                            <div class="flex items-start gap-2 text-sm text-green-800">
-                                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                                </svg>
-                                                <span>{t('activity.freeCancellation@@Free cancellation up to 24 hours before the activity')}</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             ) : (

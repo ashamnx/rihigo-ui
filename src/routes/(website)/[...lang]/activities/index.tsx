@@ -1,9 +1,15 @@
 import { component$ } from '@builder.io/qwik';
-import { routeLoader$, useLocation } from '@builder.io/qwik-city';
+import { routeLoader$, useLocation, type DocumentHead } from '@builder.io/qwik-city';
 import type { Activity, ActivityFilters } from '~/types/activity';
 import { getActivities } from '~/services/activity-api';
 
 export const useActivitiesData = routeLoader$(async (requestEvent) => {
+  requestEvent.cacheControl({
+    maxAge: 60,
+    sMaxAge: 3600,
+    staleWhileRevalidate: 60 * 60 * 24, // 1 day
+  });
+
   const url = requestEvent.url;
   const page = parseInt(url.searchParams.get('page') || '1');
   const category_id = url.searchParams.get('category_id');
@@ -34,7 +40,7 @@ export default component$(() => {
   const lang = location.params.lang || 'en';
 
   return (
-    <div class="container mx-auto px-4 py-12">
+    <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
       <h1 class="text-4xl font-bold mb-8">Explore Activities</h1>
 
       {/* Filters Section */}
@@ -142,3 +148,150 @@ export default component$(() => {
     </div>
   );
 });
+
+export const head: DocumentHead = ({ url, params }) => {
+  const lang = params.lang || 'en';
+  const page = parseInt(url.searchParams.get('page') || '1');
+  const categoryId = url.searchParams.get('category_id');
+  const islandId = url.searchParams.get('island_id');
+
+  // Base title and description
+  let title = 'Explore Activities & Tours in Maldives | Rihigo';
+  let description = 'Discover amazing activities, tours, and experiences in the Maldives. From water sports to island hopping, find and book the perfect adventure for your tropical getaway.';
+
+  // Add pagination context
+  if (page > 1) {
+    title = `Activities in Maldives - Page ${page} | Rihigo`;
+    description = `Browse page ${page} of activities and tours in the Maldives. ${description}`;
+  }
+
+  // Add filter context to description
+  if (categoryId || islandId) {
+    const filters = [];
+    if (categoryId) filters.push('filtered by category');
+    if (islandId) filters.push('by island');
+    description = `Explore ${filters.join(' and ')} activities in the Maldives. ${description}`;
+  }
+
+  const canonicalUrl = `https://rihigo.com/${lang}/activities${page > 1 ? `?page=${page}` : ''}`;
+
+  return {
+    title,
+    meta: [
+      // Primary Meta Tags
+      {
+        name: 'description',
+        content: description,
+      },
+      {
+        name: 'keywords',
+        content: 'maldives activities, maldives tours, water sports maldives, island hopping, snorkeling, diving, maldives excursions, tropical adventures',
+      },
+      {
+        name: 'author',
+        content: 'Rihigo',
+      },
+      {
+        name: 'robots',
+        content: page > 1 ? 'index, follow' : 'index, follow, max-image-preview:large',
+      },
+
+      // Open Graph / Facebook
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:url',
+        content: canonicalUrl,
+      },
+      {
+        property: 'og:title',
+        content: title,
+      },
+      {
+        property: 'og:description',
+        content: description,
+      },
+      {
+        property: 'og:image',
+        content: 'https://rihigo.com/images/og-activities.jpg',
+      },
+      {
+        property: 'og:image:width',
+        content: '1200',
+      },
+      {
+        property: 'og:image:height',
+        content: '630',
+      },
+      {
+        property: 'og:locale',
+        content: lang === 'it-IT' ? 'it_IT' : 'en_US',
+      },
+      {
+        property: 'og:site_name',
+        content: 'Rihigo',
+      },
+
+      // Twitter
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:url',
+        content: canonicalUrl,
+      },
+      {
+        name: 'twitter:title',
+        content: title,
+      },
+      {
+        name: 'twitter:description',
+        content: description,
+      },
+      {
+        name: 'twitter:image',
+        content: 'https://rihigo.com/images/og-activities.jpg',
+      },
+
+      // Additional SEO
+      {
+        name: 'geo.region',
+        content: 'MV',
+      },
+      {
+        name: 'geo.placename',
+        content: 'Maldives',
+      },
+      {
+        name: 'language',
+        content: lang,
+      },
+    ],
+    links: [
+      // Canonical URL
+      {
+        rel: 'canonical',
+        href: canonicalUrl,
+      },
+      // Alternate language versions
+      {
+        rel: 'alternate',
+        hreflang: 'en',
+        href: `https://rihigo.com/en-US/activities${page > 1 ? `?page=${page}` : ''}`,
+      },
+      {
+        rel: 'alternate',
+        hreflang: 'it',
+        href: `https://rihigo.com/it-IT/activities${page > 1 ? `?page=${page}` : ''}`,
+      },
+      {
+        rel: 'alternate',
+        hreflang: 'x-default',
+        href: `https://rihigo.com/en-US/activities${page > 1 ? `?page=${page}` : ''}`,
+      },
+    ],
+  };
+};

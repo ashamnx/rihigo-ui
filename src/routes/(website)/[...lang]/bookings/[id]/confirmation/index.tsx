@@ -79,7 +79,7 @@ export default component$(() => {
         <div class="max-w-3xl mx-auto">
           <div class="bg-white rounded-lg shadow-md overflow-hidden">
             {/* Booking ID Header */}
-            <div class="bg-secondary text-white px-6 py-4">
+            <div class="bg-primary text-white px-6 py-4">
               <div class="flex justify-between items-center">
                 <div>
                   <p class="text-sm opacity-90">{t('confirmation.bookingId@@Booking ID')}</p>
@@ -194,7 +194,7 @@ export default component$(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p class="text-sm text-gray-600">{t('confirmation.total@@Total Amount')}</p>
-                    <p class="text-2xl font-bold text-secondary">
+                    <p class="text-2xl font-bold text-primary">
                       {booking.currency === 'USD' ? '$' : booking.currency}
                       {booking.total_price.toFixed(2)}
                     </p>

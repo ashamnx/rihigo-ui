@@ -320,7 +320,7 @@ export default component$(() => {
                   <div class="card-actions justify-end mt-4">
                     <Link 
                       href={`/admin/activities/${activity.id}/builder`}
-                      class="btn btn-sm btn-outline btn-secondary"
+                      class="btn btn-sm btn-outline btn-primary"
                     >
                       Page Builder
                     </Link>
