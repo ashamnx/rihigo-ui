@@ -1,7 +1,7 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
-import { authenticatedRequest } from "~/utils/api-client";
+import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import {getActivityById, getAtolls, getIslands, updateActivity} from "~/services/activity-api";
 import type {UpdateActivityInput} from '~/types/activity';
 
@@ -35,6 +35,17 @@ export const useIslands = routeLoader$(async () => {
   }
 });
 
+export const useVendors = routeLoader$(async (requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      return await apiClient.vendors.list(1, 100, token);
+    } catch (error) {
+      console.error('Failed to load vendors:', error);
+      return { success: false, data: [], error_message: 'Failed to load vendors' };
+    }
+  });
+});
+
 export const useUpdateActivity = routeAction$(async (data, requestEvent) => {
   return authenticatedRequest(requestEvent, async (token) => {
     try {
@@ -43,6 +54,7 @@ export const useUpdateActivity = routeAction$(async (data, requestEvent) => {
         slug: data.slug ? (data.slug as string).toLowerCase().replace(/\s+/g, '-') : undefined,
         category_id: data.category_id ? parseInt(data.category_id as string) : undefined,
         island_id: data.island_id ? parseInt(data.island_id as string) : undefined,
+        vendor_id: data.vendor_id ? (data.vendor_id as string) : undefined,
         status: data.status as 'draft' | 'published' | 'archived' | undefined,
         seo_metadata: {
           title: data.seo_title as string,
@@ -80,6 +92,7 @@ export default component$(() => {
   const activityData = useActivity();
   const atolls = useAtolls();
   const islands = useIslands();
+  const vendorsResponse = useVendors();
   const updateActivityAction = useUpdateActivity();
   const selectedAtoll = useSignal<number | undefined>();
 
@@ -101,6 +114,8 @@ export default component$(() => {
   const filteredIslands = selectedAtoll.value
     ? islands.value.filter(i => i.atoll_id === selectedAtoll.value)
     : islands.value;
+
+  const vendors = vendorsResponse.value.data || [];
 
   const title = activity.translations?.en?.title || activity.seo_metadata?.title || activity.slug;
   const packageCount = activity.packages?.length || 0;
@@ -227,6 +242,29 @@ export default component$(() => {
                   <option value="draft">Draft</option>
                   <option value="published">Published</option>
                   <option value="archived">Archived</option>
+                </select>
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">Vendor</span>
+                </label>
+                <select
+                  name="vendor_id"
+                  class="select select-bordered"
+                  value={activity.vendor_id || ''}
+                >
+                  <option value="">Select Vendor (optional)</option>
+                  {vendors.map((vendor: any) => {
+                    const label = vendor.status !== 'verified'
+                      ? `${vendor.business_name} (${vendor.status})`
+                      : vendor.business_name;
+                    return (
+                      <option key={vendor.id} value={vendor.id}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

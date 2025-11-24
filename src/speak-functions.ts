@@ -11,8 +11,8 @@ const translationData = import.meta.glob<Translation>('/i18n/**/*.json');
  * Using server$, translation data is always accessed on the server
  */
 const loadTranslation$: LoadTranslationFn = server$(async (lang: string, asset: string) => {
-    console.log({asset});
-    console.log(await translationData[`/i18n/${lang}/${asset}.json`]());
+    // console.log({asset});
+    // console.log(await translationData[`/i18n/${lang}/${asset}.json`]());
     return await translationData[`/i18n/${lang}/${asset}.json`]()
 });
 

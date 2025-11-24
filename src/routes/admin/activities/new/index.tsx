@@ -1,7 +1,7 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
-import { authenticatedRequest } from "~/utils/api-client";
+import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import {createActivity, getAtolls, getIslands} from "~/services/activity-api";
 import type {CreateActivityInput} from '~/types/activity';
 
@@ -23,6 +23,17 @@ export const useIslands = routeLoader$(async () => {
   }
 });
 
+export const useVendors = routeLoader$(async (requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      return await apiClient.vendors.list(1, 100, token);
+    } catch (error) {
+      console.error('Failed to load vendors:', error);
+      return { success: false, data: [], error_message: 'Failed to load vendors' };
+    }
+  });
+});
+
 export const useCreateActivity = routeAction$(async (data, requestEvent) => {
   return authenticatedRequest(requestEvent, async (token) => {
       try {
@@ -31,6 +42,7 @@ export const useCreateActivity = routeAction$(async (data, requestEvent) => {
           slug: (data.slug as string).toLowerCase().replace(/\s+/g, '-'),
           category_id: data.category_id ? parseInt(data.category_id as string) : undefined,
           island_id: data.island_id ? parseInt(data.island_id as string) : undefined,
+          vendor_id: data.vendor_id ? (data.vendor_id as string) : undefined,
           status: (data.status as 'draft' | 'published' | 'archived') || 'draft',
           page_layout: [], // Start with empty page layout, will be built in page builder
           seo_metadata: {
@@ -59,6 +71,7 @@ export const useCreateActivity = routeAction$(async (data, requestEvent) => {
 export default component$(() => {
   const atolls = useAtolls();
   const islands = useIslands();
+  const vendorsResponse = useVendors();
   const createActivityAction = useCreateActivity();
   const selectedAtoll = useSignal<number | undefined>();
   const seoTitleLength = useSignal(0);
@@ -68,6 +81,8 @@ export default component$(() => {
   const filteredIslands = selectedAtoll.value
     ? islands.value.filter(i => i.atoll_id === selectedAtoll.value)
     : islands.value;
+
+  const vendors = vendorsResponse.value.data || [];
 
   return (
     <div class="max-w-5xl mx-auto">
@@ -213,6 +228,33 @@ export default component$(() => {
                     <option value="published">Published - Live on website</option>
                     <option value="archived">Archived - Hidden from website</option>
                   </select>
+                </div>
+
+                {/* Vendor */}
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-medium">Vendor</span>
+                    <span class="badge badge-ghost badge-sm">Optional</span>
+                  </label>
+                  <select
+                    name="vendor_id"
+                    class="select select-bordered focus:select-primary transition-all"
+                  >
+                    <option value="">Select Vendor</option>
+                    {vendors.map((vendor: any) => {
+                      const label = vendor.status !== 'verified'
+                        ? `${vendor.business_name} (${vendor.status})`
+                        : vendor.business_name;
+                      return (
+                        <option key={vendor.id} value={vendor.id}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <label class="label">
+                    <span class="label-text-alt">Associate this activity with a vendor</span>
+                  </label>
                 </div>
 
                 {/* Atoll */}

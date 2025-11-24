@@ -153,6 +153,7 @@ export interface Activity {
     id: string;
     category_id?: number;
     island_id?: number;
+    vendor_id?: string;
     slug: string;
     status: 'draft' | 'published' | 'archived';
     page_layout: PageComponent[];
@@ -245,6 +246,7 @@ export interface PackageInventory {
 export interface CreateActivityInput {
     category_id?: number;
     island_id?: number;
+    vendor_id?: string;
     slug: string;
     status: 'draft' | 'published' | 'archived';
     page_layout: PageComponent[];
@@ -254,6 +256,7 @@ export interface CreateActivityInput {
 export interface UpdateActivityInput {
     category_id?: number;
     island_id?: number;
+    vendor_id?: string;
     slug?: string;
     status?: 'draft' | 'published' | 'archived';
     page_layout?: PageComponent[];

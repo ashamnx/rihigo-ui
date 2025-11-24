@@ -276,3 +276,4 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 - **Qwik Docs**: https://qwik.dev/
 - **QwikCity Routing**: https://qwik.dev/qwikcity/routing/overview/
 - Always use Modular Forms for forms
+- always call http://localhost:8080/api/docs using curl to get the api docs and fields and validations

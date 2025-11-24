@@ -328,6 +328,39 @@ export const apiClient = {
         async listAll(): Promise<ApiResponse<Currency[]>> {
             return apiRequest('/api/currencies');
         },
+    },
+
+    /**
+     * Vendors (Admin only)
+     */
+    vendors: {
+        async list(page = 1, pageSize = 20, token: string): Promise<PaginatedResponse> {
+            return apiRequest(`/api/admin/vendors?page=${page}&page_size=${pageSize}`, {}, token);
+        },
+
+        async getById(id: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${id}`, {}, token);
+        },
+
+        async create(data: any, token: string): Promise<ApiResponse> {
+            return apiRequest('/api/admin/vendors', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async update(id: string, data: any, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async delete(id: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${id}`, {
+                method: 'DELETE',
+            }, token);
+        },
     }
 };
 
