@@ -7,7 +7,7 @@ import {
   useSpeakConfig,
   useSpeakLocale,
 } from "qwik-speak";
-import { useCurrencyData } from "~/routes/(website)/[...lang]/layout";
+import { useCurrencyData } from "~/routes/(website)/[lang]/layout";
 
 export interface LocaleSelectorProps {
   class?: string;

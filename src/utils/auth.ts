@@ -21,19 +21,6 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-export async function getUserProfile(requestEvent: RequestEventLoader | RequestEventAction): Promise<UserProfile | null> {
-  try {
-    const response = await authenticatedRequest(requestEvent, async (token) => {
-      return apiClient.users.getProfile(token);
-    });
-
-    return response.success ? response.data : null;
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    return null;
-  }
-}
-
 export async function updateUserProfile(
   requestEvent: RequestEventLoader | RequestEventAction,
   updates: Partial<UserProfile>

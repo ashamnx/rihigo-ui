@@ -275,3 +275,4 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 - **Booking System**: See `src/routes/(website)/[...lang]/booking/[slug]/IMPLEMENTATION_GUIDE.md`
 - **Qwik Docs**: https://qwik.dev/
 - **QwikCity Routing**: https://qwik.dev/qwikcity/routing/overview/
+- Always use Modular Forms for forms
