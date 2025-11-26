@@ -10,10 +10,11 @@ import {
 import { inlineTranslate } from "qwik-speak";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import { getUserBookings } from "~/services/booking-api";
-import type { Booking } from "~/types/booking"; // Load user profile data
+import type { Booking } from "~/types/booking";
+import type { UserProfile } from "~/types/api";
 
 // Load user profile data
-export const useUserProfile = routeLoader$(async (requestEvent) => {
+export const useUserProfile = routeLoader$<UserProfile | null>(async (requestEvent) => {
   const session = requestEvent.sharedMap.get("session");
 
   if (!session || !session.user) {
@@ -24,10 +25,11 @@ export const useUserProfile = routeLoader$(async (requestEvent) => {
     );
   }
 
-  return await authenticatedRequest(requestEvent, async (token) => {
-    const response = await apiClient.users.getProfile(token);
-    return response.data;
+  const result = await authenticatedRequest<UserProfile>(requestEvent, async (token) => {
+    return await apiClient.users.getProfile(token);
   });
+
+  return result.data ?? null;
 });
 
 // Load recent bookings
@@ -68,7 +70,7 @@ export const useUpdateProfile = routeAction$(async (formData, requestEvent) => {
     const updates = {
       name: formData.name as string,
       phone: formData.phone as string,
-      dateOfBirth: formData.dateOfBirth as string,
+      date_of_birth: formData.date_of_birth as string,
       nationality: formData.nationality as string,
     };
 
@@ -361,7 +363,7 @@ export default component$(() => {
                         {t("profile.info.dob@@Date of Birth")}
                       </label>
                       <p class="text-gray-800">
-                        {user.dateOfBirth || "Not provided"}
+                        {user.date_of_birth || "Not provided"}
                       </p>
                     </div>
                     <div>
@@ -409,8 +411,8 @@ export default component$(() => {
                       </label>
                       <input
                         type="date"
-                        name="dateOfBirth"
-                        value={user.dateOfBirth || ""}
+                        name="date_of_birth"
+                        value={user.date_of_birth || ""}
                         class="input input-bordered"
                       />
                     </div>
@@ -537,7 +539,7 @@ export default component$(() => {
                       {t("profile.stats.memberSince@@Member Since")}
                     </div>
                     <div class="stat-value text-secondary text-xl">
-                      {new Date(user.createdAt).toLocaleDateString(lang, {
+                      {new Date(user.created_at).toLocaleDateString(lang, {
                         month: "short",
                         year: "numeric",
                       })}
@@ -555,14 +557,16 @@ export default component$(() => {
                     </span>
                     <span class="badge badge-primary">{user.role}</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-sm text-gray-600">
-                      {t("profile.stats.lastUpdated@@Last Updated")}
-                    </span>
-                    <span class="text-sm text-gray-800">
-                      {new Date(user.updatedAt).toLocaleDateString(lang)}
-                    </span>
-                  </div>
+                  {user.updated_at && (
+                    <div class="flex justify-between">
+                      <span class="text-sm text-gray-600">
+                        {t("profile.stats.lastUpdated@@Last Updated")}
+                      </span>
+                      <span class="text-sm text-gray-800">
+                        {new Date(user.updated_at).toLocaleDateString(lang)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -605,20 +609,20 @@ export default component$(() => {
                       <label class="text-sm font-semibold text-gray-600">
                         {t("profile.preferences.language@@Language")}
                       </label>
-                      <p class="text-gray-800">{user.preferences.language}</p>
+                      <p class="text-gray-800">{user.preferences?.language || "en-US"}</p>
                     </div>
                     <div>
                       <label class="text-sm font-semibold text-gray-600">
                         {t("profile.preferences.currency@@Currency")}
                       </label>
-                      <p class="text-gray-800">{user.preferences.currency}</p>
+                      <p class="text-gray-800">{user.preferences?.currency || "USD"}</p>
                     </div>
                     <div>
                       <label class="text-sm font-semibold text-gray-600">
                         {t("profile.preferences.notifications@@Notifications")}
                       </label>
                       <p class="text-gray-800">
-                        {user.preferences.notifications
+                        {user.preferences?.notifications
                           ? t("profile.enabled@@Enabled")
                           : t("profile.disabled@@Disabled")}
                       </p>
@@ -637,7 +641,7 @@ export default component$(() => {
                       </label>
                       <select
                         name="language"
-                        value={user.preferences.language}
+                        value={user.preferences?.language || "en-US"}
                         class="select select-bordered"
                       >
                         <option value="en-US">English (US)</option>
@@ -652,7 +656,7 @@ export default component$(() => {
                       </label>
                       <select
                         name="currency"
-                        value={user.preferences.currency}
+                        value={user.preferences?.currency || "USD"}
                         class="select select-bordered"
                       >
                         <option value="USD">USD ($)</option>
@@ -671,7 +675,7 @@ export default component$(() => {
                           type="checkbox"
                           name="notifications"
                           value="true"
-                          checked={user.preferences.notifications}
+                          checked={user.preferences?.notifications}
                           class="toggle toggle-primary"
                         />
                       </label>

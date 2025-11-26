@@ -130,7 +130,7 @@ export default component$(() => {
               <h2 class="card-title mt-4">{user.name || 'No name'}</h2>
               <p class="text-sm text-base-content/70 break-all">{user.email}</p>
 
-              <div class="badge badge-lg mt-4" class={user.role === 'admin' ? 'badge-error' : 'badge-info'}>
+              <div class={`badge badge-lg mt-4 ${user.role === 'admin' ? 'badge-error' : 'badge-info'}`}>
                 {user.role}
               </div>
 

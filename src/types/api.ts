@@ -96,3 +96,43 @@ export function getErrorMessage(response: ApiResponse): string {
 
   return 'An unknown error occurred';
 }
+
+/**
+ * User preferences
+ */
+export interface UserPreferences {
+  currency?: string;
+  language?: string;
+  notifications?: boolean;
+}
+
+/**
+ * User profile data from /api/users/me
+ */
+export interface UserProfile {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  role: 'user' | 'admin';
+  phone?: string;
+  nationality?: string;
+  date_of_birth?: string;
+  preferences?: UserPreferences;
+  created_at: string;
+  updated_at?: string;
+}
+
+/**
+ * User type for admin user listing
+ */
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role: 'user' | 'admin';
+  phone?: string;
+  nationality?: string;
+  created_at: string;
+  preferences?: UserPreferences;
+}

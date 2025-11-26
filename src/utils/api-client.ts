@@ -361,6 +361,106 @@ export const apiClient = {
                 method: 'DELETE',
             }, token);
         },
+    },
+
+    /**
+     * Vendor Portal (Vendor-specific routes)
+     */
+    vendorPortal: {
+        // Vendor Profile
+        async getProfile(token: string): Promise<ApiResponse> {
+            return apiRequest('/api/vendor/profile', {}, token);
+        },
+
+        // Vendor Activities
+        async getActivities(token: string, filters?: { status?: string; page?: number; page_size?: number }): Promise<ApiResponse> {
+            const params = new URLSearchParams();
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+            const queryString = params.toString();
+            return apiRequest(`/api/vendor/activities${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        async getActivityById(id: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${id}`, {}, token);
+        },
+
+        async createActivity(data: any, token: string): Promise<ApiResponse> {
+            return apiRequest('/api/vendor/activities', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async updateActivity(id: string, data: any, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async deleteActivity(id: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${id}`, {
+                method: 'DELETE',
+            }, token);
+        },
+
+        // Vendor Activity Packages
+        async getActivityPackages(activityId: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${activityId}/packages`, {}, token);
+        },
+
+        async createActivityPackage(activityId: string, data: any, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${activityId}/packages`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async updateActivityPackage(activityId: string, packageId: string, data: any, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${activityId}/packages/${packageId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async deleteActivityPackage(activityId: string, packageId: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/activities/${activityId}/packages/${packageId}`, {
+                method: 'DELETE',
+            }, token);
+        },
+
+        // Vendor Bookings
+        async getBookings(token: string, filters?: { status?: string; from_date?: string; to_date?: string }): Promise<ApiResponse> {
+            const params = new URLSearchParams();
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.from_date) params.append('from_date', filters.from_date);
+            if (filters?.to_date) params.append('to_date', filters.to_date);
+            const queryString = params.toString();
+            return apiRequest(`/api/vendor/bookings${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        async confirmBooking(id: string, data: { notes?: string }, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/vendor/bookings/${id}/confirm`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        // Vendor Staff
+        async getStaff(token: string): Promise<ApiResponse> {
+            return apiRequest('/api/vendor/staff', {}, token);
+        },
+
+        // Vendor Reports
+        async getBookingReports(token: string, filters?: { from_date?: string; to_date?: string }): Promise<ApiResponse> {
+            const params = new URLSearchParams();
+            if (filters?.from_date) params.append('from_date', filters.from_date);
+            if (filters?.to_date) params.append('to_date', filters.to_date);
+            const queryString = params.toString();
+            return apiRequest(`/api/vendor/reports/bookings${queryString ? '?' + queryString : ''}`, {}, token);
+        },
     }
 };
 
