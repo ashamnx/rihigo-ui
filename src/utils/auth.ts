@@ -1,6 +1,9 @@
 import type { RequestEventLoader, RequestEventAction } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "./api-client";
 
+// Re-export authenticatedRequest for use in route loaders/actions
+export { authenticatedRequest };
+
 // Auth utilities for server-side operations
 export interface UserProfile {
   id: string;

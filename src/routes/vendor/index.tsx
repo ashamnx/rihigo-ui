@@ -4,10 +4,10 @@ import { authenticatedRequest, apiClient } from "~/utils/api-client";
 
 export const useVendorDashboard = routeLoader$(async (requestEvent) => {
     const [profile, activities, bookings, reports] = await Promise.all([
-        authenticatedRequest(requestEvent, (token) => apiClient.vendorPortal.getProfile(token)),
-        authenticatedRequest(requestEvent, (token) => apiClient.vendorPortal.getActivities(token)),
-        authenticatedRequest(requestEvent, (token) => apiClient.vendorPortal.getBookings(token, {})),
-        authenticatedRequest(requestEvent, (token) => apiClient.vendorPortal.getBookingReports(token, {})),
+        authenticatedRequest(requestEvent, (token: string) => apiClient.vendorPortal.getProfile(token)),
+        authenticatedRequest(requestEvent, (token: string) => apiClient.vendorPortal.getActivities(token)),
+        authenticatedRequest(requestEvent, (token: string) => apiClient.vendorPortal.bookings.list(token, {})),
+        authenticatedRequest(requestEvent, (token: string) => apiClient.vendorPortal.reports.getDashboard(token)),
     ]);
 
     return {

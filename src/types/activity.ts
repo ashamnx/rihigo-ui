@@ -155,6 +155,8 @@ export interface Activity {
     island_id?: number;
     vendor_id?: string;
     slug: string;
+    name?: string; // Activity name (from translation or direct)
+    title?: string; // Activity title (from translation or direct)
     status: 'draft' | 'published' | 'archived';
     page_layout: PageComponent[];
     seo_metadata: SEOMetadata;
