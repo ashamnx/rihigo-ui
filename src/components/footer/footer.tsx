@@ -1,11 +1,12 @@
 import { component$ } from "@builder.io/qwik";
-import { inlineTranslate } from "qwik-speak";
+import { inlineTranslate, useSpeakLocale } from "qwik-speak";
 import { LocaleSelector } from "~/components/locale-selector/locale-selector";
 
 export interface FooterProps {}
 
 export const Footer = component$<FooterProps>(() => {
   const t = inlineTranslate();
+  const locale = useSpeakLocale();
   return (
     <footer class="bg-white">
       <div class="mx-auto max-w-7xl overflow-hidden px-6 py-20 sm:py-24 lg:px-8">
@@ -30,6 +31,9 @@ export const Footer = component$<FooterProps>(() => {
           </a>
           <a href="#" class="text-gray-600 hover:text-gray-900">
             {t("app.footer.partners")}
+          </a>
+          <a href={`/${locale.lang}/faq`} class="text-gray-600 hover:text-gray-900">
+            {t("app.footer.faq@@FAQ")}
           </a>
         </nav>
         <div class="mt-16 flex justify-center gap-x-10">

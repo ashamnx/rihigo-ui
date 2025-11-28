@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Link, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { apiClient } from "~/utils/api-client";
@@ -15,8 +15,18 @@ export const useHomeData = routeLoader$(async (requestEvent) => {
   return await apiClient.activities.getTop();
 });
 
+export const useFAQsData = routeLoader$(async () => {
+  const response = await apiClient.faqs.list(1, 6);
+  if (!response.success) {
+    return { success: false, data: [] };
+  }
+  const faqs = (response.data || []).filter((faq: any) => faq.published);
+  return { success: true, data: faqs };
+});
+
 export default component$(() => {
   const homeData = useHomeData();
+  const faqsData = useFAQsData();
   const t = inlineTranslate();
   const loc = useLocation();
 
@@ -331,6 +341,56 @@ export default component$(() => {
         </div>
       </div>
 
+      {/* FAQ Section */}
+      {faqsData.value.success && faqsData.value.data.length > 0 && (
+        <div class="bg-white py-24 sm:py-32">
+          <div class="mx-auto max-w-7xl px-6 lg:px-8">
+            <div class="mx-auto max-w-2xl text-center">
+              <h2 class="text-primary text-base/7 font-semibold">
+                {t("home.faq.label@@FAQ")}
+              </h2>
+              <p class="mt-2 text-4xl font-semibold tracking-tight text-balance text-gray-950 sm:text-5xl">
+                {t("home.faq.title@@Frequently Asked Questions")}
+              </p>
+              <p class="mt-6 text-lg text-gray-600">
+                {t("home.faq.description@@Find answers to common questions about traveling to the Maldives")}
+              </p>
+            </div>
+
+            <div class="mx-auto mt-16 max-w-3xl">
+              <dl class="divide-y divide-gray-900/10">
+                {faqsData.value.data.slice(0, 5).map((faq: any) => (
+                  <FAQItem key={faq.id} faq={faq} />
+                ))}
+              </dl>
+            </div>
+
+            <div class="mt-12 text-center">
+              <Link
+                href={`/${loc.params.lang}/faq`}
+                class="text-primary hover:text-primary/80 inline-flex items-center gap-2 text-sm font-semibold"
+              >
+                {t("home.faq.viewAll@@View all FAQs")}
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Partners Section - Hidden until real partners are added */}
       {/*
             <div class="bg-white py-24 sm:py-32">
@@ -496,6 +556,61 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
     );
   },
 );
+
+const FAQItem = component$<{ faq: any }>(({ faq }) => {
+  const isExpanded = useSignal(false);
+
+  return (
+    <div class="py-6 first:pt-0 last:pb-0">
+      <dt>
+        <button
+          onClick$={() => (isExpanded.value = !isExpanded.value)}
+          type="button"
+          class="flex w-full items-start justify-between text-left text-gray-900 cursor-pointer"
+          aria-expanded={isExpanded.value}
+        >
+          <span class="text-base/7 font-semibold">{faq.question}</span>
+          <span class="ml-6 flex h-7 items-center">
+            {!isExpanded.value ? (
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 6v12m6-6H6"
+                />
+              </svg>
+            ) : (
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M18 12H6"
+                />
+              </svg>
+            )}
+          </span>
+        </button>
+      </dt>
+      {isExpanded.value && (
+        <dd class="mt-2 pr-12">
+          <p class="text-base/7 text-gray-600">{faq.answer}</p>
+        </dd>
+      )}
+    </div>
+  );
+});
 
 export const head: DocumentHead = {
   title: "Rihigo - Your Complete Maldives Travel Guide & Trip Planner",

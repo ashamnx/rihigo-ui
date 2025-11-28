@@ -42,10 +42,6 @@ export const Header = component$<HeaderProps>(() => {
             label: t('app.nav.aboutUs'),
             link: '/about-us/'
         },
-        {
-            label: t('app.nav.faq'),
-            link: '/faq/'
-        },
     ];
 
     return (
@@ -103,10 +99,10 @@ export const Header = component$<HeaderProps>(() => {
                                         <span class="text-xs opacity-60">{session.value.user.email}</span>
                                     </li>
                                     <div class="divider my-1"></div>
-                                    <li><Link href={`/${locale.lang}/profile`}>{t('app.nav.profile') || 'My Profile'}</Link></li>
-                                    <li><Link href={`/${locale.lang}/bookings`}>{t('app.nav.bookings') || 'My Bookings'}</Link></li>
+                                    <li onClick$={() => (document.activeElement as HTMLElement)?.blur()}><Link href={`/${locale.lang}/profile`}>{t('app.nav.profile') || 'My Profile'}</Link></li>
+                                    <li onClick$={() => (document.activeElement as HTMLElement)?.blur()}><Link href={`/${locale.lang}/bookings`}>{t('app.nav.bookings') || 'My Bookings'}</Link></li>
                                     {isUserAdmin && (
-                                        <li><Link href="/admin">{t('app.nav.admin') || 'Admin Panel'}</Link></li>
+                                        <li onClick$={() => (document.activeElement as HTMLElement)?.blur()}><Link href="/admin">{t('app.nav.admin') || 'Admin Panel'}</Link></li>
                                     )}
                                     <div class="divider my-1"></div>
                                     <li>
@@ -241,7 +237,7 @@ const NestedNav = component$(({item}: any) => {
     return (
         <div class="relative z-20">
             <button type="button" class="flex items-center gap-x-1 text-sm/6 font-semibold text-gray-900 cursor-pointer"
-                    aria-expanded="false"
+                    aria-expanded={isExpanded.value}
                     aria-haspopup="true"
                     onClick$={() => isExpanded.value = !isExpanded.value}
             >
@@ -261,7 +257,8 @@ const NestedNav = component$(({item}: any) => {
                             {
                                 item.children.map((child: any, index: number) => (
                                     <div class="group relative flex gap-x-6 rounded-lg p-4 text-sm/6 hover:bg-gray-50"
-                                         key={index}>
+                                         key={index}
+                                         onClick$={() => isExpanded.value = false}>
                                         <div
                                             class="mt-1 flex size-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
                                             <svg class="size-6 text-gray-600 group-hover:text-primary" fill="none"
