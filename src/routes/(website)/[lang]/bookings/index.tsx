@@ -1,8 +1,8 @@
 import {component$, useSignal} from '@builder.io/qwik';
 import {routeLoader$, useLocation, Link, type DocumentHead} from '@builder.io/qwik-city';
-import {getUserBookings} from '~/services/booking-api';
 import {inlineTranslate} from 'qwik-speak';
 import type {Booking} from '~/types/booking';
+import {authenticatedRequest, apiClient} from '~/utils/api-client';
 
 export const head: DocumentHead = {
   title: 'My Bookings | Rihigo',
@@ -19,37 +19,11 @@ export const head: DocumentHead = {
 };
 
 export const useUserBookings = routeLoader$(async (requestEvent) => {
-  const session = requestEvent.sharedMap.get('session');
+  const page = parseInt(requestEvent.url.searchParams.get('page') || '1');
 
-  if (!session || !session.user) {
-    return {
-      success: false,
-      data: [],
-      pagination: null,
-      error: 'Unauthorized'
-    };
-  }
-
-  try {
-    const token = session.user.accessToken || '';
-    const page = parseInt(requestEvent.url.searchParams.get('page') || '1');
-    const response = await getUserBookings(token, { page, page_size: 10 });
-
-    return {
-      success: true,
-      data: response.data,
-      pagination: response.pagination,
-      error: null
-    };
-  } catch (error) {
-    console.error('Failed to load bookings:', error);
-    return {
-      success: false,
-      data: [],
-      pagination: null,
-      error: error instanceof Error ? error.message : 'Failed to load bookings'
-    };
-  }
+  return authenticatedRequest(requestEvent, (token) =>
+    apiClient.bookings.list(page, 10, token)
+  );
 });
 
 export default component$(() => {
@@ -61,37 +35,47 @@ export default component$(() => {
   const filterStatus = useSignal<string>('all');
 
   // Redirect to login if not authenticated
-  if (!bookingsResponse.value.success && bookingsResponse.value.error === 'Unauthorized') {
+  if (!bookingsResponse.value.success && bookingsResponse.value.error_message === 'Authentication required') {
     if (typeof window !== 'undefined') {
       window.location.href = `/${lang}/auth/signin?callbackUrl=${encodeURIComponent(location.url.pathname)}`;
     }
     return <div>Redirecting to login...</div>;
   }
 
-  const bookings = bookingsResponse.value.data;
-  const pagination = bookingsResponse.value.pagination;
+  const bookings = bookingsResponse.value.data || [];
+  const pagination = bookingsResponse.value.pagination_data;
 
   // Filter bookings by status
   const filteredBookings = filterStatus.value === 'all'
     ? bookings
     : bookings.filter(b => b.status === filterStatus.value);
 
-  const getStatusColor = (status: string) => {
+  const getStatusBgColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'badge-success';
-      case 'pending': return 'badge-warning';
-      case 'completed': return 'badge-info';
-      case 'cancelled': return 'badge-error';
-      default: return 'badge-ghost';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getPaymentStatusColor = (status: string) => {
+  const getStatusDotColor = (status: string) => {
     switch (status) {
-      case 'paid': return 'badge-success';
-      case 'pending': return 'badge-warning';
-      case 'refunded': return 'badge-info';
-      default: return 'badge-ghost';
+      case 'confirmed': return 'bg-green-500';
+      case 'pending': return 'bg-yellow-500';
+      case 'completed': return 'bg-blue-500';
+      case 'cancelled': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getPaymentBgColor = (status: string) => {
+    switch (status) {
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-amber-100 text-amber-800';
+      case 'refunded': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -99,7 +83,7 @@ export default component$(() => {
     <div class="min-h-screen bg-gray-50">
       {/* Header */}
       <div class="bg-white border-b border-gray-200">
-        <div class="container mx-auto px-4 py-8">
+        <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 class="text-3xl font-bold text-gray-800">
@@ -116,7 +100,7 @@ export default component$(() => {
         </div>
       </div>
 
-      <div class="container mx-auto px-4 py-8">
+      <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
         {/* Filters */}
         <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div class="flex flex-wrap gap-2">
@@ -205,13 +189,21 @@ export default component$(() => {
                               <p class="text-sm text-gray-600">{booking.package.name}</p>
                             )}
                           </div>
-                          <div class="flex gap-2">
-                            <span class={`badge ${getStatusColor(booking.status)}`}>
-                              {booking.status}
-                            </span>
-                            <span class={`badge ${getPaymentStatusColor(booking.payment_status)}`}>
-                              {booking.payment_status}
-                            </span>
+                          <div class="flex gap-3">
+                            <div class="text-center">
+                              <span class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusBgColor(booking.status)}`}>
+                                <span class={`w-1.5 h-1.5 rounded-full ${getStatusDotColor(booking.status)}`}></span>
+                                {booking.status}
+                              </span>
+                            </div>
+                            <div class="text-center">
+                              <span class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${getPaymentBgColor(booking.payment_status)}`}>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {booking.payment_status}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -261,6 +253,18 @@ export default component$(() => {
 
                         {/* Actions */}
                         <div class="mt-4 flex flex-wrap gap-2">
+                          {booking.payment_status === 'pending' && (
+                            <Link
+                              href={`/${lang}/bookings/${booking.id}/pay`}
+                              class="btn btn-sm btn-success gap-1"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                              </svg>
+                              {t('bookings.card.payNow@@Pay Now')}
+                            </Link>
+                          )}
+
                           <Link
                             href={`/${lang}/bookings/${booking.id}/confirmation`}
                             class="btn btn-sm btn-primary"

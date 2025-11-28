@@ -45,10 +45,10 @@ export const ConfirmModal = component$<ConfirmModalProps>(({
                         <button
                             type="button"
                             class={`btn ${danger ? 'btn-error' : 'btn-primary'}`}
-                            onClick$={async () => {
-                                await onConfirm$();
+                            onClick$={() => {
                                 const modal = document.getElementById(id) as HTMLDialogElement;
                                 modal?.close();
+                                onConfirm$();
                             }}
                             disabled={loading}
                         >

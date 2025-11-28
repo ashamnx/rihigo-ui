@@ -191,7 +191,7 @@ export default component$(() => {
     <div class="min-h-screen bg-gray-50">
       {/* Header */}
       <div class="border-b border-gray-200 bg-white">
-        <div class="container mx-auto px-4 py-8">
+        <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
           <div class="flex flex-col items-start gap-6 md:flex-row md:items-center">
             {/* Profile Avatar */}
             <div class="avatar">
@@ -300,7 +300,7 @@ export default component$(() => {
       </div>
 
       {/* Content */}
-      <div class="container mx-auto px-4 py-8">
+      <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
         {/* Overview Tab */}
         {activeTab.value === "overview" && (
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -799,11 +799,18 @@ export default component$(() => {
                                 </p>
                               )}
                             </div>
-                            <span
-                              class={`badge ${getStatusColor(booking.status)}`}
-                            >
-                              {booking.status}
-                            </span>
+                            <div class="flex gap-2">
+                              <span
+                                class={`badge ${getStatusColor(booking.status)}`}
+                              >
+                                {booking.status}
+                              </span>
+                              <span
+                                class={`badge ${booking.payment_status === 'paid' ? 'badge-success' : booking.payment_status === 'pending' ? 'badge-warning' : 'badge-ghost'}`}
+                              >
+                                {booking.payment_status}
+                              </span>
+                            </div>
                           </div>
                           <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
                             <div>
@@ -838,7 +845,18 @@ export default component$(() => {
                                 {booking.total_price.toFixed(2)}
                               </p>
                             </div>
-                            <div>
+                            <div class="flex gap-2">
+                              {booking.payment_status === "pending" && (
+                                <Link
+                                  href={`/${lang}/bookings/${booking.id}/pay`}
+                                  class="btn btn-sm btn-success gap-1"
+                                >
+                                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                  </svg>
+                                  {t("profile.bookings.pay@@Pay")}
+                                </Link>
+                              )}
                               <Link
                                 href={`/${lang}/bookings/${booking.id}/confirmation`}
                                 class="btn btn-sm btn-outline"

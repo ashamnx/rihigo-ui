@@ -1,5 +1,5 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate, useLocation } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Link, useNavigate, useLocation, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { StatusBadge } from '~/components/vendor/shared/StatusBadge';
 import { ConfirmModal, showModal } from '~/components/vendor/shared/ConfirmModal';
@@ -286,10 +286,10 @@ export default component$(() => {
                                     <div class="text-base-content/60 text-sm">Duration</div>
                                     <div class="font-medium">{booking.nights_count} night{booking.nights_count !== 1 ? 's' : ''}</div>
                                 </div>
-                                <div>
-                                    <div class="text-base-content/60 text-sm">Service Type</div>
-                                    <div class="font-medium capitalize">{booking.service_type.replace('_', ' ')}</div>
-                                </div>
+                                {/*<div>*/}
+                                {/*    <div class="text-base-content/60 text-sm">Service Type</div>*/}
+                                {/*    <div class="font-medium capitalize">{booking.service_type.replace('_', ' ')}</div>*/}
+                                {/*</div>*/}
                             </div>
 
                             {(booking.resource || booking.activity) && (
@@ -545,3 +545,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: 'Booking Details | Vendor Portal',
+    meta: [
+        {
+            name: 'robots',
+            content: 'noindex, nofollow',
+        },
+    ],
+};
