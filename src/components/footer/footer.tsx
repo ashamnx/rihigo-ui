@@ -94,6 +94,15 @@ export const Footer = component$<FooterProps>(() => {
           {/*<LanguageSelector />*/}
           <LocaleSelector />
         </div>
+        <div class="mt-10 flex justify-center">
+          <img
+            src="/bml_banner.png"
+            alt="BML"
+            width={200}
+            height={50}
+            class="h-auto"
+          />
+        </div>
         <p class="mt-6 text-center text-sm/6 text-gray-600">
           {t("app.footer.copyright", { year: new Date().getFullYear() })}
         </p>

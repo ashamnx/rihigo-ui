@@ -40,7 +40,7 @@ export const ActionDropdown = component$<ActionDropdownProps>(({
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
                 </svg>
             </div>
-            <ul tabIndex={0} class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+            <ul tabIndex={0} class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-200 !fixed">
                 {actions.map((action, index) => (
                     <>
                         {action.dividerBefore && index > 0 && (

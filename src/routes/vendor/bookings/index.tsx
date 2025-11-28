@@ -4,7 +4,7 @@ import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { EmptyState } from '~/components/vendor/shared/EmptyState';
 import { FilterBar, type FilterDefinition } from '~/components/vendor/shared/FilterBar';
-import { ActionDropdown, type Action } from '~/components/vendor/shared/ActionDropdown';
+import { ActionDropdown } from '~/components/vendor/shared/ActionDropdown';
 import { ConfirmModal, showModal } from '~/components/vendor/shared/ConfirmModal';
 import {
     type VendorBooking,
@@ -42,7 +42,7 @@ export const useBookingsLoader = routeLoader$(async (requestEvent) => {
                 limit: parseInt(url.searchParams.get('limit') || '20'),
             };
 
-            const response = await apiClient.vendorPortal.bookings?.list(token, filters);
+            const response = await apiClient.vendorPortal.bookings.list(token, filters);
             return response as BookingListResponse;
         } catch (error) {
             console.error('Failed to load bookings:', error);
@@ -142,84 +142,6 @@ export default component$(() => {
         });
         const queryString = params.toString();
         navigate(`/vendor/bookings${queryString ? `?${queryString}` : ''}`);
-    });
-
-    const getBookingActions = $((booking: VendorBooking): Action[] => {
-        const actions: Action[] = [
-            {
-                label: 'View Details',
-                icon: 'view',
-                onClick$: $(() => navigate(`/vendor/bookings/${booking.id}`)),
-            },
-            {
-                label: 'Edit',
-                icon: 'edit',
-                onClick$: $(() => navigate(`/vendor/bookings/${booking.id}?edit=true`)),
-            },
-        ];
-
-        // Add status-specific actions
-        if (booking.status === 'pending') {
-            actions.push({
-                label: 'Confirm',
-                icon: 'check',
-                onClick$: $(() => {
-                    selectedBooking.value = booking;
-                    showModal('confirm-booking-modal');
-                }),
-            });
-        }
-        if (booking.status === 'confirmed') {
-            actions.push({
-                label: 'Check In',
-                icon: 'login',
-                onClick$: $(() => {
-                    selectedBooking.value = booking;
-                    showModal('checkin-booking-modal');
-                }),
-            });
-        }
-        if (booking.status === 'checked_in') {
-            actions.push({
-                label: 'Check Out',
-                icon: 'logout',
-                onClick$: $(() => {
-                    selectedBooking.value = booking;
-                    showModal('checkout-booking-modal');
-                }),
-            });
-        }
-
-        // Add invoice/payment actions
-        if (booking.payment_status !== 'paid') {
-            actions.push({
-                label: 'Create Invoice',
-                icon: 'document',
-                dividerBefore: true,
-                onClick$: $(() => navigate(`/vendor/invoices/new?booking_id=${booking.id}`)),
-            });
-            actions.push({
-                label: 'Record Payment',
-                icon: 'payment',
-                onClick$: $(() => navigate(`/vendor/payments/new?booking_id=${booking.id}`)),
-            });
-        }
-
-        // Cancel action
-        if (['pending', 'confirmed'].includes(booking.status)) {
-            actions.push({
-                label: 'Cancel Booking',
-                icon: 'delete',
-                danger: true,
-                dividerBefore: true,
-                onClick$: $(() => {
-                    selectedBooking.value = booking;
-                    showModal('cancel-booking-modal');
-                }),
-            });
-        }
-
-        return actions;
     });
 
     const handleConfirmBooking = $(async () => {
@@ -410,7 +332,65 @@ export default component$(() => {
                                         </span>
                                     </td>
                                     <td>
-                                        <ActionDropdown actions={getBookingActions(booking)} />
+                                        <ActionDropdown actions={[
+                                            {
+                                                label: 'View Details',
+                                                icon: 'view',
+                                                onClick$: $(() => navigate(`/vendor/bookings/${booking.id}`)),
+                                            },
+                                            {
+                                                label: 'Edit',
+                                                icon: 'edit',
+                                                onClick$: $(() => navigate(`/vendor/bookings/${booking.id}?edit=true`)),
+                                            },
+                                            ...(booking.status === 'pending' ? [{
+                                                label: 'Confirm',
+                                                icon: 'check',
+                                                onClick$: $(() => {
+                                                    selectedBooking.value = booking;
+                                                    showModal('confirm-booking-modal');
+                                                }),
+                                            }] : []),
+                                            ...(booking.status === 'confirmed' ? [{
+                                                label: 'Check In',
+                                                icon: 'check',
+                                                onClick$: $(() => {
+                                                    selectedBooking.value = booking;
+                                                    showModal('checkin-booking-modal');
+                                                }),
+                                            }] : []),
+                                            ...(booking.status === 'checked_in' ? [{
+                                                label: 'Check Out',
+                                                icon: 'check',
+                                                onClick$: $(() => {
+                                                    selectedBooking.value = booking;
+                                                    showModal('checkout-booking-modal');
+                                                }),
+                                            }] : []),
+                                            ...(booking.payment_status !== 'paid' ? [
+                                                {
+                                                    label: 'Create Invoice',
+                                                    icon: 'document',
+                                                    dividerBefore: true,
+                                                    onClick$: $(() => navigate(`/vendor/invoices/new?booking_id=${booking.id}`)),
+                                                },
+                                                {
+                                                    label: 'Record Payment',
+                                                    icon: 'payment',
+                                                    onClick$: $(() => navigate(`/vendor/payments/new?booking_id=${booking.id}`)),
+                                                },
+                                            ] : []),
+                                            ...(['pending', 'confirmed'].includes(booking.status) ? [{
+                                                label: 'Cancel Booking',
+                                                icon: 'delete',
+                                                danger: true,
+                                                dividerBefore: true,
+                                                onClick$: $(() => {
+                                                    selectedBooking.value = booking;
+                                                    showModal('cancel-booking-modal');
+                                                }),
+                                            }] : []),
+                                        ]} />
                                     </td>
                                 </tr>
                             ))}

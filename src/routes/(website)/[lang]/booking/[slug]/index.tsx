@@ -1,7 +1,6 @@
 import {component$, useStore} from '@builder.io/qwik';
-import {Form, routeAction$, routeLoader$, useLocation, useNavigate} from '@builder.io/qwik-city';
+import {Form, routeAction$, routeLoader$, useLocation, useNavigate, type DocumentHead} from '@builder.io/qwik-city';
 import {getActivityBySlug} from '~/services/activity-api';
-import {createBooking} from '~/services/booking-api';
 import {inlineTranslate} from 'qwik-speak';
 import {useSession} from '~/routes/plugin@auth';
 import {DynamicFormField} from '~/components/booking/DynamicFormField';
@@ -12,6 +11,21 @@ import {
     type BookingFieldConfig,
     type BookingType,
 } from '~/types/booking-fields';
+import {authenticatedRequest, apiClient} from '~/utils/api-client';
+
+export const head: DocumentHead = {
+  title: 'Book Now | Rihigo',
+  meta: [
+    {
+      name: 'description',
+      content: 'Complete your booking',
+    },
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};
 
 export const useActivityData = routeLoader$(async (requestEvent) => {
     const slug = requestEvent.params.slug;
@@ -42,74 +56,62 @@ export const useActivityData = routeLoader$(async (requestEvent) => {
 });
 
 export const useCreateBooking = routeAction$(async (data, requestEvent) => {
-    const session = requestEvent.sharedMap.get('session');
+    // Extract all form data including custom fields
+    const customFields: Record<string, any> = {};
+    const standardFieldNames = new Set([
+        'activity_id', 'package_id', 'booking_date', 'check_in_date', 'check_out_date',
+        'number_of_people', 'full_name', 'email', 'phone', 'nationality',
+        'special_requests', 'notes', 'payment_method'
+    ]);
 
-    if (!session || !session.user) {
-        return {
-            success: false,
-            error: 'You must be logged in to book an activity'
-        };
-    }
-
-    try {
-        const token = session.user.accessToken || '';
-
-        // Debug logging
-        console.log('Creating booking with token length:', token.length);
-        console.log('User:', session.user.email);
-
-        // Extract all form data including custom fields
-        const customFields: Record<string, any> = {};
-        const standardFieldNames = new Set([
-            'activity_id', 'package_id', 'booking_date', 'check_in_date', 'check_out_date',
-            'number_of_people', 'full_name', 'email', 'phone', 'nationality',
-            'special_requests', 'notes', 'payment_method'
-        ]);
-
-        // Collect custom fields
-        Object.entries(data).forEach(([key, value]) => {
-            if (!standardFieldNames.has(key)) {
-                customFields[key] = value;
-            }
-        });
-
-        // For digital products, use tomorrow's date if booking_date is not provided
-        let bookingDate = data.booking_date as string || data.check_in_date as string;
-        if (!bookingDate) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(12, 0, 0, 0);
-            bookingDate = tomorrow.toISOString();
+    // Collect custom fields
+    Object.entries(data).forEach(([key, value]) => {
+        if (!standardFieldNames.has(key)) {
+            customFields[key] = value;
         }
+    });
 
-        const booking = await createBooking({
-            activity_id: data.activity_id as string,
-            package_id: data.package_id as string || undefined,
-            booking_date: bookingDate,
-            number_of_people: data.number_of_people ? parseInt(data.number_of_people as string) : 1,
-            customer_info: {
-                full_name: data.full_name as string,
-                email: data.email as string,
-                phone: data.phone as string,
-                nationality: data.nationality as string || undefined,
-                special_requests: data.special_requests as string || undefined,
-                ...customFields, // Include all custom fields
-            },
-            payment_method: data.payment_method as string,
-            notes: data.notes as string || undefined,
-        }, token);
+    // For digital products, use tomorrow's date if booking_date is not provided
+    let bookingDate = data.booking_date as string || data.check_in_date as string;
+    if (!bookingDate) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(12, 0, 0, 0);
+        bookingDate = tomorrow.toISOString();
+    }
 
-        return {
-            success: true,
-            data: booking
-        };
-    } catch (error) {
-        console.error('Failed to create booking:', error);
+    const bookingData = {
+        activity_id: data.activity_id as string,
+        package_id: data.package_id as string || undefined,
+        booking_date: bookingDate,
+        number_of_people: data.number_of_people ? parseInt(data.number_of_people as string) : 1,
+        customer_info: {
+            full_name: data.full_name as string,
+            email: data.email as string,
+            phone: data.phone as string,
+            nationality: data.nationality as string || undefined,
+            special_requests: data.special_requests as string || undefined,
+            ...customFields,
+        },
+        payment_method: data.payment_method as string,
+        notes: data.notes as string || undefined,
+    };
+
+    const response = await authenticatedRequest(requestEvent, (token) =>
+        apiClient.bookings.create(bookingData, token)
+    );
+
+    if (!response.success) {
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Failed to create booking'
+            error: response.error_message || 'Failed to create booking'
         };
     }
+
+    return {
+        success: true,
+        data: response.data
+    };
 });
 
 export default component$(() => {

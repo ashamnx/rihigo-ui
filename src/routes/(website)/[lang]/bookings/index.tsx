@@ -1,8 +1,22 @@
 import {component$, useSignal} from '@builder.io/qwik';
-import {routeLoader$, useLocation, Link} from '@builder.io/qwik-city';
+import {routeLoader$, useLocation, Link, type DocumentHead} from '@builder.io/qwik-city';
 import {getUserBookings} from '~/services/booking-api';
 import {inlineTranslate} from 'qwik-speak';
 import type {Booking} from '~/types/booking';
+
+export const head: DocumentHead = {
+  title: 'My Bookings | Rihigo',
+  meta: [
+    {
+      name: 'description',
+      content: 'View and manage your bookings',
+    },
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};
 
 export const useUserBookings = routeLoader$(async (requestEvent) => {
   const session = requestEvent.sharedMap.get('session');
