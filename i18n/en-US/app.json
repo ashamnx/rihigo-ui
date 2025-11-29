@@ -74,6 +74,113 @@
     "currency": {
       "USD": "USD",
       "EUR": "EUR"
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated",
+      "backToHome": "Back to home",
+      "sections": {
+        "introduction": {
+          "title": "Introduction",
+          "content": "Welcome to Rihigo. These Terms of Service govern your use of our website and services. By accessing or using Rihigo, you agree to be bound by these terms. If you do not agree to these terms, please do not use our services."
+        },
+        "definitions": {
+          "title": "Definitions",
+          "service": "refers to the Rihigo platform, including our website, mobile applications, and all related services.",
+          "user": "refers to any individual who accesses or uses our Service.",
+          "booking": "refers to any reservation made through our platform for activities, tours, accommodations, or other services.",
+          "vendor": "refers to third-party service providers who offer their services through our platform."
+        },
+        "useOfService": {
+          "title": "Use of Service",
+          "content": "By using our Service, you agree to:",
+          "item1": "Provide accurate and complete information when creating an account or making a booking",
+          "item2": "Maintain the security of your account credentials",
+          "item3": "Use the Service only for lawful purposes",
+          "item4": "Not attempt to interfere with or disrupt the Service"
+        },
+        "bookings": {
+          "title": "Bookings and Payments",
+          "content": "When you make a booking through Rihigo:",
+          "item1": "You agree to pay all fees and charges associated with your booking",
+          "item2": "Prices are subject to change and are confirmed at the time of booking",
+          "item3": "Payment processing is handled securely through our third-party payment providers"
+        },
+        "cancellation": {
+          "title": "Cancellation Policy",
+          "content": "Cancellation policies vary by vendor and activity. Please review the specific cancellation policy for each booking before confirming. Rihigo will process refunds according to the applicable cancellation policy. Some bookings may be non-refundable."
+        },
+        "liability": {
+          "title": "Limitation of Liability",
+          "content": "Rihigo acts as an intermediary between users and vendors. We are not responsible for the quality, safety, or legality of the services provided by vendors. To the maximum extent permitted by law, Rihigo shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Service."
+        },
+        "changes": {
+          "title": "Changes to Terms",
+          "content": "We reserve the right to modify these Terms of Service at any time. We will notify users of significant changes by posting a notice on our website. Your continued use of the Service after changes are posted constitutes acceptance of the modified terms."
+        },
+        "contact": {
+          "title": "Contact Us",
+          "content": "If you have any questions about these Terms of Service, please contact us at:"
+        }
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated",
+      "backToHome": "Back to home",
+      "sections": {
+        "introduction": {
+          "title": "Introduction",
+          "content": "At Rihigo, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform. Please read this policy carefully to understand our practices regarding your personal data."
+        },
+        "collection": {
+          "title": "Information We Collect",
+          "content": "We collect information that you provide directly to us, as well as information collected automatically:",
+          "item1": "Personal information (name, email address, phone number)",
+          "item2": "Account credentials and profile information",
+          "item3": "Booking and transaction details",
+          "item4": "Device information and usage data"
+        },
+        "usage": {
+          "title": "How We Use Your Information",
+          "content": "We use the information we collect to:",
+          "item1": "Process and manage your bookings",
+          "item2": "Communicate with you about your reservations and our services",
+          "item3": "Improve and personalize your experience",
+          "item4": "Comply with legal obligations and protect our rights"
+        },
+        "sharing": {
+          "title": "Information Sharing",
+          "content": "We may share your information with:",
+          "item1": "Vendors to fulfill your bookings",
+          "item2": "Payment processors to complete transactions",
+          "item3": "Service providers who assist in operating our platform"
+        },
+        "security": {
+          "title": "Data Security",
+          "content": "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the Internet is 100% secure."
+        },
+        "rights": {
+          "title": "Your Rights",
+          "content": "Depending on your location, you may have the following rights:",
+          "item1": "Access and receive a copy of your personal data",
+          "item2": "Correct inaccurate or incomplete information",
+          "item3": "Request deletion of your personal data",
+          "item4": "Opt-out of marketing communications"
+        },
+        "cookies": {
+          "title": "Cookies and Tracking",
+          "content": "We use cookies and similar technologies to enhance your experience, analyze usage patterns, and deliver personalized content. You can manage your cookie preferences through your browser settings."
+        },
+        "changes": {
+          "title": "Changes to This Policy",
+          "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the \"Last updated\" date."
+        },
+        "contact": {
+          "title": "Contact Us",
+          "content": "If you have any questions about this Privacy Policy or our data practices, please contact us at:"
+        }
+      }
     }
   }
 }

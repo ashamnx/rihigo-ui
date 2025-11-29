@@ -11,6 +11,7 @@ import { useCurrencyData } from "~/routes/(website)/[lang]/layout";
 
 export interface LocaleSelectorProps {
   class?: string;
+  isScrolled?: boolean;
 }
 
 // Flag emojis for supported locales
@@ -20,7 +21,7 @@ const FLAG_MAP: Record<string, string> = {
 };
 
 export const LocaleSelector = component$<LocaleSelectorProps>(
-  ({ class: className }) => {
+  ({ class: className, isScrolled = true }) => {
     const isExpanded = useSignal(false);
     const buttonRef = useSignal<HTMLButtonElement>();
     const panelRef = useSignal<HTMLDivElement>();
@@ -120,16 +121,16 @@ export const LocaleSelector = component$<LocaleSelectorProps>(
         <button
           ref={buttonRef}
           type="button"
-          class="flex cursor-pointer items-center gap-x-1 text-sm/6 font-semibold text-gray-900"
+          class={`flex cursor-pointer items-center gap-x-1 text-sm/6 font-semibold transition-colors duration-300 ${isScrolled ? 'text-gray-900' : 'text-white'}`}
           aria-expanded={isExpanded.value}
           aria-haspopup="true"
           onClick$={() => (isExpanded.value = !isExpanded.value)}
         >
           <span class="text-lg">{FLAG_MAP[locale.lang] || "🌐"}</span>
-          <span class="mx-1 h-4 border-l border-gray-300"></span>
+          <span class={`mx-1 h-4 border-l transition-colors ${isScrolled ? 'border-gray-300' : 'border-white/50'}`}></span>
           <span>{store.selectedCurrency}</span>
           <svg
-            class="size-5 flex-none text-gray-400"
+            class={`size-5 flex-none transition-colors ${isScrolled ? 'text-gray-400' : 'text-white/70'}`}
             viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"

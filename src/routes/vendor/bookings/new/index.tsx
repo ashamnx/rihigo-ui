@@ -1,6 +1,15 @@
 // @ts-nocheck
 import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { routeAction$, routeLoader$, Form, Link, useNavigate, zod$, z } from '@builder.io/qwik-city';
+import {
+  routeAction$,
+  routeLoader$,
+  Form,
+  Link,
+  useNavigate,
+  zod$,
+  z,
+  type DocumentHead,
+} from "@builder.io/qwik-city";
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import type { BookingCreateInput, BookingSourceType } from '~/types/booking-vendor';
 import type { ServiceType } from '~/types/resource';
@@ -580,3 +589,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+  title: 'Add Bookings | Vendor Portal',
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};

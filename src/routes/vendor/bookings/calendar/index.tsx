@@ -1,5 +1,10 @@
 import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
+import {
+  routeLoader$,
+  Link,
+  useNavigate,
+  type DocumentHead,
+} from "@builder.io/qwik-city";
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import {
     type CalendarBooking,
@@ -417,3 +422,14 @@ export default component$(() => {
         </div>
     );
 });
+
+
+export const head: DocumentHead = {
+  title: 'Booking Calender | Vendor Portal',
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};

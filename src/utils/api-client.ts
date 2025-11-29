@@ -331,6 +331,19 @@ export const apiClient = {
     },
 
     /**
+     * Islands
+     */
+    islands: {
+        async list(atollId?: number, type?: string): Promise<ApiResponse> {
+            const params = new URLSearchParams();
+            if (atollId) params.append('atoll_id', atollId.toString());
+            if (type) params.append('type', type);
+            const queryString = params.toString();
+            return apiRequest(`/api/islands${queryString ? '?' + queryString : ''}`);
+        },
+    },
+
+    /**
      * Vendors (Admin only)
      */
     vendors: {

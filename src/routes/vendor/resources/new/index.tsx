@@ -1,6 +1,15 @@
 // @ts-nocheck
 import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { routeAction$, routeLoader$, Form, Link, useNavigate, zod$, z } from '@builder.io/qwik-city';
+import {
+  routeAction$,
+  routeLoader$,
+  Form,
+  Link,
+  useNavigate,
+  zod$,
+  z,
+  type DocumentHead,
+} from "@builder.io/qwik-city";
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import {
     type ServiceType,
@@ -539,3 +548,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+  title: 'Add Resource | Vendor Portal',
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};

@@ -1,4 +1,4 @@
-import {component$, useSignal} from '@builder.io/qwik';
+import {component$, useSignal, useOnWindow, $, type QRL} from '@builder.io/qwik';
 import {Link} from "@builder.io/qwik-city";
 import { LocaleSelector } from '~/components/locale-selector/locale-selector';
 import {inlineTranslate, localizePath, useSpeakLocale} from 'qwik-speak';
@@ -14,6 +14,12 @@ export const Header = component$<HeaderProps>(() => {
     const locale = useSpeakLocale();
     const session = useSession();
     const isUserAdmin = true;
+    const isMobileMenuOpen = useSignal(false);
+    const isScrolled = useSignal(false);
+
+    useOnWindow('scroll', $(() => {
+        isScrolled.value = window.scrollY > 50;
+    }));
 
     const getPath = localizePath();
 
@@ -45,17 +51,23 @@ export const Header = component$<HeaderProps>(() => {
     ];
 
     return (
-        <header class="bg-white">
-            <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+        <header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled.value ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+            <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
                 <div class="flex lg:flex-1">
-                    <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5 text-cyan-400">
+                    <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5">
                         <span class="sr-only">Rihigo</span>
-                        <img src="/assets/logo.svg" alt="Rihigo Logo" class="h-8"/>
+                        <img
+                            src="/assets/logo.svg"
+                            alt="Rihigo Logo"
+                            class={`h-8 transition-all duration-300 ${isScrolled.value ? '' : 'brightness-0 invert'}`}
+                            height="32"
+                        />
                     </Link>
                 </div>
                 <div class="flex lg:hidden">
                     <button type="button"
-                            class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700">
+                            class={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 transition-colors ${isScrolled.value ? 'text-gray-700' : 'text-white'}`}
+                            onClick$={() => isMobileMenuOpen.value = true}>
                         <span class="sr-only">Open main menu</span>
                         <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                              aria-hidden="true" data-slot="icon">
@@ -66,15 +78,15 @@ export const Header = component$<HeaderProps>(() => {
                 </div>
                 <div class="hidden lg:flex lg:gap-x-12">
                     {nav.map((item, index) => item.children ?
-                        (<NestedNav item={item} key={index}/>)
+                        (<NestedNav item={item} key={index} isScrolled={isScrolled.value} />)
                         : (<NavLink href={`/${locale.lang || "en-US"}${item.link}`}
                                     activeClass="text-primary"
-                                 class={`text-sm/6 font-semibold text-gray-900 hover:text-primary transition-colors duration-300`}
+                                 class={`text-sm/6 font-semibold transition-colors duration-300 hover:text-primary ${isScrolled.value ? 'text-gray-900' : 'text-white'}`}
                                  key={index}>{item.label}</NavLink>)
                     )}
                 </div>
                 <div class="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
-                    <LocaleSelector />
+                    <LocaleSelector isScrolled={isScrolled.value} />
 
                     {session.value?.user ? (
                         /* Authenticated User */
@@ -118,131 +130,150 @@ export const Header = component$<HeaderProps>(() => {
                     ) : (
                         /* Not Authenticated */
                         <div class="flex items-center gap-2">
-                            <Link href={getPath('/auth/sign-in', locale.lang || "en-US")} class="text-sm/6 font-semibold text-gray-900 hover:text-primary">
+                            <Link
+                                href={getPath('/auth/sign-in', locale.lang || "en-US")}
+                                class={`text-sm/6 font-semibold px-5 py-2 rounded-lg transition-all duration-300 ${
+                                    isScrolled.value
+                                        ? 'bg-primary text-white hover:bg-primary/90'
+                                        : 'bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 border border-white/30'
+                                }`}
+                            >
                                 {t('app.nav.login') || 'Sign In'}
-                            </Link>
-                            <Link href={getPath('/auth/signup', locale.lang || "en-US")} class="text-sm/6 font-semibold text-white bg-primary px-3 py-1.5 rounded-md hover:bg-primary/60">
-                                {t('app.nav.signup') || 'Sign Up'}
                             </Link>
                         </div>
                     )}
                 </div>
             </nav>
-            <div class="lg:hidden" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 z-10"></div>
-                <div
-                    class="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-                    <div class="flex items-center justify-between">
-                        <a href="#" class="-m-1.5 p-1.5">
-                            <span class="sr-only">Rihigo</span>
-                            <svg class="rihigo-icon h-6 text-blue-500">
-                                <use xlink:href="#rihigo-logo"></use>
-                            </svg>
-                        </a>
-                        <button type="button" class="-m-2.5 rounded-md p-2.5 text-gray-700">
-                            <span class="sr-only">Close menu</span>
-                            <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                 aria-hidden="true" data-slot="icon">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="mt-6 flow-root">
-                        <div class="-my-6 divide-y divide-gray-500/10">
-                            <div class="space-y-2 py-6">
-                                <div class="-mx-3">
-                                    <button type="button"
-                                            class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                                            aria-controls="disclosure-1" aria-expanded="false">
-                                        Product
-                                        <svg class="size-5 flex-none" viewBox="0 0 20 20" fill="currentColor"
-                                             aria-hidden="true" data-slot="icon">
-                                            <path fill-rule="evenodd"
-                                                  d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
-                                                  clip-rule="evenodd"/>
-                                        </svg>
-                                    </button>
-                                    <div class="mt-2 space-y-2" id="disclosure-1">
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Analytics</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Engagement</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Security</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Integrations</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Automations</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Watch
-                                            demo</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Contact
-                                            sales</a>
+            {/* Mobile menu */}
+            {isMobileMenuOpen.value && (
+                <div class="lg:hidden" role="dialog" aria-modal="true">
+                    {/* Backdrop */}
+                    <div
+                        class="fixed inset-0 z-40 bg-black/25"
+                        onClick$={() => isMobileMenuOpen.value = false}
+                    ></div>
+                    {/* Drawer */}
+                    <div class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+                        <div class="flex items-center justify-between">
+                            <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5" onClick$={() => isMobileMenuOpen.value = false}>
+                                <span class="sr-only">Rihigo</span>
+                                <img src="/assets/logo.svg" alt="Rihigo Logo" class="h-8"/>
+                            </Link>
+                            <button
+                                type="button"
+                                class="-m-2.5 rounded-md p-2.5 text-gray-700"
+                                onClick$={() => isMobileMenuOpen.value = false}
+                            >
+                                <span class="sr-only">Close menu</span>
+                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                     aria-hidden="true" data-slot="icon">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-6 flow-root">
+                            <div class="-my-6 divide-y divide-gray-500/10">
+                                <div class="space-y-2 py-6">
+                                    {nav.map((item, index) => item.children ? (
+                                        <MobileNestedNav
+                                            key={index}
+                                            item={item}
+                                            locale={locale.lang || "en-US"}
+                                            onNavigate$={() => isMobileMenuOpen.value = false}
+                                        />
+                                    ) : (
+                                        <Link
+                                            key={index}
+                                            href={`/${locale.lang || "en-US"}${item.link}`}
+                                            class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                                            onClick$={() => isMobileMenuOpen.value = false}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                                <div class="py-6">
+                                    <div class="flex items-center gap-4 px-3 py-2.5">
+                                        <LocaleSelector />
                                     </div>
+                                    {session.value?.user ? (
+                                        <>
+                                            <div class="px-3 py-2.5 border-b border-gray-200 mb-2">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-full overflow-hidden">
+                                                        <img src={session.value.user.image || '/default-avatar.png'} alt="Profile" width="40" height="40" />
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-semibold text-gray-900">{session.value.user.name}</p>
+                                                        <p class="text-sm text-gray-500">{session.value.user.email}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Link
+                                                href={`/${locale.lang}/profile`}
+                                                class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                                                onClick$={() => isMobileMenuOpen.value = false}
+                                            >
+                                                {t('app.nav.profile') || 'My Profile'}
+                                            </Link>
+                                            <Link
+                                                href={`/${locale.lang}/bookings`}
+                                                class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                                                onClick$={() => isMobileMenuOpen.value = false}
+                                            >
+                                                {t('app.nav.bookings') || 'My Bookings'}
+                                            </Link>
+                                            {isUserAdmin && (
+                                                <Link
+                                                    href="/admin"
+                                                    class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                                                    onClick$={() => isMobileMenuOpen.value = false}
+                                                >
+                                                    {t('app.nav.admin') || 'Admin Panel'}
+                                                </Link>
+                                            )}
+                                            <form action="/auth/signout" method="post" class="mt-2">
+                                                <button
+                                                    type="submit"
+                                                    class="-mx-3 block w-full text-left rounded-lg px-3 py-2 text-base/7 font-semibold text-red-600 hover:bg-gray-50"
+                                                >
+                                                    {t('app.nav.signOut') || 'Sign Out'}
+                                                </button>
+                                            </form>
+                                        </>
+                                    ) : (
+                                        <div class="space-y-2">
+                                            <Link
+                                                href={getPath('/auth/sign-in', locale.lang || "en-US")}
+                                                class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-primary text-center hover:bg-primary/80"
+                                                onClick$={() => isMobileMenuOpen.value = false}
+                                            >
+                                                {t('app.nav.login') || 'Sign In'}
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
-
-                                <a href="#"
-                                   class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Features</a>
-                                <a href="#"
-                                   class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Marketplace</a>
-
-                                <div class="-mx-3">
-                                    <button type="button"
-                                            class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                                            aria-controls="disclosure-2" aria-expanded="false">
-                                        Company
-                                        <svg class="size-5 flex-none" viewBox="0 0 20 20" fill="currentColor"
-                                             aria-hidden="true" data-slot="icon">
-                                            <path fill-rule="evenodd"
-                                                  d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
-                                                  clip-rule="evenodd"/>
-                                        </svg>
-                                    </button>
-                                    <div class="mt-2 space-y-2" id="disclosure-2">
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">About
-                                            us</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Careers</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Support</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Press</a>
-                                        <a href="#"
-                                           class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">Blog</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="py-6">
-                                <div class="flex items-center gap-4 px-3 py-2.5">
-                                    <LocaleSelector />
-                                </div>
-                                <a href="#"
-                                   class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
-                                    {t('app.nav.login')}
-                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </header>
     );
 });
 
-const NestedNav = component$(({item}: any) => {
+const NestedNav = component$(({item, isScrolled}: {item: any, isScrolled: boolean}) => {
     const isExpanded = useSignal(false);
 
     return (
         <div class="relative z-20">
-            <button type="button" class="flex items-center gap-x-1 text-sm/6 font-semibold text-gray-900 cursor-pointer"
+            <button type="button" class={`flex items-center gap-x-1 text-sm/6 font-semibold cursor-pointer transition-colors duration-300 hover:text-primary ${isScrolled ? 'text-gray-900' : 'text-white'}`}
                     aria-expanded={isExpanded.value}
                     aria-haspopup="true"
                     onClick$={() => isExpanded.value = !isExpanded.value}
             >
                 {item.label}
-                <svg class="size-5 flex-none text-gray-400" viewBox="0 0 20 20" fill="currentColor"
+                <svg class={`size-5 flex-none transition-colors ${isScrolled ? 'text-gray-400' : 'text-white/70'}`} viewBox="0 0 20 20" fill="currentColor"
                      aria-hidden="true" data-slot="icon">
                     <path fill-rule="evenodd"
                           d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
@@ -284,6 +315,66 @@ const NestedNav = component$(({item}: any) => {
                     </div>
                 )
             }
+        </div>
+    )
+})
+
+interface MobileNestedNavProps {
+    item: {
+        label: string;
+        link: string;
+        children: Array<{
+            label: string;
+            link: string;
+            description?: string;
+        }>;
+    };
+    locale: string;
+    onNavigate$: QRL<() => void>;
+}
+
+const MobileNestedNav = component$<MobileNestedNavProps>(({item, locale, onNavigate$}) => {
+    const isExpanded = useSignal(false);
+
+    return (
+        <div class="-mx-3">
+            <button
+                type="button"
+                class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                aria-expanded={isExpanded.value}
+                onClick$={() => isExpanded.value = !isExpanded.value}
+            >
+                {item.label}
+                <svg
+                    class={`size-5 flex-none transition-transform duration-200 ${isExpanded.value ? 'rotate-180' : ''}`}
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <path
+                        fill-rule="evenodd"
+                        d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                        clip-rule="evenodd"
+                    />
+                </svg>
+            </button>
+            {isExpanded.value && (
+                <div class="mt-2 space-y-2">
+                    {item.children.map((child, index) => (
+                        <Link
+                            key={index}
+                            href={`/${locale}${child.link}`}
+                            class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50"
+                            onClick$={onNavigate$}
+                        >
+                            {child.label}
+                            {child.description && (
+                                <span class="block text-xs font-normal text-gray-500 mt-0.5">{child.description}</span>
+                            )}
+                        </Link>
+                    ))}
+                </div>
+            )}
         </div>
     )
 })

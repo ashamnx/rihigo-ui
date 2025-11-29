@@ -64,15 +64,122 @@
     },
     "nav": {
       "aboutUs": "Chi siamo",
-      "admin": "",
-      "bookings": "",
+      "admin": "Amministrazione",
+      "bookings": "Prenotazioni",
       "explore": "Esplora",
       "faq": "FAQ",
       "login": "Accedi",
-      "profile": "",
+      "profile": "Profilo",
       "services": "Servizi",
-      "signOut": "",
-      "signup": ""
+      "signOut": "Esci",
+      "signup": "Registrati"
+    },
+    "terms": {
+      "title": "Termini di Servizio",
+      "lastUpdated": "Ultimo aggiornamento",
+      "backToHome": "Torna alla home",
+      "sections": {
+        "introduction": {
+          "title": "Introduzione",
+          "content": "Benvenuto su Rihigo. Questi Termini di Servizio regolano l'utilizzo del nostro sito web e dei nostri servizi. Accedendo o utilizzando Rihigo, accetti di essere vincolato da questi termini. Se non accetti questi termini, ti preghiamo di non utilizzare i nostri servizi."
+        },
+        "definitions": {
+          "title": "Definizioni",
+          "service": "si riferisce alla piattaforma Rihigo, incluso il nostro sito web, le applicazioni mobili e tutti i servizi correlati.",
+          "user": "si riferisce a qualsiasi individuo che accede o utilizza il nostro Servizio.",
+          "booking": "si riferisce a qualsiasi prenotazione effettuata tramite la nostra piattaforma per attività, tour, alloggi o altri servizi.",
+          "vendor": "si riferisce a fornitori di servizi terzi che offrono i loro servizi tramite la nostra piattaforma."
+        },
+        "useOfService": {
+          "title": "Utilizzo del Servizio",
+          "content": "Utilizzando il nostro Servizio, accetti di:",
+          "item1": "Fornire informazioni accurate e complete quando crei un account o effettui una prenotazione",
+          "item2": "Mantenere la sicurezza delle credenziali del tuo account",
+          "item3": "Utilizzare il Servizio solo per scopi legali",
+          "item4": "Non tentare di interferire o interrompere il Servizio"
+        },
+        "bookings": {
+          "title": "Prenotazioni e Pagamenti",
+          "content": "Quando effettui una prenotazione tramite Rihigo:",
+          "item1": "Accetti di pagare tutte le tariffe e gli addebiti associati alla tua prenotazione",
+          "item2": "I prezzi sono soggetti a modifiche e vengono confermati al momento della prenotazione",
+          "item3": "L'elaborazione dei pagamenti viene gestita in modo sicuro tramite i nostri fornitori di pagamento terzi"
+        },
+        "cancellation": {
+          "title": "Politica di Cancellazione",
+          "content": "Le politiche di cancellazione variano in base al fornitore e all'attività. Ti preghiamo di verificare la politica di cancellazione specifica per ogni prenotazione prima di confermare. Rihigo elaborerà i rimborsi in base alla politica di cancellazione applicabile. Alcune prenotazioni potrebbero non essere rimborsabili."
+        },
+        "liability": {
+          "title": "Limitazione di Responsabilità",
+          "content": "Rihigo agisce come intermediario tra utenti e fornitori. Non siamo responsabili per la qualità, la sicurezza o la legalità dei servizi forniti dai venditori. Nella misura massima consentita dalla legge, Rihigo non sarà responsabile per eventuali danni indiretti, incidentali o consequenziali derivanti dall'utilizzo del Servizio."
+        },
+        "changes": {
+          "title": "Modifiche ai Termini",
+          "content": "Ci riserviamo il diritto di modificare questi Termini di Servizio in qualsiasi momento. Notificheremo agli utenti le modifiche significative pubblicando un avviso sul nostro sito web. L'uso continuato del Servizio dopo la pubblicazione delle modifiche costituisce accettazione dei termini modificati."
+        },
+        "contact": {
+          "title": "Contattaci",
+          "content": "Se hai domande su questi Termini di Servizio, contattaci a:"
+        }
+      }
+    },
+    "privacy": {
+      "title": "Informativa sulla Privacy",
+      "lastUpdated": "Ultimo aggiornamento",
+      "backToHome": "Torna alla home",
+      "sections": {
+        "introduction": {
+          "title": "Introduzione",
+          "content": "In Rihigo, prendiamo sul serio la tua privacy. Questa Informativa sulla Privacy spiega come raccogliamo, utilizziamo, divulghiamo e proteggiamo le tue informazioni quando utilizzi la nostra piattaforma. Ti preghiamo di leggere attentamente questa informativa per comprendere le nostre pratiche riguardo ai tuoi dati personali."
+        },
+        "collection": {
+          "title": "Informazioni che Raccogliamo",
+          "content": "Raccogliamo le informazioni che ci fornisci direttamente, nonché le informazioni raccolte automaticamente:",
+          "item1": "Informazioni personali (nome, indirizzo email, numero di telefono)",
+          "item2": "Credenziali dell'account e informazioni del profilo",
+          "item3": "Dettagli delle prenotazioni e delle transazioni",
+          "item4": "Informazioni sul dispositivo e dati di utilizzo"
+        },
+        "usage": {
+          "title": "Come Utilizziamo le Tue Informazioni",
+          "content": "Utilizziamo le informazioni che raccogliamo per:",
+          "item1": "Elaborare e gestire le tue prenotazioni",
+          "item2": "Comunicare con te riguardo alle tue prenotazioni e ai nostri servizi",
+          "item3": "Migliorare e personalizzare la tua esperienza",
+          "item4": "Rispettare gli obblighi legali e proteggere i nostri diritti"
+        },
+        "sharing": {
+          "title": "Condivisione delle Informazioni",
+          "content": "Potremmo condividere le tue informazioni con:",
+          "item1": "Fornitori per evadere le tue prenotazioni",
+          "item2": "Processori di pagamento per completare le transazioni",
+          "item3": "Fornitori di servizi che ci assistono nella gestione della nostra piattaforma"
+        },
+        "security": {
+          "title": "Sicurezza dei Dati",
+          "content": "Implementiamo misure tecniche e organizzative appropriate per proteggere le tue informazioni personali da accesso non autorizzato, alterazione, divulgazione o distruzione. Tuttavia, nessun metodo di trasmissione su Internet è sicuro al 100%."
+        },
+        "rights": {
+          "title": "I Tuoi Diritti",
+          "content": "A seconda della tua posizione, potresti avere i seguenti diritti:",
+          "item1": "Accedere e ricevere una copia dei tuoi dati personali",
+          "item2": "Correggere informazioni inesatte o incomplete",
+          "item3": "Richiedere la cancellazione dei tuoi dati personali",
+          "item4": "Rinunciare alle comunicazioni di marketing"
+        },
+        "cookies": {
+          "title": "Cookie e Tracciamento",
+          "content": "Utilizziamo cookie e tecnologie simili per migliorare la tua esperienza, analizzare i modelli di utilizzo e fornire contenuti personalizzati. Puoi gestire le tue preferenze sui cookie attraverso le impostazioni del tuo browser."
+        },
+        "changes": {
+          "title": "Modifiche a Questa Informativa",
+          "content": "Potremmo aggiornare questa Informativa sulla Privacy di tanto in tanto. Ti informeremo di eventuali modifiche pubblicando la nuova informativa su questa pagina e aggiornando la data di \"Ultimo aggiornamento\"."
+        },
+        "contact": {
+          "title": "Contattaci",
+          "content": "Se hai domande su questa Informativa sulla Privacy o sulle nostre pratiche relative ai dati, contattaci a:"
+        }
+      }
     }
   }
 }

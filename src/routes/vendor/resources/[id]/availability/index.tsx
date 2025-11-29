@@ -1,6 +1,12 @@
 // @ts-nocheck
 import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate } from '@builder.io/qwik-city';
+import {
+  routeLoader$,
+  routeAction$,
+  Link,
+  useNavigate,
+  type DocumentHead,
+} from "@builder.io/qwik-city";
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import {
     type VendorResource,
@@ -605,3 +611,14 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+  title: 'Resource Availability | Vendor Portal',
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};
+
