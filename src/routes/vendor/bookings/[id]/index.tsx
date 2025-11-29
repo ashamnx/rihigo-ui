@@ -65,13 +65,13 @@ export default component$(() => {
 
     // Handle successful actions
     if (updateStatusAction.value?.success) {
-        navigate(`/vendor/bookings/${bookingData.value?.data?.id}`, { forceReload: true });
+        navigate(`/vendor/bookings/${bookingData.value.data?.id}`, { forceReload: true });
     }
     if (deleteAction.value?.success) {
         navigate('/vendor/bookings');
     }
 
-    if (!bookingData.value?.success || !bookingData.value.data) {
+    if (!bookingData.value.success || !bookingData.value.data) {
         return (
             <div class="alert alert-error">
                 <span>Booking not found</span>

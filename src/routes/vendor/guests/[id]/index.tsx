@@ -20,8 +20,8 @@ export const useGuestLoader = routeLoader$(async (requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const guest = await apiClient.vendorPortal.guests?.get(guestId, token);
-            const history = await apiClient.vendorPortal.guests?.getHistory(guestId, token);
+            const guest = await apiClient.vendorPortal.guests.get(guestId, token);
+            const history = await apiClient.vendorPortal.guests.getHistory(guestId, token);
             return {
                 success: true,
                 guest: guest as Guest,
@@ -39,7 +39,7 @@ export const useDeleteGuest = routeAction$(async (_, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            await apiClient.vendorPortal.guests?.delete(guestId, token);
+            await apiClient.vendorPortal.guests.delete(guestId, token);
             return { success: true };
         } catch (error) {
             console.error('Failed to delete guest:', error);
@@ -61,8 +61,8 @@ export default component$(() => {
     const _isEditMode = useSignal(location.url.searchParams.get('edit') === 'true');
     void _isEditMode; // Silence unused variable warning
 
-    const guest = guestData.value?.guest;
-    const history = guestData.value?.history || [];
+    const guest = guestData.value.guest;
+    const history = guestData.value.history || [];
 
     // Handle delete success
     if (deleteAction.value?.success) {
@@ -403,7 +403,7 @@ export default component$(() => {
                     loading={deleteAction.isRunning}
                     onConfirm$={$(() => {
                         const form = document.querySelector('form[data-action]') as HTMLFormElement;
-                        form?.requestSubmit();
+                        form.requestSubmit();
                     })}
                 />
             </Form>

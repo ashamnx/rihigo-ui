@@ -258,7 +258,7 @@ export default component$(() => {
   const selectedComponent = useSignal<string | null>(null);
 
   // Handle not found
-  if (!response.value?.success || !response.value.data) {
+  if (!response.value.success || !response.value.data) {
     return (
       <div class="text-center py-12">
         <h1 class="text-2xl font-bold mb-4">Activity Not Found</h1>
@@ -280,7 +280,7 @@ export default component$(() => {
   useTask$(({ track }) => {
     track(() => response.value);
 
-    if (response.value?.data?.layout) {
+    if (response.value.data?.layout) {
       const loadedLayout = response.value.data.layout;
       layoutStore.activity_id = loadedLayout.activity_id;
       layoutStore.components = Array.isArray(loadedLayout.components) ? loadedLayout.components : [];

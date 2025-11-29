@@ -50,8 +50,8 @@ export default component$(() => {
     const currentMonth = useSignal(new Date().toISOString().slice(0, 7));
     const viewMode = useSignal<'month' | 'timeline'>('month');
 
-    const bookings = calendarData.value?.bookings || [];
-    const resources = calendarData.value?.resources || [];
+    const bookings = calendarData.value.bookings || [];
+    const resources = calendarData.value.resources || [];
 
     // Parse current month
     const parsedMonth = useComputed$(() => {

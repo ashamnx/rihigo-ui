@@ -256,7 +256,7 @@ export default component$(() => {
     formData.bookingOptions!.timeSlots!.splice(index, 1);
   });
 
-  if (!data.value?.success || !data.value.data) {
+  if (!data.value.success || !data.value.data) {
     return (
       <div class="text-center py-12">
         <h1 class="text-2xl font-bold mb-4">Activity Not Found</h1>
@@ -355,13 +355,13 @@ export default component$(() => {
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
                   <span>Advance Booking:</span>
-                  <span>{pkg.bookingOptions?.advanceBookingDays} days</span>
+                  <span>{pkg.bookingOptions.advanceBookingDays} days</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Same Day Booking:</span>
-                  <span>{pkg.bookingOptions?.allowSameDayBooking ? 'Yes' : 'No'}</span>
+                  <span>{pkg.bookingOptions.allowSameDayBooking ? 'Yes' : 'No'}</span>
                 </div>
-                {pkg.bookingOptions?.requiresTimeSlot && (
+                {pkg.bookingOptions.requiresTimeSlot && (
                   <div class="flex justify-between">
                     <span>Time Slots:</span>
                     <span>{pkg.bookingOptions.timeSlots?.length || 0} slots</span>

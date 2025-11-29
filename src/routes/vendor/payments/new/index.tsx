@@ -36,25 +36,25 @@ export const useFormDataLoader = routeLoader$(async (requestEvent) => {
             let guest = null;
 
             if (invoiceId) {
-                invoice = await apiClient.vendorPortal.invoices?.get(invoiceId, token);
-                if (invoice?.guest) {
+                invoice = await apiClient.vendorPortal.invoices.get(invoiceId, token);
+                if (invoice.guest) {
                     guest = invoice.guest;
                 }
             } else if (bookingId) {
-                booking = await apiClient.vendorPortal.bookings?.get(bookingId, token);
-                if (booking?.primary_guest) {
+                booking = await apiClient.vendorPortal.bookings.get(bookingId, token);
+                if (booking.primary_guest) {
                     guest = booking.primary_guest;
                 }
             }
 
-            const guestsResponse = await apiClient.vendorPortal.guests?.list(token, { limit: 100 });
+            const guestsResponse = await apiClient.vendorPortal.guests.list(token, { limit: 100 });
 
             return {
                 success: true,
                 invoice,
                 booking,
                 guest,
-                guests: guestsResponse?.data || [],
+                guests: guestsResponse.data || [],
             };
         } catch (error) {
             console.error('Failed to load form data:', error);
@@ -91,7 +91,7 @@ export const useCreatePayment = routeAction$(
                     auto_allocate: data.auto_allocate,
                 };
 
-                const result = await apiClient.vendorPortal.payments?.create(paymentData, token);
+                const result = await apiClient.vendorPortal.payments.create(paymentData, token);
                 return { success: true, data: result };
             } catch (error) {
                 console.error('Failed to create payment:', error);
@@ -119,9 +119,9 @@ export default component$(() => {
         navigate('/vendor/payments');
     }
 
-    const invoice = formData.value?.invoice;
-    const booking = formData.value?.booking;
-    const initialGuest = formData.value?.guest;
+    const invoice = formData.value.invoice;
+    const booking = formData.value.booking;
+    const initialGuest = formData.value.guest;
 
     const payerName = useSignal(
         invoice?.billing_name ||

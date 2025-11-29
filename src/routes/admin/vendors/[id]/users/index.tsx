@@ -238,7 +238,7 @@ export default component$(() => {
                         <div class="flex items-center gap-3">
                           <div class="avatar placeholder">
                             <div class="bg-neutral text-neutral-content rounded-full w-10">
-                              <span>{vendorUser.user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                              <span>{vendorUser.user?.name.charAt(0).toUpperCase() || 'U'}</span>
                             </div>
                           </div>
                           <div>
@@ -250,10 +250,10 @@ export default component$(() => {
                       <td>{getRoleBadge(vendorUser.role)}</td>
                       <td>
                         <div class="flex flex-wrap gap-1">
-                          {vendorUser.permissions?.slice(0, 3).map((perm) => (
+                          {vendorUser.permissions.slice(0, 3).map((perm) => (
                             <span key={perm} class="badge badge-outline badge-sm">{perm.replace(/_/g, ' ')}</span>
                           ))}
-                          {(vendorUser.permissions?.length || 0) > 3 && (
+                          {(vendorUser.permissions.length || 0) > 3 && (
                             <span class="badge badge-outline badge-sm">+{vendorUser.permissions!.length - 3} more</span>
                           )}
                         </div>
@@ -406,7 +406,7 @@ export default component$(() => {
             <div class="flex items-center gap-3 mb-4 p-4 bg-base-200 rounded-lg">
               <div class="avatar placeholder">
                 <div class="bg-neutral text-neutral-content rounded-full w-12">
-                  <span>{editingUser.value.user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                  <span>{editingUser.value.user?.name.charAt(0).toUpperCase() || 'U'}</span>
                 </div>
               </div>
               <div>

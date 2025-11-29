@@ -93,8 +93,8 @@ export default component$(() => {
     const matchesStatus = filterStatus.value === 'all' || booking.status === filterStatus.value;
     const matchesSearch = searchTerm.value === '' ||
       booking.id.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      booking.customer_info?.full_name?.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      booking.activity?.title?.toLowerCase().includes(searchTerm.value.toLowerCase());
+      booking.customer_info.full_name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+      booking.activity?.title.toLowerCase().includes(searchTerm.value.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
@@ -278,8 +278,8 @@ export default component$(() => {
                       )}
                     </td>
                     <td>
-                      <div>{booking.customer_info?.full_name || 'N/A'}</div>
-                      <div class="text-xs text-base-content/70">{booking.customer_info?.email}</div>
+                      <div>{booking.customer_info.full_name || 'N/A'}</div>
+                      <div class="text-xs text-base-content/70">{booking.customer_info.email}</div>
                     </td>
                     <td>
                       <div>{bookingDate.toLocaleDateString()}</div>
@@ -354,7 +354,7 @@ export default component$(() => {
                 Booking ID: <span class="font-mono">{selectedBooking.value.id}</span>
               </p>
               <p class="text-sm text-base-content/70">
-                Guest: <span class="font-semibold">{selectedBooking.value.customer_info?.full_name}</span>
+                Guest: <span class="font-semibold">{selectedBooking.value.customer_info.full_name}</span>
               </p>
             </div>
 

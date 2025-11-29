@@ -8,7 +8,7 @@ export const GalleryComponent = component$<GalleryComponentProps>((props) => {
     return (
       <div class="container mx-auto px-4 py-12">
         <div class="carousel w-full">
-          {props.images?.map((image, index) => (
+          {props.images.map((image, index) => (
             <div key={index} id={`slide${index}`} class="carousel-item relative w-full">
               <img src={image.url} alt={image.alt || image.caption} class="w-full" />
               <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
@@ -29,7 +29,7 @@ export const GalleryComponent = component$<GalleryComponentProps>((props) => {
   return (
     <div class="container mx-auto px-4 py-12">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {props.images?.map((image, index) => (
+        {props.images.map((image, index) => (
           <div key={index} class="relative group overflow-hidden rounded-lg">
             <img
               src={image.url}

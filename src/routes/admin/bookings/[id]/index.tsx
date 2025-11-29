@@ -90,15 +90,15 @@ export default component$(() => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <div class="text-sm opacity-70">Name</div>
-                                    <div>{booking.customer_info?.full_name}</div>
+                                    <div>{booking.customer_info.full_name}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm opacity-70">Email</div>
-                                    <div>{booking.customer_info?.email}</div>
+                                    <div>{booking.customer_info.email}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm opacity-70">Phone</div>
-                                    <div>{booking.customer_info?.phone}</div>
+                                    <div>{booking.customer_info.phone}</div>
                                 </div>
                             </div>
                         </div>
@@ -113,7 +113,7 @@ export default component$(() => {
                             <div class="space-y-2">
                                 <div class="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span>${booking.subtotal?.toFixed(2)}</span>
+                                    <span>${booking.subtotal.toFixed(2)}</span>
                                 </div>
 
                                 {booking.taxes && booking.taxes.length > 0 && (
@@ -138,7 +138,7 @@ export default component$(() => {
                             <div class="mt-6">
                                 <div class="text-sm opacity-70 mb-1">Payment Status</div>
                                 <div class={`badge ${booking.payment_status === 'paid' ? 'badge-success' : 'badge-warning'} w-full py-3`}>
-                                    {booking.payment_status?.toUpperCase()}
+                                    {booking.payment_status.toUpperCase()}
                                 </div>
                             </div>
                         </div>

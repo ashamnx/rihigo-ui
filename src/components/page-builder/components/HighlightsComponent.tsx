@@ -17,7 +17,7 @@ export const HighlightsComponent = component$<HighlightsComponentProps>(
           <h2 class="text-3xl font-bold mb-8 text-center">{props.title}</h2>
         )}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {props.items?.map((item, index) => (
+          {props.items.map((item, index) => (
             <div key={index} class="card bg-base-100 shadow-xl">
               <div class="card-body">
                 {item.icon && (

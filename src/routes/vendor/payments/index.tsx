@@ -37,7 +37,7 @@ export const usePaymentsLoader = routeLoader$(async (requestEvent) => {
                 limit: parseInt(url.searchParams.get('limit') || '20'),
             };
 
-            const response = await apiClient.vendorPortal.payments?.list(token, filters);
+            const response = await apiClient.vendorPortal.payments.list(token, filters);
             return response as PaymentListResponse;
         } catch (error) {
             console.error('Failed to load payments:', error);
@@ -59,8 +59,8 @@ export default component$(() => {
     const filters = useSignal<Record<string, string>>({});
     const searchValue = useSignal('');
 
-    const payments = paymentsData.value?.data || [];
-    const total = paymentsData.value?.total || 0;
+    const payments = paymentsData.value.data || [];
+    const total = paymentsData.value.total || 0;
 
     const filterDefinitions: FilterDefinition[] = [
         {

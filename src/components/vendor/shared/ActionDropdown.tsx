@@ -60,7 +60,7 @@ export const ActionDropdown = component$<ActionDropdownProps>(({
                                     if (!action.disabled) {
                                         // Close dropdown by blurring active element
                                         const elem = document.activeElement as HTMLElement;
-                                        elem?.blur();
+                                        elem.blur();
                                         action.onClick$();
                                     }
                                 }}

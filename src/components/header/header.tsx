@@ -111,10 +111,10 @@ export const Header = component$<HeaderProps>(() => {
                                         <span class="text-xs opacity-60">{session.value.user.email}</span>
                                     </li>
                                     <div class="divider my-1"></div>
-                                    <li onClick$={() => (document.activeElement as HTMLElement)?.blur()}><Link href={`/${locale.lang}/profile`}>{t('app.nav.profile') || 'My Profile'}</Link></li>
-                                    <li onClick$={() => (document.activeElement as HTMLElement)?.blur()}><Link href={`/${locale.lang}/bookings`}>{t('app.nav.bookings') || 'My Bookings'}</Link></li>
+                                    <li onClick$={() => (document.activeElement as HTMLElement).blur()}><Link href={`/${locale.lang}/profile`}>{t('app.nav.profile') || 'My Profile'}</Link></li>
+                                    <li onClick$={() => (document.activeElement as HTMLElement).blur()}><Link href={`/${locale.lang}/bookings`}>{t('app.nav.bookings') || 'My Bookings'}</Link></li>
                                     {isUserAdmin && (
-                                        <li onClick$={() => (document.activeElement as HTMLElement)?.blur()}><Link href="/admin">{t('app.nav.admin') || 'Admin Panel'}</Link></li>
+                                        <li onClick$={() => (document.activeElement as HTMLElement).blur()}><Link href="/admin">{t('app.nav.admin') || 'Admin Panel'}</Link></li>
                                     )}
                                     <div class="divider my-1"></div>
                                     <li>

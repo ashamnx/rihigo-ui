@@ -153,8 +153,8 @@ export const Calendar = component$<CalendarProps>(({value, name, required, minDa
               }
 
               const isSelected = selectedDate.value?.getDate() === day &&
-                selectedDate.value?.getMonth() === currentMonth.value &&
-                selectedDate.value?.getFullYear() === currentYear.value;
+                selectedDate.value.getMonth() === currentMonth.value &&
+                selectedDate.value.getFullYear() === currentYear.value;
 
               const isToday = new Date().getDate() === day &&
                 new Date().getMonth() === currentMonth.value &&

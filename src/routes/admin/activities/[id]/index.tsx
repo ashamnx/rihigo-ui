@@ -97,7 +97,7 @@ export default component$(() => {
   const selectedAtoll = useSignal<number | undefined>();
 
   // Handle not found
-  if (!activityData.value?.success || !activityData.value.data) {
+  if (!activityData.value.success || !activityData.value.data) {
     return (
       <div class="text-center py-12">
         <div class="text-6xl mb-4">🏝️</div>
@@ -117,7 +117,7 @@ export default component$(() => {
 
   const vendors = vendorsResponse.value.data || [];
 
-  const title = activity.translations?.en?.title || activity.seo_metadata?.title || activity.slug;
+  const title = activity.translations?.en?.title || activity.seo_metadata.title || activity.slug;
   const packageCount = activity.packages?.length || 0;
 
   return (
@@ -331,7 +331,7 @@ export default component$(() => {
                   type="text"
                   name="seo_title"
                   class="input input-bordered"
-                  value={activity.seo_metadata?.title || ''}
+                  value={activity.seo_metadata.title || ''}
                   required
                   maxLength={60}
                 />
@@ -347,7 +347,7 @@ export default component$(() => {
                   class="textarea textarea-bordered h-24"
                   required
                   maxLength={160}
-                >{activity.seo_metadata?.description || ''}</textarea>
+                >{activity.seo_metadata.description || ''}</textarea>
               </div>
 
               <div class="form-control">
@@ -359,7 +359,7 @@ export default component$(() => {
                   type="text"
                   name="seo_keywords"
                   class="input input-bordered"
-                  value={activity.seo_metadata?.keywords?.join(', ') || ''}
+                  value={activity.seo_metadata.keywords?.join(', ') || ''}
                 />
               </div>
 
@@ -372,7 +372,7 @@ export default component$(() => {
                   type="url"
                   name="og_image"
                   class="input input-bordered"
-                  value={activity.seo_metadata?.og_image || ''}
+                  value={activity.seo_metadata.og_image || ''}
                 />
               </div>
             </div>
@@ -412,7 +412,7 @@ export default component$(() => {
           <div class="card-body">
             <h2 class="card-title">Page Layout</h2>
             <p class="text-sm text-base-content/70">
-              The page layout is managed via the Page Builder. Current layout has {activity.page_layout?.length || 0} components.
+              The page layout is managed via the Page Builder. Current layout has {activity.page_layout.length || 0} components.
             </p>
             <div class="mt-4">
               <Link

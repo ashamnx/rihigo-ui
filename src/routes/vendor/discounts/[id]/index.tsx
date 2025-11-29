@@ -227,7 +227,7 @@ export default component$(() => {
                                 <p class="text-base-content/70">Applies to all services and resources</p>
                             ) : (
                                 <div class="space-y-4">
-                                    {discount.applies_to?.service_types?.length ? (
+                                    {discount.applies_to.service_types?.length ? (
                                         <div>
                                             <div class="text-sm text-base-content/70 mb-2">Service Types</div>
                                             <div class="flex flex-wrap gap-2">
@@ -237,7 +237,7 @@ export default component$(() => {
                                             </div>
                                         </div>
                                     ) : null}
-                                    {discount.applies_to?.resource_ids?.length ? (
+                                    {discount.applies_to.resource_ids?.length ? (
                                         <div>
                                             <div class="text-sm text-base-content/70 mb-2">Specific Resources</div>
                                             <div class="flex flex-wrap gap-2">

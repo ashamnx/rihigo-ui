@@ -120,7 +120,7 @@ export async function getCloudflareImages(page = 1, perPage = 50): Promise<Cloud
   }
 
   const result = await response.json() as CloudflareImageListResult;
-  console.log('getCloudflareImages: Success, images count:', result.result?.images?.length || 0);
+  console.log('getCloudflareImages: Success, images count:', result.result.images.length || 0);
 
   return result;
 }

@@ -334,7 +334,7 @@ export default component$(() => {
                                                 <div class="text-right">
                                                     <p class="text-sm text-base-content/70">Rate</p>
                                                     <div class="flex items-center gap-2">
-                                                        {setting?.override !== undefined ? (
+                                                        {setting.override !== undefined ? (
                                                             <>
                                                                 <span class="text-lg font-bold text-primary">
                                                                     {formatTaxRate(setting.override, rate.rate_type, 'USD')}
@@ -358,7 +358,7 @@ export default component$(() => {
                                                         <input
                                                             type="checkbox"
                                                             class="toggle toggle-primary"
-                                                            checked={setting?.enabled}
+                                                            checked={setting.enabled}
                                                             onChange$={() => toggleTaxEnabled(rate.id)}
                                                         />
                                                     </label>
@@ -367,7 +367,7 @@ export default component$(() => {
                                         </div>
 
                                         {/* Override Rate Option */}
-                                        {setting?.enabled && (
+                                        {setting.enabled && (
                                             <div class="mt-4 pt-4 border-t border-base-300">
                                                 <div class="flex items-center gap-4">
                                                     <div class="form-control w-48">
@@ -682,7 +682,7 @@ export default component$(() => {
                                 <div class="space-y-4">
                                     {/* Tax Breakdown */}
                                     <div class="space-y-2">
-                                        {(calculateAction.value.data as TaxCalculationResult).taxes?.map((tax, index) => (
+                                        {(calculateAction.value.data as TaxCalculationResult).taxes.map((tax, index) => (
                                             <div key={index} class="flex justify-between items-center py-2 border-b border-base-300">
                                                 <div>
                                                     <span class="font-medium">{tax.tax_name}</span>
@@ -702,16 +702,16 @@ export default component$(() => {
                                     <div class="bg-base-200 rounded-lg p-4 space-y-2">
                                         <div class="flex justify-between">
                                             <span>Taxable Amount</span>
-                                            <span>${(calculateAction.value.data as TaxCalculationResult).taxable_amount?.toFixed(2)}</span>
+                                            <span>${(calculateAction.value.data as TaxCalculationResult).taxable_amount.toFixed(2)}</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span>Total Tax</span>
-                                            <span>${(calculateAction.value.data as TaxCalculationResult).total_tax?.toFixed(2)}</span>
+                                            <span>${(calculateAction.value.data as TaxCalculationResult).total_tax.toFixed(2)}</span>
                                         </div>
                                         <div class="divider my-1"></div>
                                         <div class="flex justify-between text-lg font-bold">
                                             <span>Total with Tax</span>
-                                            <span>${(calculateAction.value.data as TaxCalculationResult).total_with_tax?.toFixed(2)}</span>
+                                            <span>${(calculateAction.value.data as TaxCalculationResult).total_with_tax.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>

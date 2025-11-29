@@ -48,7 +48,7 @@ export const useCreateGuest = routeAction$(
                     source_name: data.source_name || undefined,
                 };
 
-                const result = await apiClient.vendorPortal.guests?.create(guestData, token);
+                const result = await apiClient.vendorPortal.guests.create(guestData, token);
                 return { success: true, data: result };
             } catch (error) {
                 console.error('Failed to create guest:', error);

@@ -313,9 +313,9 @@ export default component$(() => {
                 variant="warning"
               />
             </div>
-          ) : homeData.value.data && homeData.value.data?.length > 0 ? (
+          ) : homeData.value.data && homeData.value.data.length > 0 ? (
             <div class="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {homeData.value.data?.map((activity: any) => (
+              {homeData.value.data.map((activity: any) => (
                 <ActivityCard
                   key={activity.id}
                   activity={activity}

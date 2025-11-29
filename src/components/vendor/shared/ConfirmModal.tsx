@@ -35,7 +35,7 @@ export const ConfirmModal = component$<ConfirmModalProps>(({
                             class="btn btn-ghost"
                             onClick$={() => {
                                 const modal = document.getElementById(id) as HTMLDialogElement;
-                                modal?.close();
+                                modal.close();
                                 onCancel$?.();
                             }}
                             disabled={loading}
@@ -47,7 +47,7 @@ export const ConfirmModal = component$<ConfirmModalProps>(({
                             class={`btn ${danger ? 'btn-error' : 'btn-primary'}`}
                             onClick$={() => {
                                 const modal = document.getElementById(id) as HTMLDialogElement;
-                                modal?.close();
+                                modal.close();
                                 onConfirm$();
                             }}
                             disabled={loading}
@@ -68,11 +68,11 @@ export const ConfirmModal = component$<ConfirmModalProps>(({
 // Helper function to show modal
 export const showModal = (id: string) => {
     const modal = document.getElementById(id) as HTMLDialogElement;
-    modal?.showModal();
+    modal.showModal();
 };
 
 // Helper function to close modal
 export const closeModal = (id: string) => {
     const modal = document.getElementById(id) as HTMLDialogElement;
-    modal?.close();
+    modal.close();
 };

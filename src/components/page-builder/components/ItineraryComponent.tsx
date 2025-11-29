@@ -7,7 +7,7 @@ export const ItineraryComponent = component$<ItineraryComponentProps>(
       <div class="container mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold mb-8 text-center">Itinerary</h2>
         <ul class="timeline timeline-vertical">
-          {props.steps?.map((step, index) => (
+          {props.steps.map((step, index) => (
             <li key={index}>
               {index > 0 && <hr />}
               <div class="timeline-start">{step.time}</div>

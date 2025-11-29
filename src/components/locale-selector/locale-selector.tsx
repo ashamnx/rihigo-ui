@@ -210,7 +210,7 @@ export const LocaleSelector = component$<LocaleSelectorProps>(
                   {t("app.locale.currency@@Currency")}
                 </h3>
                 <div class="grid grid-cols-3 gap-2">
-                  {uniqueCurrencies.value.data?.map((currency) => (
+                  {uniqueCurrencies.value.data.map((currency) => (
                     <button
                       key={currency.code}
                       type="button"

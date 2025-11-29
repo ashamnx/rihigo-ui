@@ -60,15 +60,15 @@ export const useFormDataLoader = routeLoader$(async (requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const [guestsResponse, resourcesResponse, activitiesResponse] = await Promise.all([
-                apiClient.vendorPortal.guests?.list(token, { limit: 100 }),
-                apiClient.vendorPortal.resources?.list(token, { limit: 100 }),
+                apiClient.vendorPortal.guests.list(token, { limit: 100 }),
+                apiClient.vendorPortal.resources.list(token, { limit: 100 }),
                 apiClient.vendorPortal.activities?.list(token, 1, 100),
             ]);
 
             return {
                 success: true,
-                guests: guestsResponse?.data || [],
-                resources: resourcesResponse?.data || [],
+                guests: guestsResponse.data || [],
+                resources: resourcesResponse.data || [],
                 activities: activitiesResponse?.data || [],
             };
         } catch (error) {
@@ -113,7 +113,7 @@ export const useCreateBooking = routeAction$(
                     tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
                 };
 
-                const result = await apiClient.vendorPortal.bookings?.create(bookingData, token);
+                const result = await apiClient.vendorPortal.bookings.create(bookingData, token);
                 return { success: true, data: result };
             } catch (error) {
                 console.error('Failed to create booking:', error);
@@ -139,9 +139,9 @@ export default component$(() => {
         navigate('/vendor/bookings');
     }
 
-    const guests = formData.value?.guests || [];
-    const resources = formData.value?.resources || [];
-    const activities = formData.value?.activities || [];
+    const guests = formData.value.guests || [];
+    const resources = formData.value.resources || [];
+    const activities = formData.value.activities || [];
 
     // Filter resources by service type
     const filteredResources = useComputed$(() => {

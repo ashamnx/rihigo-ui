@@ -21,7 +21,7 @@ export const useRefundLoader = routeLoader$(async (requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const refund = await apiClient.vendorPortal.refunds?.get(refundId, token);
+            const refund = await apiClient.vendorPortal.refunds.get(refundId, token);
             return {
                 success: true,
                 refund,
@@ -41,7 +41,7 @@ export const useApproveRefund = routeAction$(async (data, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const result = await apiClient.vendorPortal.refunds?.approve(refundId, token);
+            const result = await apiClient.vendorPortal.refunds.approve(refundId, token);
             return { success: true, data: result };
         } catch (error) {
             console.error('Failed to approve refund:', error);
@@ -59,7 +59,7 @@ export const useRejectRefund = routeAction$(async (data, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const result = await apiClient.vendorPortal.refunds?.reject(refundId, reason, token);
+            const result = await apiClient.vendorPortal.refunds.reject(refundId, reason, token);
             return { success: true, data: result };
         } catch (error) {
             console.error('Failed to reject refund:', error);
@@ -76,7 +76,7 @@ export const useProcessRefund = routeAction$(async (data, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const result = await apiClient.vendorPortal.refunds?.process(refundId, token);
+            const result = await apiClient.vendorPortal.refunds.process(refundId, token);
             return { success: true, data: result };
         } catch (error) {
             console.error('Failed to process refund:', error);
@@ -97,7 +97,7 @@ export default component$(() => {
 
     const rejectionReason = useSignal('');
 
-    const refund = refundData.value?.refund as Refund | null;
+    const refund = refundData.value.refund as Refund | null;
 
     // Redirect on successful actions
     if (approveAction.value?.success || rejectAction.value?.success || processAction.value?.success) {

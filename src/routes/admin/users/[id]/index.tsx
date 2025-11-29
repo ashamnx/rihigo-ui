@@ -122,7 +122,7 @@ export default component$(() => {
               ) : (
                 <div class="avatar placeholder">
                   <div class="bg-neutral-focus text-neutral-content rounded-full w-24">
-                    <span class="text-3xl">{user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}</span>
+                    <span class="text-3xl">{user.name.charAt(0) || user.email.charAt(0).toUpperCase()}</span>
                   </div>
                 </div>
               )}

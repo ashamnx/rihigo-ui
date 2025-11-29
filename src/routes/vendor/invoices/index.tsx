@@ -41,7 +41,7 @@ export const useInvoicesLoader = routeLoader$(async (requestEvent) => {
                 limit: parseInt(url.searchParams.get('limit') || '20'),
             };
 
-            const response = await apiClient.vendorPortal.invoices?.list(token, filters);
+            const response = await apiClient.vendorPortal.invoices.list(token, filters);
             return response as InvoiceListResponse;
         } catch (error) {
             console.error('Failed to load invoices:', error);
@@ -64,8 +64,8 @@ export default component$(() => {
     const searchValue = useSignal('');
     const selectedInvoice = useSignal<Invoice | null>(null);
 
-    const invoices = invoicesData.value?.data || [];
-    const total = invoicesData.value?.total || 0;
+    const invoices = invoicesData.value.data || [];
+    const total = invoicesData.value.total || 0;
 
     const filterDefinitions: FilterDefinition[] = [
         {

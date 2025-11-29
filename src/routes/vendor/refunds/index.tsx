@@ -41,7 +41,7 @@ export const useRefundsLoader = routeLoader$(async (requestEvent) => {
                 limit: parseInt(url.searchParams.get('limit') || '20'),
             };
 
-            const response = await apiClient.vendorPortal.refunds?.list(token, filters);
+            const response = await apiClient.vendorPortal.refunds.list(token, filters);
             return response as RefundListResponse;
         } catch (error) {
             console.error('Failed to load refunds:', error);
@@ -64,8 +64,8 @@ export default component$(() => {
     const searchValue = useSignal('');
     const selectedRefund = useSignal<Refund | null>(null);
 
-    const refunds = refundsData.value?.data || [];
-    const total = refundsData.value?.total || 0;
+    const refunds = refundsData.value.data || [];
+    const total = refundsData.value.total || 0;
 
     const filterDefinitions: FilterDefinition[] = [
         {

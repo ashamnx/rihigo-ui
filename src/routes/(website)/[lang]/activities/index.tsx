@@ -61,11 +61,11 @@ export default component$(() => {
         {activitiesData.value.data.map((activity: Activity) => {
           const title =
             activity.translations?.[lang]?.title ||
-            activity.seo_metadata?.title ||
+            activity.seo_metadata.title ||
             activity.slug;
           const description =
             activity.translations?.[lang]?.description ||
-            activity.seo_metadata?.description ||
+            activity.seo_metadata.description ||
             '';
 
           return (
@@ -75,7 +75,7 @@ export default component$(() => {
               class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow"
             >
               <figure class="relative h-48">
-                {activity.seo_metadata?.og_image ? (
+                {activity.seo_metadata.og_image ? (
                   <img
                     src={activity.seo_metadata.og_image}
                     alt={title}

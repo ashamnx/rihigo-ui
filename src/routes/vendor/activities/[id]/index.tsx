@@ -94,7 +94,7 @@ export default component$(() => {
     const updateActivityAction = useUpdateActivity();
     const selectedAtoll = useSignal<number | undefined>();
 
-    if (!activityData.value?.success || !activityData.value.data) {
+    if (!activityData.value.success || !activityData.value.data) {
         return (
             <div class="text-center py-12">
                 <div class="text-6xl mb-4">🏝️</div>

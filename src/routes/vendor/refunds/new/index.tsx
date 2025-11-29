@@ -25,11 +25,11 @@ export const useFormDataLoader = routeLoader$(async (requestEvent) => {
             let payment = null;
 
             if (paymentId) {
-                payment = await apiClient.vendorPortal.payments?.get(paymentId, token);
+                payment = await apiClient.vendorPortal.payments.get(paymentId, token);
             }
 
             // Get recent completed payments for selection
-            const paymentsResponse = await apiClient.vendorPortal.payments?.list(token, {
+            const paymentsResponse = await apiClient.vendorPortal.payments.list(token, {
                 status: 'completed',
                 limit: 50,
             });
@@ -37,7 +37,7 @@ export const useFormDataLoader = routeLoader$(async (requestEvent) => {
             return {
                 success: true,
                 payment,
-                payments: paymentsResponse?.data || [],
+                payments: paymentsResponse.data || [],
             };
         } catch (error) {
             console.error('Failed to load form data:', error);
@@ -64,7 +64,7 @@ export const useCreateRefund = routeAction$(
                     notes: data.notes || undefined,
                 };
 
-                const result = await apiClient.vendorPortal.refunds?.create(refundData, token);
+                const result = await apiClient.vendorPortal.refunds.create(refundData, token);
                 return { success: true, data: result };
             } catch (error) {
                 console.error('Failed to create refund:', error);
@@ -90,8 +90,8 @@ export default component$(() => {
         navigate('/vendor/refunds');
     }
 
-    const initialPayment = formData.value?.payment;
-    const payments = formData.value?.payments || [];
+    const initialPayment = formData.value.payment;
+    const payments = formData.value.payments || [];
 
     const selectedPaymentId = useSignal(initialPayment?.id || '');
     const amount = useSignal(initialPayment?.amount || 0);

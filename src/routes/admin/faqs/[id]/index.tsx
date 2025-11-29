@@ -46,7 +46,7 @@ export default component$(() => {
   const activeTab = useSignal<string>(SUPPORTED_LOCALES[0].locale);
 
   // Handle not found or error
-  if (!faqResponse.value?.success || !faqResponse.value.data) {
+  if (!faqResponse.value.success || !faqResponse.value.data) {
     return (
       <div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">

@@ -34,28 +34,28 @@ export const useFormDataLoader = routeLoader$(async (requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const [guestsResponse, taxRatesResponse] = await Promise.all([
-                apiClient.vendorPortal.guests?.list(token, { limit: 100 }),
-                apiClient.vendorPortal.taxes?.getRates(token),
+                apiClient.vendorPortal.guests.list(token, { limit: 100 }),
+                apiClient.vendorPortal.taxes.getRates(token),
             ]);
 
             let booking = null;
             let guest = null;
 
             if (bookingId) {
-                booking = await apiClient.vendorPortal.bookings?.get(bookingId, token);
-                if (booking?.primary_guest) {
+                booking = await apiClient.vendorPortal.bookings.get(bookingId, token);
+                if (booking.primary_guest) {
                     guest = booking.primary_guest;
                 }
             } else if (guestId) {
-                guest = await apiClient.vendorPortal.guests?.get(guestId, token);
+                guest = await apiClient.vendorPortal.guests.get(guestId, token);
             }
 
             return {
                 success: true,
                 booking,
                 guest,
-                guests: guestsResponse?.data || [],
-                taxRates: taxRatesResponse?.data || [],
+                guests: guestsResponse.data || [],
+                taxRates: taxRatesResponse.data || [],
             };
         } catch (error) {
             console.error('Failed to load form data:', error);
@@ -96,7 +96,7 @@ export const useCreateInvoice = routeAction$(
                     items,
                 };
 
-                const result = await apiClient.vendorPortal.invoices?.create(invoiceData, token);
+                const result = await apiClient.vendorPortal.invoices.create(invoiceData, token);
                 return { success: true, data: result };
             } catch (error) {
                 console.error('Failed to create invoice:', error);
@@ -131,8 +131,8 @@ export default component$(() => {
     const activeTab = useSignal<'details' | 'items' | 'notes'>('details');
 
     // Initialize from booking/guest data
-    const booking = formData.value?.booking;
-    const initialGuest = formData.value?.guest;
+    const booking = formData.value.booking;
+    const initialGuest = formData.value.guest;
 
     const billingName = useSignal(
         initialGuest ? `${initialGuest.first_name} ${initialGuest.last_name}` : ''

@@ -39,14 +39,14 @@ export default component$(() => {
   const categoryResponse = useCategory();
   const updateAction = useUpdateCategory();
   const nav = useNavigate();
-  const category = categoryResponse.value?.success ? categoryResponse.value.data as ActivityCategory : null;
+  const category = categoryResponse.value.success ? categoryResponse.value.data as ActivityCategory : null;
   const iconPreview = useSignal(category?.icon || '🏛️');
 
   if (!category) {
     return (
       <div class="container mx-auto px-4 py-8">
         <div class="alert alert-error">
-          <span>{categoryResponse.value?.error_message || 'Category not found'}</span>
+          <span>{categoryResponse.value.error_message || 'Category not found'}</span>
         </div>
         <Link href="/admin/categories" class="btn btn-ghost mt-4">
           Back to Categories

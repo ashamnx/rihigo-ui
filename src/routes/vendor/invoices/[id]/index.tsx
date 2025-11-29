@@ -22,7 +22,7 @@ export const useInvoiceLoader = routeLoader$(async (requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const invoice = await apiClient.vendorPortal.invoices?.get(invoiceId, token);
+            const invoice = await apiClient.vendorPortal.invoices.get(invoiceId, token);
             return { success: true, data: invoice as Invoice };
         } catch (error) {
             console.error('Failed to load invoice:', error);
@@ -36,7 +36,7 @@ export const useSendInvoice = routeAction$(async (_, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            await apiClient.vendorPortal.invoices?.send(invoiceId, token);
+            await apiClient.vendorPortal.invoices.send(invoiceId, token);
             return { success: true };
         } catch (error) {
             console.error('Failed to send invoice:', error);
@@ -54,7 +54,7 @@ export const useVoidInvoice = routeAction$(async (data, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            await apiClient.vendorPortal.invoices?.void(invoiceId, { reason }, token);
+            await apiClient.vendorPortal.invoices.void(invoiceId, { reason }, token);
             return { success: true };
         } catch (error) {
             console.error('Failed to void invoice:', error);
@@ -76,10 +76,10 @@ export default component$(() => {
 
     // Handle successful actions
     if (sendAction.value?.success || voidAction.value?.success) {
-        navigate(`/vendor/invoices/${invoiceData.value?.data?.id}`, { forceReload: true });
+        navigate(`/vendor/invoices/${invoiceData.value.data?.id}`, { forceReload: true });
     }
 
-    if (!invoiceData.value?.success || !invoiceData.value.data) {
+    if (!invoiceData.value.success || !invoiceData.value.data) {
         return (
             <div class="alert alert-error">
                 <span>Invoice not found</span>

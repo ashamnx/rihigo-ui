@@ -8,7 +8,7 @@ export const FAQComponent = component$<FAQComponentProps>((props) => {
         Frequently Asked Questions
       </h2>
       <div class="space-y-4 max-w-3xl mx-auto">
-        {props.items?.map((item, index) => (
+        {props.items.map((item, index) => (
           <div key={index} class="collapse collapse-plus bg-base-200">
             <input type="radio" name="faq-accordion" />
             <div class="collapse-title text-xl font-medium">

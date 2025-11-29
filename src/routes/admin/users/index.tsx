@@ -3,7 +3,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import type { ApiResponse } from "~/types/api";
-import { User } from "~/types/api";
+import type { User } from "~/types/api";
 
 export const useUsers = routeLoader$<ApiResponse<User[]>>(
   async (requestEvent) => {

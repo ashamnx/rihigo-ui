@@ -358,7 +358,7 @@ export default component$(() => {
                                             class={`
                                                 min-h-24 p-2 border rounded-lg cursor-pointer transition-all
                                                 ${dayInfo.isCurrentMonth ? '' : 'opacity-40'}
-                                                ${getStatusColor(avail?.status)}
+                                                ${getStatusColor(avail.status)}
                                                 ${isSelected ? 'ring-2 ring-primary' : ''}
                                                 ${today ? 'ring-2 ring-info' : ''}
                                                 ${past && !editMode.value ? 'opacity-50' : ''}
@@ -386,7 +386,7 @@ export default component$(() => {
                                             </div>
                                             {dayInfo.isCurrentMonth && (
                                                 <div class="mt-1 text-xs">
-                                                    {avail?.price_override ? (
+                                                    {avail.price_override ? (
                                                         <div class="font-medium text-primary">
                                                             {formatCurrency(avail.price_override, resource.currency)}
                                                         </div>
@@ -395,7 +395,7 @@ export default component$(() => {
                                                             {formatCurrency(resource.base_price, resource.currency)}
                                                         </div>
                                                     )}
-                                                    {avail?.min_stay && (
+                                                    {avail.min_stay && (
                                                         <div class="text-base-content/50">
                                                             Min: {avail.min_stay}n
                                                         </div>

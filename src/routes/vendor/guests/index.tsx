@@ -36,7 +36,7 @@ export const useGuestsLoader = routeLoader$(async (requestEvent) => {
             };
 
             // API call - adjust based on actual API structure
-            const response = await apiClient.vendorPortal.guests?.list(token, filters);
+            const response = await apiClient.vendorPortal.guests.list(token, filters);
             return response as GuestListResponse;
         } catch (error) {
             console.error('Failed to load guests:', error);
@@ -59,8 +59,8 @@ export default component$(() => {
     const searchValue = useSignal('');
     const selectedGuest = useSignal<Guest | null>(null);
 
-    const guests = guestsData.value?.data || [];
-    const total = guestsData.value?.total || 0;
+    const guests = guestsData.value.data || [];
+    const total = guestsData.value.total || 0;
 
     const filterDefinitions: FilterDefinition[] = [
         {

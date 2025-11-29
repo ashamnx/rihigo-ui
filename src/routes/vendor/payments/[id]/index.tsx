@@ -16,7 +16,7 @@ export const usePaymentLoader = routeLoader$(async (requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const payment = await apiClient.vendorPortal.payments?.get(paymentId, token);
+            const payment = await apiClient.vendorPortal.payments.get(paymentId, token);
             return {
                 success: true,
                 payment,
@@ -35,7 +35,7 @@ export default component$(() => {
     const paymentData = usePaymentLoader();
     const navigate = useNavigate();
 
-    const payment = paymentData.value?.payment as Payment | null;
+    const payment = paymentData.value.payment as Payment | null;
 
     if (!payment) {
         return (

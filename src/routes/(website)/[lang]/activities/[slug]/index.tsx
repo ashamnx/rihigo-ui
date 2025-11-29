@@ -52,7 +52,7 @@ export default component$(() => {
     }
 
     const activity = activityDataResponse.value.data;
-    const title = activity.translations?.[lang]?.title || activity.seo_metadata?.title || activity.slug;
+    const title = activity.translations?.[lang]?.title || activity.seo_metadata.title || activity.slug;
 
     // Get images from activity
     const images = Array.isArray(activity.images) ? activity.images :
@@ -310,8 +310,8 @@ export const head: DocumentHead = ({resolveValue}) => {
     }
 
     const activity = activityData.data;
-    const title = activity.seo_metadata?.title || activity.slug;
-    const description = activity.seo_metadata?.description || '';
+    const title = activity.seo_metadata.title || activity.slug;
+    const description = activity.seo_metadata.description || '';
     const images = Array.isArray(activity.images) ? activity.images :
                    typeof activity.images === 'string' && activity.images ? JSON.parse(activity.images) : [];
     const image = images[0] || '/assets/images/cover.jpeg';

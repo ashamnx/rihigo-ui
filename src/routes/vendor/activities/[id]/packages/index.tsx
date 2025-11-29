@@ -247,7 +247,7 @@ export default component$(() => {
         formData.bookingOptions!.timeSlots!.splice(index, 1);
     });
 
-    if (!data.value?.success || !data.value.data) {
+    if (!data.value.success || !data.value.data) {
         return (
             <div class="text-center py-12">
                 <div class="text-6xl mb-4">🏝️</div>
@@ -358,18 +358,18 @@ export default component$(() => {
                                     pkg.status === 'SOLD_OUT' ? 'badge-warning' :
                                     'badge-error'
                                 }`}>
-                                    {pkg.status?.replace('_', ' ')}
+                                    {pkg.status.replace('_', ' ')}
                                 </div>
                             </div>
 
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
                                     <span>Advance Booking:</span>
-                                    <span>{pkg.bookingOptions?.advanceBookingDays || 1} days</span>
+                                    <span>{pkg.bookingOptions.advanceBookingDays || 1} days</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span>Same Day Booking:</span>
-                                    <span>{pkg.bookingOptions?.allowSameDayBooking ? 'Yes' : 'No'}</span>
+                                    <span>{pkg.bookingOptions.allowSameDayBooking ? 'Yes' : 'No'}</span>
                                 </div>
                             </div>
 
