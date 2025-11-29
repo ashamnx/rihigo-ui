@@ -99,6 +99,12 @@ export default component$(() => {
         <p class="text-gray-600 mt-2">Update vendor information</p>
       </div>
 
+      {/* Navigation Tabs */}
+      <div class="tabs tabs-boxed mb-6">
+        <Link href={`/admin/vendors/${vendor.id}/edit`} class="tab tab-active">Details</Link>
+        <Link href={`/admin/vendors/${vendor.id}/users`} class="tab">Users</Link>
+      </div>
+
       {updateAction.value?.success === false && (
         <div class="alert alert-error mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

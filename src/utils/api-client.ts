@@ -374,6 +374,42 @@ export const apiClient = {
                 method: 'DELETE',
             }, token);
         },
+
+        // Vendor User Management
+        async getUsers(vendorId: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/users`, {}, token);
+        },
+
+        async addUser(vendorId: string, data: any, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/users`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async updateUser(vendorId: string, userId: string, data: any, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/users/${userId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async removeUser(vendorId: string, userId: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/users/${userId}`, {
+                method: 'DELETE',
+            }, token);
+        },
+    },
+
+    /**
+     * Admin Users
+     */
+    admin: {
+        users: {
+            async list(page = 1, pageSize = 20, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/users?page=${page}&page_size=${pageSize}`, {}, token);
+            },
+        },
     },
 
     /**

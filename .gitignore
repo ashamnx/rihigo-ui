@@ -56,3 +56,6 @@ qwik-speak-inline.log
 # *.png
 # *.jpg
 # *.jpeg
+
+# Cloudflare
+functions/**/*.js
