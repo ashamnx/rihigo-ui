@@ -1,6 +1,12 @@
 // @ts-nocheck
 import { component$, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate } from '@builder.io/qwik-city';
+import {
+  routeLoader$,
+  routeAction$,
+  Link,
+  useNavigate,
+  type DocumentHead,
+} from "@builder.io/qwik-city";
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { ConfirmModal, showModal } from '~/components/vendor/shared/ConfirmModal';
 import {
@@ -20,19 +26,12 @@ export const useResourceLoader = routeLoader$(async (requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const resource = await apiClient.vendorPortal.resources?.get(resourceId, token);
-            const ratePlans = await apiClient.vendorPortal.resources?.getRatePlans(resourceId, token);
-            return {
-                success: true,
-                resource,
-                ratePlans: ratePlans || [],
-            };
+            return await apiClient.vendorPortal.resources.get(resourceId, token);
         } catch (error) {
             console.error('Failed to load resource:', error);
             return {
                 success: false,
-                resource: null,
-                ratePlans: [],
+                data: null,
             };
         }
     });
@@ -44,7 +43,7 @@ export const useUpdateStatus = routeAction$(async (data, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const result = await apiClient.vendorPortal.resources?.update(resourceId, { status }, token);
+            const result = await apiClient.vendorPortal.resources.update(resourceId, { status }, token);
             return { success: true, data: result };
         } catch (error) {
             console.error('Failed to update status:', error);
@@ -61,7 +60,7 @@ export const useDeleteResource = routeAction$(async (data, requestEvent) => {
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            await apiClient.vendorPortal.resources?.delete(resourceId, token);
+            await apiClient.vendorPortal.resources.delete(resourceId, token);
             return { success: true };
         } catch (error) {
             console.error('Failed to delete resource:', error);
@@ -79,8 +78,7 @@ export default component$(() => {
     const deleteAction = useDeleteResource();
     const navigate = useNavigate();
 
-    const resource = resourceData.value?.resource as VendorResource | null;
-    const ratePlans = resourceData.value?.ratePlans || [];
+    const resource = resourceData.value.data as VendorResource | null;
 
     // Redirect on delete success
     if (deleteAction.value?.success) {
@@ -405,62 +403,6 @@ export default component$(() => {
                         </div>
                     )}
 
-                    {/* Rate Plans */}
-                    {ratePlans.length > 0 && (
-                        <div class="card bg-base-100 shadow-sm border border-base-200">
-                            <div class="card-body">
-                                <div class="flex justify-between items-center">
-                                    <h3 class="card-title text-base">Rate Plans</h3>
-                                    <button class="btn btn-ghost btn-sm">
-                                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
-                                        Add Plan
-                                    </button>
-                                </div>
-
-                                <div class="overflow-x-auto mt-4">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Discount</th>
-                                                <th>Valid Period</th>
-                                                <th>Stay Requirements</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {ratePlans.map((plan) => (
-                                                <tr key={plan.id}>
-                                                    <td class="font-medium">{plan.name}</td>
-                                                    <td>
-                                                        {plan.discount_type === 'percentage'
-                                                            ? `${plan.discount_value}%`
-                                                            : formatCurrency(plan.discount_value, resource.currency)}
-                                                    </td>
-                                                    <td class="text-sm">
-                                                        {formatDate(plan.valid_from)} - {formatDate(plan.valid_to)}
-                                                    </td>
-                                                    <td class="text-sm">
-                                                        {plan.min_stay && `Min: ${plan.min_stay} nights`}
-                                                        {plan.min_stay && plan.max_stay && ' / '}
-                                                        {plan.max_stay && `Max: ${plan.max_stay} nights`}
-                                                        {!plan.min_stay && !plan.max_stay && '-'}
-                                                    </td>
-                                                    <td>
-                                                        <span class={`badge badge-sm ${plan.is_active ? 'badge-success' : 'badge-ghost'}`}>
-                                                            {plan.is_active ? 'Active' : 'Inactive'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Sidebar */}
@@ -591,3 +533,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+  title: "Resource Details • Rihigo Vendor Portal",
+  meta: [
+    {
+      name: "description",
+      content: "Manage your Rihigo Vendor Portal profile, bookings, and account settings",
+    },
+  ],
+};

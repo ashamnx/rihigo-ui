@@ -1,10 +1,15 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
+import {
+  routeLoader$,
+  Link,
+  useNavigate,
+  type DocumentHead,
+} from "@builder.io/qwik-city";
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { EmptyState } from '~/components/vendor/shared/EmptyState';
 import { FilterBar, type FilterDefinition } from '~/components/vendor/shared/FilterBar';
-import { ActionDropdown, type Action } from '~/components/vendor/shared/ActionDropdown';
+import { ActionDropdown } from '~/components/vendor/shared/ActionDropdown';
 import { ConfirmModal, showModal } from '~/components/vendor/shared/ConfirmModal';
 import {
     type VendorResource,
@@ -37,7 +42,8 @@ export const useResourcesLoader = routeLoader$(async (requestEvent) => {
                 limit: parseInt(url.searchParams.get('limit') || '20'),
             };
 
-            const response = await apiClient.vendorPortal.resources?.list(token, filters);
+            const response = await apiClient.vendorPortal.resources.list(token, filters);
+          console.log({response});
             return response as ResourceListResponse;
         } catch (error) {
             console.error('Failed to load resources:', error);
@@ -60,8 +66,8 @@ export default component$(() => {
     const searchValue = useSignal('');
     const selectedResource = useSignal<VendorResource | null>(null);
 
-    const resources = resourcesData.value?.data || [];
-    const total = resourcesData.value?.total || 0;
+    const resources = resourcesData.value.data || [];
+    const total = resourcesData.value.pagination_data?.total_count || 0;
 
     const filterDefinitions: FilterDefinition[] = [
         {
@@ -125,51 +131,6 @@ export default component$(() => {
         navigate(`/vendor/resources${queryString ? `?${queryString}` : ''}`);
     });
 
-    const getResourceActions = $((resource: VendorResource): Action[] => {
-        const actions: Action[] = [
-            {
-                label: 'View Details',
-                icon: 'view',
-                onClick$: $(() => navigate(`/vendor/resources/${resource.id}`)),
-            },
-            {
-                label: 'Edit',
-                icon: 'edit',
-                onClick$: $(() => navigate(`/vendor/resources/${resource.id}?edit=true`)),
-            },
-            {
-                label: 'Manage Availability',
-                icon: 'calendar',
-                onClick$: $(() => navigate(`/vendor/resources/${resource.id}/availability`)),
-            },
-        ];
-
-        if (resource.status !== 'retired') {
-            actions.push({
-                label: resource.status === 'maintenance' ? 'Mark Available' : 'Set Maintenance',
-                icon: resource.status === 'maintenance' ? 'check' : 'settings',
-                dividerBefore: true,
-                onClick$: $(() => {
-                    selectedResource.value = resource;
-                    showModal('status-change-modal');
-                }),
-            });
-        }
-
-        if (resource.status !== 'retired') {
-            actions.push({
-                label: 'Retire Resource',
-                icon: 'delete',
-                danger: true,
-                onClick$: $(() => {
-                    selectedResource.value = resource;
-                    showModal('retire-resource-modal');
-                }),
-            });
-        }
-
-        return actions;
-    });
 
     const handleStatusChange = $(async () => {
         if (!selectedResource.value) return;
@@ -338,7 +299,41 @@ export default component$(() => {
                                             <div class="text-xs text-base-content/60 font-mono">{resource.code}</div>
                                         )}
                                     </div>
-                                    <ActionDropdown actions={getResourceActions(resource)} />
+                                    <ActionDropdown actions={[
+                                        {
+                                            label: 'View Details',
+                                            icon: 'view',
+                                            onClick$: $(() => navigate(`/vendor/resources/${resource.id}`)),
+                                        },
+                                        {
+                                            label: 'Edit',
+                                            icon: 'edit',
+                                            onClick$: $(() => navigate(`/vendor/resources/${resource.id}?edit=true`)),
+                                        },
+                                        {
+                                            label: 'Manage Availability',
+                                            icon: 'calendar',
+                                            onClick$: $(() => navigate(`/vendor/resources/${resource.id}/availability`)),
+                                        },
+                                        ...(resource.status !== 'retired' ? [{
+                                            label: resource.status === 'maintenance' ? 'Mark Available' : 'Set Maintenance',
+                                            icon: resource.status === 'maintenance' ? 'check' : 'settings',
+                                            dividerBefore: true,
+                                            onClick$: $(() => {
+                                                selectedResource.value = resource;
+                                                showModal('status-change-modal');
+                                            }),
+                                        }] : []),
+                                        ...(resource.status !== 'retired' ? [{
+                                            label: 'Retire Resource',
+                                            icon: 'delete',
+                                            danger: true,
+                                            onClick$: $(() => {
+                                                selectedResource.value = resource;
+                                                showModal('retire-resource-modal');
+                                            }),
+                                        }] : []),
+                                    ]} />
                                 </div>
 
                                 <p class="text-sm text-base-content/70 line-clamp-2 mt-1">
@@ -411,3 +406,14 @@ export default component$(() => {
         </div>
     );
 });
+
+
+export const head: DocumentHead = {
+  title: "Resources • Rihigo Vendor Portal",
+  meta: [
+    {
+      name: "description",
+      content: "Manage your Rihigo Vendor Portal resources, bookings, and account settings",
+    },
+  ],
+};

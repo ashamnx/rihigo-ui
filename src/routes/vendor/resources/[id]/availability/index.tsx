@@ -27,8 +27,8 @@ export const useResourceAvailabilityLoader = routeLoader$(async (requestEvent) =
 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
-            const resource = await apiClient.vendorPortal.resources?.get(resourceId, token);
-            const availability = await apiClient.vendorPortal.resources?.getAvailability(
+            const resource = await apiClient.vendorPortal.resources.get(resourceId, token);
+            const availability = await apiClient.vendorPortal.resources.getAvailability(
                 resourceId,
                 startDate.toISOString().split('T')[0],
                 endDate.toISOString().split('T')[0],
@@ -38,7 +38,7 @@ export const useResourceAvailabilityLoader = routeLoader$(async (requestEvent) =
             return {
                 success: true,
                 resource,
-                availability: availability || [],
+                availability: availability.data || [],
                 year,
                 month,
             };
@@ -61,7 +61,7 @@ export const useUpdateAvailability = routeAction$(async (data, requestEvent) => 
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const updates = JSON.parse(data.updates as string);
-            await apiClient.vendorPortal.resources?.updateAvailability(resourceId, updates, token);
+            await apiClient.vendorPortal.resources.updateAvailability(resourceId, updates, token);
             return { success: true };
         } catch (error) {
             console.error('Failed to update availability:', error);
@@ -78,10 +78,10 @@ export default component$(() => {
     const updateAction = useUpdateAvailability();
     const navigate = useNavigate();
 
-    const resource = loaderData.value?.resource as VendorResource | null;
-    const availability = loaderData.value?.availability || [];
-    const year = loaderData.value?.year || new Date().getFullYear();
-    const month = loaderData.value?.month || new Date().getMonth();
+    const resource = loaderData.value.resource as VendorResource | null;
+    const availability = loaderData.value.availability || [];
+    const year = loaderData.value.year || new Date().getFullYear();
+    const month = loaderData.value.month || new Date().getMonth();
 
     // Selected dates for bulk edit
     const selectedDates = useSignal<string[]>([]);
