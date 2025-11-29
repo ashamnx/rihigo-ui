@@ -60,5 +60,8 @@
     "wrangler": "^3.0.0"
   },
   "nx": {},
-  "dependencies": {}
+  "dependencies": {},
+  "overrides": {
+    "picomatch": "^4.0.3"
+  }
 }
