@@ -25,13 +25,13 @@ async function fetchAPI<T>(
     },
   });
 
-  const data = await response.json();
+  const data = await response.json() as { data: T; success: boolean; message?: string; error?: string };
 
   if (!response.ok) {
     throw new Error(data.message || data.error || `HTTP ${response.status}`);
   }
 
-  return data;
+  return data as { data: T; success: boolean; message?: string };
 }
 
 function buildQueryString(params: Record<string, any>): string {

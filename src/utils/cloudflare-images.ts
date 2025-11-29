@@ -119,7 +119,7 @@ export async function getCloudflareImages(page = 1, perPage = 50): Promise<Cloud
     throw new Error(`Failed to fetch Cloudflare Images: ${response.statusText} - ${errorText}`);
   }
 
-  const result = await response.json();
+  const result = await response.json() as CloudflareImageListResult;
   console.log('getCloudflareImages: Success, images count:', result.result?.images?.length || 0);
 
   return result;
@@ -150,7 +150,7 @@ export async function deleteCloudflareImage(imageId: string): Promise<{ success:
     throw new Error(`Failed to delete Cloudflare Image: ${response.statusText}`);
   }
 
-  const result = await response.json();
+  const result = await response.json() as { success: boolean };
   return { success: result.success };
 }
 

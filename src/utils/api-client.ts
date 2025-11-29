@@ -58,7 +58,7 @@ async function apiRequest<T = any>(
             console.log(response);
             throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
         }
-        const data = await response.json();
+        const data = await response.json() as ApiResponse<T>;
         console.log('API response:', data);
 
         // API returns success field, just return as-is

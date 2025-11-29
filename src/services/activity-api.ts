@@ -37,11 +37,11 @@ async function fetchAPI<T>(
   if (!response.ok) {
     const error = await response.json().catch(() => ({
       error: 'An error occurred',
-    }));
+    })) as { error?: string };
     throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  return response.json();
+  return response.json() as Promise<APIResponse<T>>;
 }
 
 function buildQueryString(params: Record<string, any>): string {

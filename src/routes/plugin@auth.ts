@@ -13,7 +13,7 @@ async function getOrCreateUser(email: string, name?: string, image?: string) {
         const checkResponse = await fetch(`${apiUrl}/api/users/by-email?email=${encodeURIComponent(email)}`);
 
         if (checkResponse.ok) {
-            const data = await checkResponse.json();
+            const data = await checkResponse.json() as { success: boolean; data?: { id: string } };
             if (data.success && data.data) {
                 console.log('User already exists:', data.data.id);
                 return data.data;
@@ -40,12 +40,12 @@ async function getOrCreateUser(email: string, name?: string, image?: string) {
         });
 
         if (!createResponse.ok) {
-            const errorData = await createResponse.json();
+            const errorData = await createResponse.json() as { error_message?: string };
             console.error('Failed to create user:', errorData);
             throw new Error(`Failed to create user: ${errorData.error_message || 'Unknown error'}`);
         }
 
-        const createData = await createResponse.json();
+        const createData = await createResponse.json() as { success: boolean; data?: { id: string } };
         if (createData.success && createData.data) {
             console.log('User created successfully:', createData.data.id);
             return createData.data;
@@ -75,7 +75,12 @@ async function refreshAccessToken(token: any) {
             method: "POST",
         });
 
-        const refreshedTokens = await response.json();
+        const refreshedTokens = await response.json() as {
+            access_token: string;
+            id_token: string;
+            expires_in: number;
+            refresh_token?: string;
+        };
 
         if (!response.ok) {
             throw refreshedTokens;

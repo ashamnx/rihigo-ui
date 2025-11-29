@@ -37,11 +37,11 @@ export const createTaxRule = async (data: any, token: string) => {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message?: string };
         throw new Error(errorData.message || 'Failed to create tax rule');
     }
 
-    return response.json();
+    return response.json() as Promise<TaxRulesResponse>;
 };
 
 export const updateTaxRule = async (id: string, data: any, token: string) => {
@@ -55,11 +55,11 @@ export const updateTaxRule = async (id: string, data: any, token: string) => {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message?: string };
         throw new Error(errorData.message || 'Failed to update tax rule');
     }
 
-    return response.json();
+    return response.json() as Promise<TaxRulesResponse>;
 };
 
 export const deleteTaxRule = async (id: string, token: string) => {
@@ -71,9 +71,9 @@ export const deleteTaxRule = async (id: string, token: string) => {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { message?: string };
         throw new Error(errorData.message || 'Failed to delete tax rule');
     }
 
-    return response.json();
+    return response.json() as Promise<TaxRulesResponse>;
 };
