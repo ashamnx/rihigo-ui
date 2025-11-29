@@ -37,6 +37,7 @@
     "@auth/qwik": "0.9.1",
     "@builder.io/qwik": "^1.17.2",
     "@builder.io/qwik-city": "^1.17.2",
+    "@cloudflare/workers-types": "^4.20251128.0",
     "@modular-forms/qwik": "^0.29.1",
     "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.1.17",
@@ -58,7 +59,7 @@
     "vite": "7.2.4",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^4.0.10",
-    "wrangler": "^4.51.0"
+    "wrangler": "^3.0.0"
   },
   "nx": {},
   "dependencies": {},
