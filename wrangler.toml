@@ -1,4 +1,9 @@
 name = "rihigo"
 pages_build_output_dir = "./dist"
 compatibility_date = "2024-11-01"
+account_id = "60d6dc383a599e86b42ce3674d7f7eb5"
 compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "dist"
+binding = "ASSETS"
