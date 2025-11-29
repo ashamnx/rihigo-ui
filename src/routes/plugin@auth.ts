@@ -101,6 +101,7 @@ async function refreshAccessToken(token: any) {
 export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
     (event) => ({
         secret: event.env.get('AUTH_SECRET'),
+        trustHost: true,
         debug: true,
         providers: [
             Google({
