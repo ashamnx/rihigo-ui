@@ -9,7 +9,12 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	"pages_build_output_dir": "./dist",
+rt5aQ	"main": "./worker-entry.js",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"run_worker_first": true
+	},
 	"observability": {
 		"enabled": true
 	}

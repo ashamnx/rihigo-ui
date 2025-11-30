@@ -13,7 +13,7 @@
     "build.preview": "vite build --ssr src/entry.preview.tsx",
     "build.server": "qwik check-client src dist && vite build -c adapters/cloudflare-pages/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
-    "deploy": "npm run build && wrangler pages deploy",
+    "deploy": "npm run build && wrangler deploy",
     "dev": "vite --mode ssr",
     "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
     "fmt": "prettier --write .",
@@ -21,7 +21,7 @@
     "lint": "eslint \"src/**/*.ts*\"",
     "preview": "qwik build preview && vite preview --open",
     "qwik-speak-extract": "qwik-speak-extract --supportedLangs=en-US,it-IT --assetsPath=i18n",
-    "serve": "wrangler pages dev ./dist --compatibility-flags=nodejs_als",
+    "serve": "wrangler dev",
     "start": "vite --open --mode ssr",
     "test.e2e": "playwright test",
     "test.e2e:debug": "playwright test --debug",
@@ -59,10 +59,9 @@
     "vite": "7.2.4",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^4.0.10",
-    "wrangler": "^3.0.0"
+    "wrangler": "^4.51.0"
   },
   "nx": {},
-  "dependencies": {},
   "overrides": {
     "picomatch": "^4.0.3"
   }
