@@ -9,7 +9,7 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-rt5aQ	"main": "./worker-entry.js",
+	"main": "./worker-entry.js",
 	"assets": {
 		"directory": "./dist",
 		"binding": "ASSETS",
