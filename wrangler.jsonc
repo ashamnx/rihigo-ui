@@ -17,6 +17,14 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	/**
+	 * Environment Variables
+	 * Note: Secrets like AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET should be set via:
+	 * wrangler secret put <SECRET_NAME>
+	 */
+	"vars": {
+		"API_URL": "https://api.rihigo.com"
 	}
 	/**
 	 * Smart Placement
