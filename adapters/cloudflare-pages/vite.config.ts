@@ -13,6 +13,7 @@ export default extendConfig(baseConfig, () => {
     plugins: [cloudflarePagesAdapter({
       ssg: {
         include: ["/*"],
+        exclude: ['/auth/*', '/api/*','/admin/*','/i18n/*','/vendor/*'],
         origin: "https://rihigo.pages.dev",
       },
     })],
