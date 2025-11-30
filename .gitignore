@@ -15,6 +15,7 @@ tmp/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # IDE / Editor
 .vscode/
@@ -59,3 +60,4 @@ qwik-speak-inline.log
 
 # Cloudflare
 functions/**/*.js
+wrangler.jsonc
