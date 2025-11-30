@@ -1,0 +1,52 @@
+# Rihigo - Maldives Travel Platform
+# https://rihigo.com
+
+User-agent: *
+Allow: /en-US/
+Allow: /it-IT/
+Allow: /assets/
+
+# Disallow admin and vendor sections
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /auth/
+Disallow: /api/
+
+# Disallow URL parameters that create duplicate content
+Disallow: /*?category_id=
+Disallow: /*?island_id=
+
+# Allow search engines to access important resources
+Allow: /assets/images/
+Allow: /assets/logo*.svg
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemaps
+Sitemap: https://rihigo.com/sitemap.xml
+Sitemap: https://rihigo.com/sitemap-images.xml
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /auth/
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /auth/
+
+# Social media bots (allow for rich previews)
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /

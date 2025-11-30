@@ -1,9 +1,11 @@
 import {component$, useSignal} from '@builder.io/qwik';
 import type {DocumentHead} from "@builder.io/qwik-city";
-import {routeLoader$} from "@builder.io/qwik-city";
+import {routeLoader$, useLocation} from "@builder.io/qwik-city";
 import {apiClient} from "~/utils/api-client";
 import {inlineTranslate} from "qwik-speak";
 import {ErrorState} from "~/components/error-state/error-state";
+import {generateFAQSchema, generateBreadcrumbSchema, generateHreflangLinks} from '~/utils/seo';
+import {structuredDataScript} from '~/components/seo/StructuredData';
 
 // Define the FAQ type based on the API response
 interface FAQ {
@@ -62,15 +64,17 @@ export const useFAQs = routeLoader$(async (requestEvent) => {
 export default component$(() => {
     const t = inlineTranslate();
     const faqsResponse = useFAQs();
+    const location = useLocation();
+    const lang = location.params.lang || 'en-US';
 
     return (
         <div class="bg-white">
             <div class="bg-white px-6 py-24 sm:py-32 lg:px-8">
                 <div class="mx-auto max-w-2xl text-center">
                     <p class="text-base/7 font-semibold text-primary">{t('app.faq.getToKnow@@Get to know')}</p>
-                    <h2 class="mt-2 text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
+                    <h1 class="mt-2 text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
                         {t('app.faq.title@@Frequently asked questions')}
-                    </h2>
+                    </h1>
                     <p class="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">
                         {t('app.faq.description@@We\'re here to help. If you have any questions, please don\'t hesitate to reach out.')}
                     </p>
@@ -156,12 +160,115 @@ const Question = component$((props: { faq: FAQ }) => {
     )
 })
 
-export const head: DocumentHead = {
-    title: "FAQ • Rihigo",
-    meta: [
-        {
-            name: "description",
-            content: "Frequently asked questions",
-        },
-    ],
+export const head: DocumentHead = ({resolveValue, params}) => {
+    const faqsData = resolveValue(useFAQs);
+    const lang = params.lang || 'en-US';
+
+    const canonicalUrl = `https://rihigo.com/${lang}/faq`;
+    const title = 'Frequently Asked Questions About Maldives Travel';
+    const description = 'Find answers to common questions about traveling to the Maldives. Learn about visa requirements, Imuga forms, best time to visit, activities, and more.';
+
+    // Collect all FAQs for schema
+    const allFaqs: { question: string; answer: string }[] = [];
+    if (faqsData.success && faqsData.data) {
+        for (const category of Object.values(faqsData.data as Record<string, any[]>)) {
+            for (const faq of category) {
+                if (faq.question && faq.answer) {
+                    allFaqs.push({ question: faq.question, answer: faq.answer });
+                }
+            }
+        }
+    }
+
+    // Generate schemas
+    const faqSchema = allFaqs.length > 0 ? generateFAQSchema(allFaqs) : null;
+    const breadcrumbSchema = generateBreadcrumbSchema([
+        { name: 'Home', url: `https://rihigo.com/${lang}` },
+        { name: 'FAQ' },
+    ]);
+    const hreflangLinks = generateHreflangLinks('/faq');
+
+    return {
+        title: `${title} | Rihigo`,
+        meta: [
+            // Primary Meta Tags
+            {
+                name: 'description',
+                content: description,
+            },
+            {
+                name: 'robots',
+                content: 'index, follow, max-snippet:-1',
+            },
+            {
+                name: 'author',
+                content: 'Rihigo',
+            },
+
+            // Open Graph / Facebook
+            {
+                property: 'og:type',
+                content: 'website',
+            },
+            {
+                property: 'og:url',
+                content: canonicalUrl,
+            },
+            {
+                property: 'og:title',
+                content: `${title} | Rihigo`,
+            },
+            {
+                property: 'og:description',
+                content: description,
+            },
+            {
+                property: 'og:image',
+                content: 'https://rihigo.com/assets/images/cover.jpeg',
+            },
+            {
+                property: 'og:locale',
+                content: lang === 'it-IT' ? 'it_IT' : 'en_US',
+            },
+            {
+                property: 'og:site_name',
+                content: 'Rihigo',
+            },
+
+            // Twitter Card
+            {
+                name: 'twitter:card',
+                content: 'summary_large_image',
+            },
+            {
+                name: 'twitter:url',
+                content: canonicalUrl,
+            },
+            {
+                name: 'twitter:title',
+                content: title,
+            },
+            {
+                name: 'twitter:description',
+                content: description,
+            },
+            {
+                name: 'twitter:image',
+                content: 'https://rihigo.com/assets/images/cover.jpeg',
+            },
+        ],
+        links: [
+            {
+                rel: 'canonical',
+                href: canonicalUrl,
+            },
+            ...hreflangLinks,
+        ],
+        scripts: [
+            // Breadcrumb Schema
+            structuredDataScript(breadcrumbSchema),
+            // FAQPage Schema (if FAQs available)
+            ...(faqSchema ? [structuredDataScript(faqSchema)] : []),
+        ],
+    };
 };

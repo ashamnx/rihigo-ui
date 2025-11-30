@@ -4,6 +4,13 @@ import {getActivityBySlug} from '~/services/activity-api';
 import {PageRenderer} from '~/components/page-builder/PageRenderer';
 import {ErrorState} from '~/components/error-state/error-state';
 import {inlineTranslate} from 'qwik-speak';
+import {
+    generateActivitySchema,
+    generateBreadcrumbSchema,
+    generateHreflangLinks,
+    serializeSchema
+} from '~/utils/seo';
+import {structuredDataScript} from '~/components/seo/StructuredData';
 
 export const useActivityData = routeLoader$(async (requestEvent) => {
     const slug = requestEvent.params.slug;
@@ -53,10 +60,12 @@ export default component$(() => {
 
     const activity = activityDataResponse.value.data;
     const title = activity.translations?.[lang]?.title || activity.seo_metadata.title || activity.slug;
+    const description = activity.translations?.[lang]?.description || activity.seo_metadata.description || '';
 
     // Get images from activity
     const images = Array.isArray(activity.images) ? activity.images :
                    typeof activity.images === 'string' && activity.images ? JSON.parse(activity.images) : [];
+    const mainImage = images[0] || '/assets/images/cover.jpeg';
 
     return (
         <div class="min-h-screen bg-white">
@@ -64,32 +73,67 @@ export default component$(() => {
             <div class="bg-gray-50 border-b border-gray-200">
                 <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
                     <nav class="flex" aria-label="Breadcrumb">
-                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                            <li class="inline-flex items-center">
-                                <Link href={`/${lang}`} class="text-sm text-gray-700 hover:text-primary">
-                                    {t('breadcrumb.home@@Home')}
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3" itemScope itemType="https://schema.org/BreadcrumbList">
+                            <li class="inline-flex items-center" itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+                                <Link href={`/${lang}`} class="text-sm text-gray-700 hover:text-primary" itemProp="item">
+                                    <span itemProp="name">{t('breadcrumb.home@@Home')}</span>
                                 </Link>
+                                <meta itemProp="position" content="1" />
                             </li>
-                            <li>
+                            <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
                                 <div class="flex items-center">
-                                    <svg class="w-3 h-3 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-3 h-3 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <Link href={`/${lang}/activities`} class="text-sm text-gray-700 hover:text-primary">
-                                        {t('breadcrumb.activities@@Activities')}
+                                    <Link href={`/${lang}/activities`} class="text-sm text-gray-700 hover:text-primary" itemProp="item">
+                                        <span itemProp="name">{t('breadcrumb.activities@@Activities')}</span>
                                     </Link>
+                                    <meta itemProp="position" content="2" />
                                 </div>
                             </li>
-                            <li aria-current="page">
+                            <li aria-current="page" itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
                                 <div class="flex items-center">
-                                    <svg class="w-3 h-3 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg class="w-3 h-3 text-gray-400 mx-1" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="text-sm text-gray-500 truncate max-w-xs">{title}</span>
+                                    <span class="text-sm text-gray-500 truncate max-w-xs" itemProp="name">{title}</span>
+                                    <meta itemProp="position" content="3" />
                                 </div>
                             </li>
                         </ol>
                     </nav>
+                </div>
+            </div>
+
+            {/* Activity Title Section with H1 */}
+            <div class="container mx-auto py-6 max-w-7xl px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">{title}</h1>
+                        {activity.island && (
+                            <div class="flex items-center mt-2 text-gray-600">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>{activity.island.name}{activity.island.atoll && `, ${activity.island.atoll.name}`}</span>
+                            </div>
+                        )}
+                    </div>
+                    <div class="flex items-center gap-4">
+                        {activity.category && (
+                            <span class="badge badge-primary badge-lg">{activity.category.name}</span>
+                        )}
+                        {activity.review_count > 0 && (
+                            <div class="flex items-center gap-1 text-gray-700">
+                                <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <span class="font-semibold">{activity.review_score.toFixed(1)}</span>
+                                <span class="text-gray-500">({activity.review_count} {t('activity.reviews@@reviews')})</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -294,53 +338,175 @@ export default component$(() => {
     );
 });
 
-export const head: DocumentHead = ({resolveValue}) => {
+export const head: DocumentHead = ({resolveValue, params}) => {
     const activityData = resolveValue(useActivityData);
+    const lang = params.lang || 'en-US';
 
     if (!activityData.success || !activityData.data) {
         return {
-            title: 'Activity Not Found',
+            title: 'Activity Not Found | Rihigo',
             meta: [
                 {
                     name: 'description',
                     content: 'The requested activity could not be found.',
+                },
+                {
+                    name: 'robots',
+                    content: 'noindex, nofollow',
                 },
             ],
         };
     }
 
     const activity = activityData.data;
-    const title = activity.seo_metadata.title || activity.slug;
-    const description = activity.seo_metadata.description || '';
+    const title = activity.translations?.[lang]?.title || activity.seo_metadata?.title || activity.slug;
+    const description = activity.translations?.[lang]?.description || activity.seo_metadata?.description || '';
+    const truncatedDescription = description.length > 155 ? description.substring(0, 152) + '...' : description;
+
     const images = Array.isArray(activity.images) ? activity.images :
                    typeof activity.images === 'string' && activity.images ? JSON.parse(activity.images) : [];
-    const image = images[0] || '/assets/images/cover.jpeg';
+    const image = images[0] || 'https://rihigo.com/assets/images/cover.jpeg';
+    const imageUrl = image.startsWith('http') ? image : `https://rihigo.com${image}`;
 
-    console.log('from header', activity);
+    const canonicalUrl = `https://rihigo.com/${lang}/activities/${activity.slug}`;
+    const priceText = activity.min_price_usd ? ` - From $${activity.min_price_usd}` : '';
+
+    // Generate structured data schemas
+    const activitySchema = generateActivitySchema(activity, lang);
+    const breadcrumbSchema = generateBreadcrumbSchema([
+        { name: 'Home', url: `https://rihigo.com/${lang}` },
+        { name: 'Activities', url: `https://rihigo.com/${lang}/activities` },
+        { name: title },
+    ]);
+
+    // Generate hreflang links
+    const hreflangLinks = generateHreflangLinks(`/activities/${activity.slug}`);
 
     return {
-        title: `${title} | Rihigo`,
+        title: `${title}${priceText} | Rihigo`,
         meta: [
+            // Primary Meta Tags
             {
                 name: 'description',
-                content: description,
+                content: truncatedDescription || `Explore ${title} in the Maldives. Book this amazing experience with Rihigo.`,
+            },
+            {
+                name: 'robots',
+                content: 'index, follow, max-image-preview:large, max-snippet:-1',
+            },
+            {
+                name: 'author',
+                content: 'Rihigo',
+            },
+
+            // Open Graph / Facebook
+            {
+                property: 'og:type',
+                content: 'product',
+            },
+            {
+                property: 'og:url',
+                content: canonicalUrl,
             },
             {
                 property: 'og:title',
-                content: title,
+                content: `${title} | Rihigo Maldives`,
             },
             {
                 property: 'og:description',
-                content: description,
+                content: truncatedDescription || `Discover ${title} - an unforgettable experience in the Maldives.`,
             },
             {
                 property: 'og:image',
-                content: image,
+                content: imageUrl,
             },
             {
-                property: 'og:type',
-                content: 'website',
+                property: 'og:image:width',
+                content: '1200',
             },
+            {
+                property: 'og:image:height',
+                content: '630',
+            },
+            {
+                property: 'og:image:alt',
+                content: `${title} - Maldives Activity`,
+            },
+            {
+                property: 'og:locale',
+                content: lang === 'it-IT' ? 'it_IT' : 'en_US',
+            },
+            {
+                property: 'og:locale:alternate',
+                content: lang === 'it-IT' ? 'en_US' : 'it_IT',
+            },
+            {
+                property: 'og:site_name',
+                content: 'Rihigo',
+            },
+
+            // Product specific OG
+            ...(activity.min_price_usd ? [
+                {
+                    property: 'product:price:amount',
+                    content: activity.min_price_usd.toString(),
+                },
+                {
+                    property: 'product:price:currency',
+                    content: 'USD',
+                },
+            ] : []),
+
+            // Twitter Card
+            {
+                name: 'twitter:card',
+                content: 'summary_large_image',
+            },
+            {
+                name: 'twitter:url',
+                content: canonicalUrl,
+            },
+            {
+                name: 'twitter:title',
+                content: title,
+            },
+            {
+                name: 'twitter:description',
+                content: truncatedDescription,
+            },
+            {
+                name: 'twitter:image',
+                content: imageUrl,
+            },
+            {
+                name: 'twitter:image:alt',
+                content: `${title} - Maldives Activity`,
+            },
+
+            // Location specific
+            {
+                name: 'geo.region',
+                content: 'MV',
+            },
+            {
+                name: 'geo.placename',
+                content: activity.island?.name || 'Maldives',
+            },
+        ],
+        links: [
+            // Canonical URL
+            {
+                rel: 'canonical',
+                href: canonicalUrl,
+            },
+            // Hreflang alternates
+            ...hreflangLinks,
+        ],
+        scripts: [
+            // TouristAttraction/Product Schema
+            structuredDataScript(activitySchema),
+            // Breadcrumb Schema
+            structuredDataScript(breadcrumbSchema),
         ],
     };
 };

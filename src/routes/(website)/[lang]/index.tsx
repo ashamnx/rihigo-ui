@@ -653,75 +653,119 @@ const FAQItem = component$<{ faq: any }>(({ faq }) => {
   );
 });
 
-export const head: DocumentHead = {
-  title: "Rihigo - Your Complete Maldives Travel Guide & Trip Planner",
-  meta: [
-    {
-      name: "description",
-      content:
-        "Plan your perfect Maldives vacation with Rihigo. Explore top activities, book tours, find accommodations, and get expert travel services including Imuga form assistance, eSIM cards, and airport fast-track.",
-    },
-    {
-      name: "keywords",
-      content:
-        "Maldives travel, Maldives activities, Maldives trip planner, Maldives tours, Imuga form, Maldives eSIM, Maldives vacation, island hopping Maldives, water sports Maldives",
-    },
-    // Open Graph meta tags
-    {
-      property: "og:title",
-      content: "Rihigo - Your Complete Maldives Travel Guide",
-    },
-    {
-      property: "og:description",
-      content:
-        "Discover amazing activities and plan your dream Maldives vacation. From snorkeling to island hopping, we help you create unforgettable memories.",
-    },
-    {
-      property: "og:type",
-      content: "website",
-    },
-    {
-      property: "og:url",
-      content: "https://rihigo.com",
-    },
-    {
-      property: "og:image",
-      content: "https://rihigo.com/assets/images/og-image.jpg",
-    },
-    {
-      property: "og:locale",
-      content: "en_US",
-    },
-    {
-      property: "og:locale:alternate",
-      content: "it_IT",
-    },
-    // Twitter Card meta tags
-    {
-      name: "twitter:card",
-      content: "summary_large_image",
-    },
-    {
-      name: "twitter:title",
-      content: "Rihigo - Your Complete Maldives Travel Guide",
-    },
-    {
-      name: "twitter:description",
-      content:
-        "Plan your perfect Maldives vacation with our comprehensive travel guide. Explore activities, book tours, and get expert travel assistance.",
-    },
-    {
-      name: "twitter:image",
-      content: "https://rihigo.com/assets/images/og-image.jpg",
-    },
-    // Additional SEO meta tags
-    {
-      name: "robots",
-      content: "index, follow",
-    },
-    {
-      name: "author",
-      content: "Rihigo",
-    },
-  ],
+export const head: DocumentHead = ({params}) => {
+  const lang = params.lang || 'en-US';
+  const canonicalUrl = `https://rihigo.com/${lang}`;
+
+  return {
+    title: "Rihigo - Your Complete Maldives Travel Guide & Trip Planner",
+    meta: [
+      {
+        name: "description",
+        content:
+          "Plan your perfect Maldives vacation with Rihigo. Explore top activities, book tours, find accommodations, and get expert travel services including Imuga form assistance, eSIM cards, and airport fast-track.",
+      },
+      {
+        name: "robots",
+        content: "index, follow, max-image-preview:large, max-snippet:-1",
+      },
+      {
+        name: "author",
+        content: "Rihigo",
+      },
+      // Open Graph meta tags
+      {
+        property: "og:type",
+        content: "website",
+      },
+      {
+        property: "og:url",
+        content: canonicalUrl,
+      },
+      {
+        property: "og:title",
+        content: "Rihigo - Your Complete Maldives Travel Guide",
+      },
+      {
+        property: "og:description",
+        content:
+          "Discover amazing activities and plan your dream Maldives vacation. From snorkeling to island hopping, we help you create unforgettable memories.",
+      },
+      {
+        property: "og:image",
+        content: "https://rihigo.com/assets/images/cover.jpeg",
+      },
+      {
+        property: "og:image:width",
+        content: "1920",
+      },
+      {
+        property: "og:image:height",
+        content: "1280",
+      },
+      {
+        property: "og:image:alt",
+        content: "Beautiful Maldives beach and ocean view",
+      },
+      {
+        property: "og:locale",
+        content: lang === 'it-IT' ? 'it_IT' : 'en_US',
+      },
+      {
+        property: "og:locale:alternate",
+        content: lang === 'it-IT' ? 'en_US' : 'it_IT',
+      },
+      {
+        property: "og:site_name",
+        content: "Rihigo",
+      },
+      // Twitter Card meta tags
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+      {
+        name: "twitter:url",
+        content: canonicalUrl,
+      },
+      {
+        name: "twitter:title",
+        content: "Rihigo - Your Complete Maldives Travel Guide",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Plan your perfect Maldives vacation with our comprehensive travel guide. Explore activities, book tours, and get expert travel assistance.",
+      },
+      {
+        name: "twitter:image",
+        content: "https://rihigo.com/assets/images/cover.jpeg",
+      },
+      {
+        name: "twitter:image:alt",
+        content: "Beautiful Maldives beach and ocean view",
+      },
+    ],
+    links: [
+      {
+        rel: 'canonical',
+        href: canonicalUrl,
+      },
+      {
+        rel: 'alternate',
+        hreflang: 'en',
+        href: 'https://rihigo.com/en-US/',
+      },
+      {
+        rel: 'alternate',
+        hreflang: 'it',
+        href: 'https://rihigo.com/it-IT/',
+      },
+      {
+        rel: 'alternate',
+        hreflang: 'x-default',
+        href: 'https://rihigo.com/en-US/',
+      },
+    ],
+  };
 };
