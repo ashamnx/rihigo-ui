@@ -1,10 +1,29 @@
 import { component$, Slot } from "@builder.io/qwik";
+import { useLocation } from "@builder.io/qwik-city";
 import { Header } from "~/components/header/header";
 import { Footer } from "~/components/footer/footer";
 
 export interface NavProps {}
 
 export const Nav = component$<NavProps>(() => {
+  const location = useLocation();
+
+  // Pages with hero sections (transparent header with white text)
+  // - Home page: /en-US, /it-IT, etc.
+  // - About us: /en-US/about-us
+  // - Activity detail: /en-US/activities/[slug] (has slug after activities)
+  const pathname = location.url.pathname;
+  const pathParts = pathname.split('/').filter(Boolean);
+
+  // Check if page has a hero
+  const hasHero =
+    // Home page (just language code)
+    pathParts.length === 1 ||
+    // About us page
+    pathname.includes('/about-us') ||
+    // Activity detail page (has slug after activities, not just /activities/)
+    (pathname.includes('/activities/') && pathParts.length >= 3 && pathParts[pathParts.length - 1] !== 'activities');
+
   return (
     <div class="min-h-screen front" data-theme="light">
       <svg width="0" height="0" style="display: none;">
@@ -35,7 +54,7 @@ export const Nav = component$<NavProps>(() => {
           />
         </symbol>
       </svg>
-      <Header />
+      <Header hasHero={hasHero} />
       <Slot />
       <Footer />
     </div>

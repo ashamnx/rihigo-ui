@@ -6,10 +6,10 @@ import { useSession } from "~/routes/plugin@auth";
 import { NavLink } from "~/components/nav/nav-link";
 
 export interface HeaderProps {
-
+    hasHero?: boolean;
 }
 
-export const Header = component$<HeaderProps>(() => {
+export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     const t = inlineTranslate();
     const locale = useSpeakLocale();
     const session = useSession();
@@ -22,6 +22,9 @@ export const Header = component$<HeaderProps>(() => {
     useOnWindow('scroll', $(() => {
         isScrolled.value = window.scrollY > 50;
     }));
+
+    // Show solid header when scrolled OR when page has no hero
+    const showSolidHeader = isScrolled.value || !hasHero;
 
     const getPath = localizePath();
 
@@ -53,7 +56,7 @@ export const Header = component$<HeaderProps>(() => {
     ];
 
     return (
-        <header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled.value ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+        <header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showSolidHeader ? 'bg-white shadow-md' : 'bg-transparent'}`}>
             <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
                 <div class="flex lg:flex-1">
                     <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5">
@@ -61,14 +64,14 @@ export const Header = component$<HeaderProps>(() => {
                         <img
                             src="/assets/logo.svg"
                             alt="Rihigo Logo"
-                            class={`h-8 transition-all duration-300 ${isScrolled.value ? '' : 'brightness-0 invert'}`}
+                            class={`h-8 transition-all duration-300 ${showSolidHeader ? '' : 'brightness-0 invert'}`}
                             height="32"
                         />
                     </Link>
                 </div>
                 <div class="flex lg:hidden">
                     <button type="button"
-                            class={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 transition-colors ${isScrolled.value ? 'text-gray-700' : 'text-white'}`}
+                            class={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 transition-colors ${showSolidHeader ? 'text-gray-700' : 'text-white'}`}
                             onClick$={() => isMobileMenuOpen.value = true}>
                         <span class="sr-only">Open main menu</span>
                         <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -80,15 +83,15 @@ export const Header = component$<HeaderProps>(() => {
                 </div>
                 <div class="hidden lg:flex lg:gap-x-12">
                     {nav.map((item, index) => item.children ?
-                        (<NestedNav item={item} key={index} isScrolled={isScrolled.value} />)
+                        (<NestedNav item={item} key={index} isScrolled={showSolidHeader} />)
                         : (<NavLink href={`/${locale.lang || "en-US"}${item.link}`}
                                     activeClass="text-primary"
-                                 class={`text-sm/6 font-semibold transition-colors duration-300 hover:text-primary ${isScrolled.value ? 'text-gray-900' : 'text-white'}`}
+                                 class={`text-sm/6 font-semibold transition-colors duration-300 hover:text-primary ${showSolidHeader ? 'text-gray-900' : 'text-white'}`}
                                  key={index}>{item.label}</NavLink>)
                     )}
                 </div>
                 <div class="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
-                    <LocaleSelector isScrolled={isScrolled.value} />
+                    <LocaleSelector isScrolled={showSolidHeader} />
 
                     {session.value?.user ? (
                         /* Authenticated User */
@@ -135,7 +138,7 @@ export const Header = component$<HeaderProps>(() => {
                             <Link
                                 href={getPath('/auth/sign-in', locale.lang || "en-US")}
                                 class={`text-sm/6 font-semibold px-5 py-2 rounded-lg transition-all duration-300 ${
-                                    isScrolled.value
+                                    showSolidHeader
                                         ? 'bg-primary text-white hover:bg-primary/90'
                                         : 'bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 border border-white/30'
                                 }`}
