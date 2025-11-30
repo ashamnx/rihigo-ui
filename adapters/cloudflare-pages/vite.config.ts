@@ -10,12 +10,6 @@ export default extendConfig(baseConfig, () => {
         input: ["src/entry.cloudflare-pages.tsx", "@qwik-city-plan"],
       },
     },
-    plugins: [cloudflarePagesAdapter({
-      ssg: {
-        include: ["/*"],
-        exclude: ['/auth/*', '/api/*','/admin/*','/i18n/*','/vendor/*'],
-        origin: "https://rihigo.pages.dev",
-      },
-    })],
+    plugins: [cloudflarePagesAdapter()],
   };
 });
