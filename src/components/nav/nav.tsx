@@ -55,7 +55,10 @@ export const Nav = component$<NavProps>(() => {
         </symbol>
       </svg>
       <Header hasHero={hasHero} />
-      <Slot />
+      {/* Add top padding for pages without hero to account for fixed header */}
+      <main class={hasHero ? '' : 'pt-20'}>
+        <Slot />
+      </main>
       <Footer />
     </div>
   );
