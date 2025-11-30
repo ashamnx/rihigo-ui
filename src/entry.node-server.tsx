@@ -14,6 +14,7 @@ import {
 import qwikCityPlan from "@qwik-city-plan";
 import render from "./entry.ssr";
 import { createServer } from "node:http";
+import { join } from "node:path";
 
 declare global {
   interface QwikCityPlatform extends PlatformNode {}
@@ -27,6 +28,7 @@ const { router, notFound, staticFile } = createQwikCity({
   render,
   qwikCityPlan,
   static: {
+    root: join(process.cwd(), "dist"),
     cacheControl: "public, max-age=31536000, immutable",
   },
 });

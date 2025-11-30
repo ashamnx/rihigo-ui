@@ -19,7 +19,14 @@ interface FAQ {
 }
 
 // Loader to fetch all published FAQs
-export const useFAQs = routeLoader$(async () => {
+export const useFAQs = routeLoader$(async (requestEvent) => {
+    // Cache FAQs for 1 hour on CDN, 1 minute on browser
+    requestEvent.cacheControl({
+        maxAge: 60,
+        sMaxAge: 3600,
+        staleWhileRevalidate: 60 * 60 * 24, // 1 day
+    });
+
     // Fetch FAQs from the API (public endpoint, no auth needed)
     const response = await apiClient.faqs.list(1, 100); // Fetch up to 100 FAQs
 

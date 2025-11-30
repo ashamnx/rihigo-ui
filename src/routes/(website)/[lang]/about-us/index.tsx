@@ -1,7 +1,29 @@
 import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
+import type { DocumentHead, StaticGenerateHandler } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
+
+// Cache static about page for 1 day on CDN
+export const useAboutCache = routeLoader$(async (requestEvent) => {
+    requestEvent.cacheControl({
+        maxAge: 3600,
+        sMaxAge: 86400, // 1 day
+        staleWhileRevalidate: 60 * 60 * 24 * 7, // 1 week
+    });
+    return null;
+});
+
+// Enable static generation for about page
+export const onStaticGenerate: StaticGenerateHandler = () => {
+    return {
+        params: [
+            { lang: 'en-US' },
+            { lang: 'it-IT' },
+        ],
+    };
+};
 
 export default component$(() => {
+    useAboutCache(); // Trigger cache headers
   const stats = [
     { label: 'Years of experience', value: '12' },
     { label: 'Islands covered', value: '100+' },

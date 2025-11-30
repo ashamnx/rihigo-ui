@@ -22,11 +22,17 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 
 export default defineConfig(({ command, mode }): UserConfig => {
   return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss(), qwikSpeakInline({
-      supportedLangs: ['en-US', 'it-IT'],
-      defaultLang: 'en-US',
-      assetsPath: 'i18n'
-    })],
+    plugins: [
+      qwikCity(),
+      qwikVite(),
+      tsconfigPaths(),
+      tailwindcss(),
+      qwikSpeakInline({
+        supportedLangs: ['en-US', 'it-IT'],
+        defaultLang: 'en-US',
+        assetsPath: 'i18n'
+      }),
+    ],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
         include: ['@auth/qwik'],

@@ -1,21 +1,36 @@
 import { component$, useSignal } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import type { DocumentHead, StaticGenerateHandler } from "@builder.io/qwik-city";
 import { Link, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { apiClient } from "~/utils/api-client";
 import { inlineTranslate } from "qwik-speak";
 import { ErrorState } from "~/components/error-state/error-state";
 
+// Enable static generation for homepage (pre-render for each language)
+export const onStaticGenerate: StaticGenerateHandler = () => {
+  return {
+    params: [{ lang: 'en-US' }, { lang: 'it-IT' }],
+  };
+};
+
 export const useHomeData = routeLoader$(async (requestEvent) => {
+  // Cache homepage for 5 minutes on browser, 1 hour on CDN
   requestEvent.cacheControl({
-    maxAge: 60,
-    sMaxAge: 3600,
-    staleWhileRevalidate: 60 * 60 * 24, // 1 day
+    maxAge: 300,       // 5 minutes browser cache
+    sMaxAge: 3600,     // 1 hour CDN cache
+    staleWhileRevalidate: 60 * 60 * 24, // 1 day stale-while-revalidate
   });
 
   return await apiClient.activities.getTop();
 });
 
-export const useFAQsData = routeLoader$(async () => {
+export const useFAQsData = routeLoader$(async (requestEvent) => {
+  // Also cache FAQs loader
+  requestEvent.cacheControl({
+    maxAge: 300,
+    sMaxAge: 3600,
+    staleWhileRevalidate: 60 * 60 * 24,
+  });
+
   const response = await apiClient.faqs.list(1, 6);
   if (!response.success) {
     return { success: false, data: [] };

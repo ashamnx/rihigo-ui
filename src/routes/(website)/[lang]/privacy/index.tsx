@@ -1,9 +1,27 @@
 import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from "@builder.io/qwik-city";
-import { Link } from "@builder.io/qwik-city";
+import type { DocumentHead, StaticGenerateHandler } from "@builder.io/qwik-city";
+import { Link, routeLoader$ } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
 
+// Cache static privacy page for 1 day on CDN
+export const usePrivacyCache = routeLoader$(async (requestEvent) => {
+    requestEvent.cacheControl({
+        maxAge: 3600,
+        sMaxAge: 86400, // 1 day
+        staleWhileRevalidate: 60 * 60 * 24 * 7, // 1 week
+    });
+    return null;
+});
+
+// Enable static generation
+export const onStaticGenerate: StaticGenerateHandler = () => {
+    return {
+        params: [{ lang: 'en-US' }, { lang: 'it-IT' }],
+    };
+};
+
 export default component$(() => {
+    usePrivacyCache();
     const t = inlineTranslate();
 
     return (
