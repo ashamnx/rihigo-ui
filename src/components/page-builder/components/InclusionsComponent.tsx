@@ -21,7 +21,7 @@ export const InclusionsComponent = component$<InclusionsComponentProps>((props) 
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Inclusions */}
-        {inclusions && inclusions.length > 0 && (
+        {inclusions.length > 0 && (
           <div class="bg-green-50 rounded-lg p-6">
             <div class="flex items-center gap-2 mb-4">
               <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -43,7 +43,7 @@ export const InclusionsComponent = component$<InclusionsComponentProps>((props) 
         )}
 
         {/* Exclusions */}
-        {showExclusions && exclusions && exclusions.length > 0 && (
+        {showExclusions && exclusions.length > 0 && (
           <div class="bg-red-50 rounded-lg p-6">
             <div class="flex items-center gap-2 mb-4">
               <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">

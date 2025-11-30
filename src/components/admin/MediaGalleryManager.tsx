@@ -140,6 +140,8 @@ export const MediaGalleryManager = component$<MediaGalleryManagerProps>(({
                           src={imageUrls.medium}
                           alt={media.meta?.alt || media.filename}
                           class="w-full h-full object-cover"
+                          width={400}
+                          height={400}
                         />
                       ) : (
                         <div class="w-full h-full bg-gray-200 flex items-center justify-center">

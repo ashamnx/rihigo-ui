@@ -85,7 +85,7 @@ export const OverviewComponent = component$<OverviewComponentProps>((props) => {
       )}
 
       {/* Features List */}
-      {features && features.length > 0 && (
+      {features.length > 0 && (
         <div class="bg-gray-50 rounded-lg p-6">
           <h3 class="font-semibold mb-4">Highlights</h3>
           <ul class="space-y-3">

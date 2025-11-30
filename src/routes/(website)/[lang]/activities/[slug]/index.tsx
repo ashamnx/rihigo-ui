@@ -159,7 +159,7 @@ export default component$(() => {
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     {images.slice(1, 7).map((img: string, idx: number) => (
                                         <div key={idx} class="aspect-video rounded-lg overflow-hidden bg-gray-100">
-                                            <img src={img} alt={`${title} ${idx + 1}`} class="w-full h-full object-cover hover:scale-105 transition-transform" />
+                                            <img src={img} alt={`${title} ${idx + 1}`} class="w-full h-full object-cover hover:scale-105 transition-transform" width={400} height={225} />
                                         </div>
                                     ))}
                                 </div>

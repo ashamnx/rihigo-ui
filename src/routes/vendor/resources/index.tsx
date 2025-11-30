@@ -269,6 +269,8 @@ export default component$(() => {
                                         src={resource.media.find(m => m.is_primary)?.url || resource.media[0].url}
                                         alt={resource.name}
                                         class="w-full h-full object-cover"
+                                        width={400}
+                                        height={160}
                                     />
                                 ) : (
                                     <div class="flex items-center justify-center w-full h-full text-base-content/30">

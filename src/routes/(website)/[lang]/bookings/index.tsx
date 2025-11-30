@@ -174,6 +174,8 @@ export default component$(() => {
                             src={booking.activity.images[0]}
                             alt={booking.activity.title}
                             class="w-full lg:w-48 h-48 object-cover rounded-lg"
+                            width={192}
+                            height={192}
                           />
                         </div>
                       )}

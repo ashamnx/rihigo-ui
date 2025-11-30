@@ -80,6 +80,8 @@ export default component$(() => {
                     src={activity.seo_metadata.og_image}
                     alt={title}
                     class="w-full h-full object-cover"
+                    width={400}
+                    height={192}
                   />
                 ) : (
                   <div class="w-full h-full bg-base-300 flex items-center justify-center">

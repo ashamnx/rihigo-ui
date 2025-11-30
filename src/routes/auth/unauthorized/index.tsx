@@ -30,10 +30,12 @@ export default component$(() => {
             // User is logged in but doesn't have admin access
             <div class="space-y-4">
               <div class="flex items-center justify-center">
-                <img 
-                  src={session.value.user.image || '/default-avatar.png'} 
-                  alt="Profile" 
+                <img
+                  src={session.value.user.image || '/default-avatar.png'}
+                  alt="Profile"
                   class="w-12 h-12 rounded-full mr-3"
+                  width={48}
+                  height={48}
                 />
                 <div class="text-left">
                   <div class="font-medium text-gray-900">

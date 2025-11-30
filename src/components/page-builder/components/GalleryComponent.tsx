@@ -10,7 +10,7 @@ export const GalleryComponent = component$<GalleryComponentProps>((props) => {
         <div class="carousel w-full">
           {props.images.map((image, index) => (
             <div key={index} id={`slide${index}`} class="carousel-item relative w-full">
-              <img src={image.url} alt={image.alt || image.caption} class="w-full" />
+              <img src={image.url} alt={image.alt || image.caption} class="w-full" width={1200} height={800} />
               <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
                 <a href={`#slide${index === 0 ? props.images.length - 1 : index - 1}`} class="btn btn-circle">
                   ❮
@@ -35,6 +35,8 @@ export const GalleryComponent = component$<GalleryComponentProps>((props) => {
               src={image.url}
               alt={image.alt || image.caption}
               class="w-full h-64 object-cover transition-transform group-hover:scale-110"
+              width={400}
+              height={256}
             />
             {image.caption && (
               <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">

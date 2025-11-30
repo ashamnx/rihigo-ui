@@ -236,6 +236,8 @@ export default component$(() => {
                                     src={resource.media.find(m => m.is_primary)?.url || resource.media[0].url}
                                     alt={resource.name}
                                     class="w-full h-full object-cover"
+                                    width={600}
+                                    height={256}
                                 />
                             </figure>
                             {resource.media.length > 1 && (
@@ -246,6 +248,8 @@ export default component$(() => {
                                             src={media.url}
                                             alt={media.alt_text || resource.name}
                                             class="w-20 h-20 object-cover rounded-lg"
+                                            width={80}
+                                            height={80}
                                         />
                                     ))}
                                 </div>

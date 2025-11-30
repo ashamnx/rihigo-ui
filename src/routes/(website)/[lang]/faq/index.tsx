@@ -40,12 +40,10 @@ export const useFAQs = routeLoader$(async () => {
     // Group FAQs by category
     const groupedFaqs = publishedFaqs.reduce((acc: Record<string, FAQ[]>, faq: FAQ) => {
         const category = faq.category || 'General';
-        if (!acc[category]) {
-            acc[category] = [];
-        }
+        acc[category] ??= [];
         acc[category].push(faq);
         return acc;
-    }, {});
+    }, {} as Record<string, FAQ[]>);
 
     return {
         success: true,

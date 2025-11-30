@@ -306,7 +306,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                     {uploadForm.preview && (
                       <div class="mb-3">
                         {uploadForm.fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                          <img src={uploadForm.preview} alt="Preview" class="w-full h-32 object-cover rounded" />
+                          <img src={uploadForm.preview} alt="Preview" class="w-full h-32 object-cover rounded" width={400} height={128} />
                         ) : (
                           <video src={uploadForm.preview} class="w-full h-32 object-cover rounded" />
                         )}
@@ -409,6 +409,8 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                                     src={imageUrls.small}
                                     alt={media.meta?.alt || media.filename}
                                     class="w-full h-full object-cover rounded"
+                                    width={200}
+                                    height={200}
                                   />
                                 ) : (
                                   <div class="w-full h-full bg-gray-200 rounded flex items-center justify-center">
@@ -441,6 +443,8 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                                     src={imageUrls.thumbnail}
                                     alt={media.meta?.alt || media.filename}
                                     class="w-full h-full object-cover rounded"
+                                    width={48}
+                                    height={48}
                                   />
                                 ) : (
                                   <div class="w-full h-full bg-gray-200 rounded flex items-center justify-center">

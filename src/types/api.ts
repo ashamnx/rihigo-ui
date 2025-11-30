@@ -69,9 +69,10 @@ export function hasStringErrors(response: ApiResponse): response is ApiResponse 
  * Type guard to check if response has record errors
  */
 export function hasRecordErrors(response: ApiResponse): response is ApiResponse & { errors: Record<string, string> } {
-  return typeof response.errors === 'object' &&
-         !Array.isArray(response.errors) &&
-         response.errors !== null;
+  const errors = response.errors;
+  return errors != null &&
+         typeof errors === 'object' &&
+         !Array.isArray(errors);
 }
 
 /**

@@ -16,7 +16,7 @@ interface PageRendererProps {
 }
 
 export const PageRenderer = component$<PageRendererProps>((props) => {
-    if (!props.components || props.components.length === 0) {
+    if (props.components.length === 0) {
         return null;
     }
 
@@ -24,7 +24,7 @@ export const PageRenderer = component$<PageRendererProps>((props) => {
         <div class="page-renderer space-y-8">
             {props.components.map((comp, index) => {
                 // Handle both formats: comp.config and comp.props
-                const componentProps = (comp as any).config || comp.props || {};
+                const componentProps = (comp as any).config ?? comp.props ?? {};
 
                 switch (comp.type) {
                     case 'hero':

@@ -116,7 +116,7 @@ export default component$(() => {
               {user.image ? (
                 <div class="avatar">
                   <div class="w-24 rounded-full">
-                    <img src={user.image} alt={user.name} />
+                    <img src={user.image} alt={user.name} width={96} height={96} />
                   </div>
                 </div>
               ) : (
