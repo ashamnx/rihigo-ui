@@ -78,6 +78,26 @@ export default component$(() => {
         }).format(amount);
     };
 
+    // Format quotation amount with display currency
+    const formatQuotationAmount = (quotation: Quotation) => {
+        const displayCurrency = quotation.display_currency || quotation.currency || 'USD';
+        const exchangeRate = quotation.exchange_rate_at_creation;
+
+        if (displayCurrency !== 'USD' && exchangeRate) {
+            const displayAmount = quotation.total * exchangeRate;
+            return {
+                primary: formatCurrency(displayAmount, displayCurrency),
+                secondary: `${formatCurrency(quotation.total, 'USD')} USD`,
+                hasExchange: true,
+            };
+        }
+        return {
+            primary: formatCurrency(quotation.total, displayCurrency),
+            secondary: null,
+            hasExchange: false,
+        };
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -296,7 +316,12 @@ export default component$(() => {
                                             )}
                                         </td>
                                         <td class="font-semibold">
-                                            {formatCurrency(quotation.total, quotation.currency)}
+                                            <div>{formatQuotationAmount(quotation).primary}</div>
+                                            {formatQuotationAmount(quotation).hasExchange && (
+                                                <div class="text-xs text-base-content/50">
+                                                    {formatQuotationAmount(quotation).secondary}
+                                                </div>
+                                            )}
                                         </td>
                                         <td>
                                             <span class={`badge ${quotationStatusColors[quotation.status]}`}>

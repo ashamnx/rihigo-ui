@@ -26,6 +26,7 @@ async function fetchAPI<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<APIResponse<T>> {
+  console.log(`[fetchAPI] ${endpoint}`, {...options?.headers});
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {

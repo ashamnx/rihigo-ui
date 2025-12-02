@@ -7,9 +7,9 @@ import { apiClient, authenticatedRequest } from "~/utils/api-client";
 interface PricingTier {
   tierName: string;
   description: string;
-  price: number;
-  currency: string;
-  originalPrice?: number;
+  price: number; // Always in USD (base currency)
+  currency: string; // Always 'USD' - kept for backwards compatibility
+  originalPrice?: number; // Always in USD
 }
 
 interface BookingOptions {
@@ -335,7 +335,8 @@ export default component$(() => {
                 <div>
                   {pkg.pricingTiers && pkg.pricingTiers.length > 0 && (
                     <div class="text-2xl font-bold text-primary">
-                      ${pkg.pricingTiers[0].price} {pkg.pricingTiers[0].currency}
+                      ${pkg.pricingTiers[0].price.toFixed(2)}
+                      <span class="text-sm font-normal text-base-content/70"> USD</span>
                       {pkg.pricingTiers.length > 1 && <span class="text-sm text-base-content/70"> +{pkg.pricingTiers.length - 1} more</span>}
                     </div>
                   )}
@@ -528,9 +529,10 @@ export default component$(() => {
                           </div>
                           <div class="form-control">
                             <label class="label">
-                              <span class="label-text">Price</span>
+                              <span class="label-text">Price (USD)</span>
                             </label>
                             <div class="input-group">
+                              <span class="bg-base-200 px-3 flex items-center text-sm">$</span>
                               <input
                                 type="number"
                                 class="input input-bordered input-sm flex-1"
@@ -538,30 +540,30 @@ export default component$(() => {
                                 onInput$={(e) => formData.pricingTiers![index].price = parseFloat((e.target as HTMLInputElement).value) || 0}
                                 min="0"
                                 step="0.01"
+                                placeholder="0.00"
                               />
-                              <select
-                                class="select select-bordered select-sm"
-                                value={tier.currency}
-                                onChange$={(e) => formData.pricingTiers![index].currency = (e.target as HTMLSelectElement).value}
-                              >
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
-                                <option value="MVR">MVR</option>
-                              </select>
+                              <span class="bg-base-200 px-3 flex items-center text-sm font-medium">USD</span>
                             </div>
+                            <label class="label">
+                              <span class="label-text-alt text-base-content/50">All prices stored in USD</span>
+                            </label>
                           </div>
                           <div class="form-control">
                             <label class="label">
-                              <span class="label-text">Original Price (optional)</span>
+                              <span class="label-text">Original Price in USD (optional)</span>
                             </label>
-                            <input
-                              type="number"
-                              class="input input-bordered input-sm"
-                              value={tier.originalPrice || ''}
-                              onInput$={(e) => formData.pricingTiers![index].originalPrice = (e.target as HTMLInputElement).value ? parseFloat((e.target as HTMLInputElement).value) : undefined}
-                              min="0"
-                              step="0.01"
-                            />
+                            <div class="input-group">
+                              <span class="bg-base-200 px-3 flex items-center text-sm">$</span>
+                              <input
+                                type="number"
+                                class="input input-bordered input-sm flex-1"
+                                value={tier.originalPrice || ''}
+                                onInput$={(e) => formData.pricingTiers![index].originalPrice = (e.target as HTMLInputElement).value ? parseFloat((e.target as HTMLInputElement).value) : undefined}
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                              />
+                            </div>
                           </div>
                           <div class="form-control">
                             <label class="label">

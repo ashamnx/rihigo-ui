@@ -188,6 +188,26 @@ export default component$(() => {
         }).format(amount);
     };
 
+    // Format booking amount with display currency
+    const formatBookingAmount = (booking: VendorBooking) => {
+        const displayCurrency = booking.display_currency || booking.currency || 'USD';
+        const exchangeRate = booking.exchange_rate_at_booking;
+
+        if (displayCurrency !== 'USD' && exchangeRate) {
+            const displayAmount = booking.total * exchangeRate;
+            return {
+                primary: formatCurrency(displayAmount, displayCurrency),
+                secondary: `${formatCurrency(booking.total, 'USD')} USD`,
+                hasExchange: true,
+            };
+        }
+        return {
+            primary: formatCurrency(booking.total, displayCurrency),
+            secondary: null,
+            hasExchange: false,
+        };
+    };
+
     return (
         <div>
             <PageHeader
@@ -323,11 +343,16 @@ export default component$(() => {
                                     </td>
                                     <td>
                                         <div class="font-medium">
-                                            {formatCurrency(booking.total, booking.currency)}
+                                            {formatBookingAmount(booking).primary}
                                         </div>
+                                        {formatBookingAmount(booking).hasExchange && (
+                                            <div class="text-xs text-base-content/50">
+                                                {formatBookingAmount(booking).secondary}
+                                            </div>
+                                        )}
                                         {booking.net_revenue !== booking.total && (
                                             <div class="text-xs text-base-content/60">
-                                                Net: {formatCurrency(booking.net_revenue, booking.currency)}
+                                                Net: {formatCurrency(booking.net_revenue, 'USD')}
                                             </div>
                                         )}
                                     </td>

@@ -209,6 +209,18 @@ export default component$(() => {
         }).format(amount);
     };
 
+    // Format amount in display currency if available
+    const formatDisplayAmount = (amount: number, invoice: Invoice) => {
+        const displayCurrency = invoice.display_currency || invoice.currency || 'USD';
+        const exchangeRate = invoice.exchange_rate_at_creation;
+
+        if (displayCurrency !== 'USD' && exchangeRate) {
+            const displayAmount = amount * exchangeRate;
+            return formatCurrency(displayAmount, displayCurrency);
+        }
+        return formatCurrency(amount, displayCurrency);
+    };
+
     // Calculate stats
     const totalOutstanding = invoices
         .filter((i) => ['pending', 'sent', 'partial', 'overdue'].includes(i.status))
@@ -331,12 +343,22 @@ export default component$(() => {
                                             )}
                                         </td>
                                         <td class="font-medium">
-                                            {formatCurrency(invoice.total, invoice.currency)}
+                                            <div>{formatDisplayAmount(invoice.total, invoice)}</div>
+                                            {invoice.display_currency && invoice.display_currency !== 'USD' && invoice.exchange_rate_at_creation && (
+                                                <div class="text-xs text-base-content/50">
+                                                    {formatCurrency(invoice.total, 'USD')} USD
+                                                </div>
+                                            )}
                                         </td>
                                         <td>
                                             <span class={invoice.amount_due > 0 ? 'text-warning font-medium' : 'text-success'}>
-                                                {formatCurrency(invoice.amount_due, invoice.currency)}
+                                                {formatDisplayAmount(invoice.amount_due, invoice)}
                                             </span>
+                                            {invoice.display_currency && invoice.display_currency !== 'USD' && invoice.exchange_rate_at_creation && invoice.amount_due > 0 && (
+                                                <div class="text-xs text-base-content/50">
+                                                    {formatCurrency(invoice.amount_due, 'USD')} USD
+                                                </div>
+                                            )}
                                         </td>
                                         <td>
                                             <span class={`badge badge-sm ${invoiceStatusColors[invoice.status]}`}>

@@ -57,7 +57,9 @@ export interface Invoice {
     taxable_amount: number;
     tax_amount: number;
     total: number;
-    currency: string;
+    currency: string; // Always USD (base currency)
+    display_currency?: string; // Display currency
+    exchange_rate_at_creation?: number; // Exchange rate at time of invoice creation
 
     // Payment
     amount_paid: number;
@@ -141,7 +143,8 @@ export interface InvoiceCreateInput {
     items: InvoiceItemInput[];
 
     // Currency
-    currency?: string;
+    currency?: string; // Display currency (stored amounts are in USD)
+    display_currency?: string; // Alias for currency field
 
     // Content
     notes?: string;

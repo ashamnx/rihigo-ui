@@ -10,7 +10,9 @@ export interface Booking {
   subtotal: number;
   tax_amount: number;
   total_price: number;
-  currency: string;
+  currency: string; // Always USD (base currency)
+  display_currency?: string; // User's preferred display currency
+  exchange_rate_at_booking?: number; // Exchange rate at time of booking
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   taxes?: BookingTax[];
   customer_info: CustomerInfo;
@@ -49,6 +51,7 @@ export interface CreateBookingInput {
   customer_info: CustomerInfo;
   payment_method: string;
   notes?: string;
+  display_currency?: string; // User's preferred display currency
 }
 
 export interface UpdateBookingStatusInput {
@@ -80,7 +83,9 @@ export interface Invoice {
   booking_id: string;
   invoice_number: string;
   amount: number;
-  currency: string;
+  currency: string; // Always USD (base currency)
+  display_currency?: string; // Display currency
+  exchange_rate_at_creation?: number; // Exchange rate at time of invoice creation
   status: 'draft' | 'sent' | 'paid' | 'cancelled';
   issued_at: string;
   due_at: string;

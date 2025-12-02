@@ -60,7 +60,9 @@ export interface Quotation {
     discount_amount: number;
     tax_amount: number;
     total: number;
-    currency: string;
+    currency: string; // Always USD (base currency)
+    display_currency?: string; // Display currency
+    exchange_rate_at_creation?: number; // Exchange rate at time of quotation creation
 
     // Items
     items: QuotationItem[];
@@ -133,7 +135,8 @@ export interface QuotationCreateInput {
     items: QuotationItemInput[];
 
     // Currency
-    currency?: string;
+    currency?: string; // Display currency (stored amounts are in USD)
+    display_currency?: string; // Alias for currency field
 
     // Content
     notes?: string;

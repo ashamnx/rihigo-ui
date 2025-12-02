@@ -48,7 +48,7 @@ async function apiRequest<T = any>(
     }
 
     try {
-        console.log('Making API request:', url, options);
+        console.log('Making API request:', url, options, headers);
         const response = await fetch(url, {
             ...options,
             headers,
@@ -408,6 +408,26 @@ export const apiClient = {
         users: {
             async list(page = 1, pageSize = 20, token: string): Promise<ApiResponse> {
                 return apiRequest(`/api/admin/users?page=${page}&page_size=${pageSize}`, {}, token);
+            },
+        },
+        bookings: {
+            async list(token: string, filters?: {
+                page?: number;
+                page_size?: number;
+                status?: string;
+            }): Promise<ApiResponse> {
+                const params = new URLSearchParams();
+                if (filters?.page) params.append('page', filters.page.toString());
+                if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+                if (filters?.status) params.append('status', filters.status);
+                const queryString = params.toString();
+                return apiRequest(`/api/admin/bookings${queryString ? '?' + queryString : ''}`, {}, token);
+            },
+            async updateStatus(id: string, data: { status: string; payment_status?: string }, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/bookings/${id}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }, token);
             },
         },
     },

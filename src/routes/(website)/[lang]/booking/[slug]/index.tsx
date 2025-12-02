@@ -1,17 +1,18 @@
-import {component$, useStore} from '@builder.io/qwik';
+import {component$, useSignal, useStore, useComputed$, $, type QRL} from '@builder.io/qwik';
 import {Form, routeAction$, routeLoader$, useLocation, useNavigate, type DocumentHead} from '@builder.io/qwik-city';
 import {getActivityBySlug} from '~/services/activity-api';
 import {inlineTranslate} from 'qwik-speak';
 import {useSession} from '~/routes/plugin@auth';
-import {DynamicFormField} from '~/components/booking/DynamicFormField';
 import {
     BOOKING_TYPE_PRESETS,
     getFieldsForConfig,
     mergeBookingConfigs,
     type BookingFieldConfig,
     type BookingType,
+    type BookingFieldDefinition,
 } from '~/types/booking-fields';
 import {authenticatedRequest, apiClient} from '~/utils/api-client';
+import type {ActivityPackage} from '~/types/activity';
 
 export const head: DocumentHead = {
   title: 'Book Now | Rihigo',
@@ -26,6 +27,21 @@ export const head: DocumentHead = {
     },
   ],
 };
+
+// Helper functions moved outside components
+function getNextWeekend(d: Date): Date {
+    const day = d.getDay();
+    const diff = day === 0 ? 6 : 6 - day;
+    return new Date(d.getTime() + diff * 86400000);
+}
+
+function formatDateISO(d: Date): string {
+    return d.toISOString().split('T')[0];
+}
+
+function formatDateDisplay(d: Date): string {
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
 
 export const useActivityData = routeLoader$(async (requestEvent) => {
     const slug = requestEvent.params.slug;
@@ -56,6 +72,8 @@ export const useActivityData = routeLoader$(async (requestEvent) => {
 });
 
 export const useCreateBooking = routeAction$(async (data, requestEvent) => {
+    const lang = requestEvent.params.lang || 'en';
+
     // Extract all form data including custom fields
     const customFields: Record<string, any> = {};
     const standardFieldNames = new Set([
@@ -108,10 +126,354 @@ export const useCreateBooking = routeAction$(async (data, requestEvent) => {
         };
     }
 
+    // Redirect to confirmation page on success
+    const bookingId = response.data?.id;
+    if (bookingId) {
+        throw requestEvent.redirect(302, `/${lang}/bookings/${bookingId}/confirmation`);
+    }
+
     return {
         success: true,
         data: response.data
     };
+});
+
+// Step indicator component
+const StepIndicator = component$<{currentStep: number; totalSteps: number}>(
+    ({currentStep, totalSteps}) => {
+        return (
+            <div class="flex items-center justify-center gap-2 mb-6">
+                {Array.from({length: totalSteps}, (_, i) => (
+                    <div key={i} class="flex items-center">
+                        <div class={`flex items-center justify-center size-8 rounded-full text-sm font-semibold transition-all ${
+                            i < currentStep
+                                ? 'bg-success text-success-content'
+                                : i === currentStep
+                                    ? 'bg-primary text-primary-content ring-4 ring-primary/20'
+                                    : 'bg-base-200 text-base-content/50'
+                        }`}>
+                            {i < currentStep ? (
+                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            ) : (
+                                i + 1
+                            )}
+                        </div>
+                        {i < totalSteps - 1 && (
+                            <div class={`w-8 sm:w-12 h-0.5 mx-1 transition-colors ${
+                                i < currentStep ? 'bg-success' : 'bg-base-200'
+                            }`}/>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+);
+
+// Package selection card
+const PackageCard = component$<{
+    pkg: ActivityPackage;
+    lang: string;
+    isSelected: boolean;
+    onSelect$: QRL<() => void>;
+}>(({pkg, lang, isSelected, onSelect$}) => {
+    const config = pkg.options_config as any;
+    const pricingTiers = config?.pricingTiers || [];
+    const dbPrice = pkg.prices?.[0];
+    const price = pricingTiers[0]?.price ?? dbPrice?.amount ?? 0;
+    const title = pkg.translations?.[lang]?.name || config?.title || pkg.name_internal;
+    const description = pkg.translations?.[lang]?.description || config?.description || '';
+    const inclusions = config?.inclusions || [];
+    const duration = config?.duration || config?.bookingOptions?.duration;
+
+    return (
+        <button
+            type="button"
+            onClick$={onSelect$}
+            class={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                isSelected
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'border-base-200 hover:border-primary/50 hover:bg-base-50'
+            }`}
+        >
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-semibold text-base-content">{title}</h4>
+                        {pkg.is_recommended && (
+                            <span class="badge badge-primary badge-sm">Recommended</span>
+                        )}
+                    </div>
+                    {description && (
+                        <p class="text-sm text-base-content/60 mt-1 line-clamp-2">{description}</p>
+                    )}
+                    <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-base-content/70">
+                        {duration && (
+                            <span class="flex items-center gap-1">
+                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {duration} min
+                            </span>
+                        )}
+                        {inclusions.length > 0 && (
+                            <span class="flex items-center gap-1">
+                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {inclusions.length} inclusions
+                            </span>
+                        )}
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <div class="text-lg font-bold text-primary">${price}</div>
+                    <div class="text-xs text-base-content/50">USD</div>
+                </div>
+            </div>
+            {/* Selection indicator */}
+            <div class={`mt-3 flex items-center gap-2 text-sm ${isSelected ? 'text-primary' : 'text-base-content/40'}`}>
+                <div class={`size-5 rounded-full border-2 flex items-center justify-center ${
+                    isSelected ? 'border-primary bg-primary' : 'border-current'
+                }`}>
+                    {isSelected && (
+                        <svg class="size-3 text-primary-content" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    )}
+                </div>
+                {isSelected ? 'Selected' : 'Select this package'}
+            </div>
+        </button>
+    );
+});
+
+// Guest counter component
+const GuestCounter = component$<{
+    value: number;
+    onIncrement$: QRL<() => void>;
+    onDecrement$: QRL<() => void>;
+    min?: number;
+    max?: number;
+    label?: string;
+}>(({value, onIncrement$, onDecrement$, min = 1, max = 20, label = 'Guests'}) => {
+    return (
+        <div class="flex items-center justify-between p-4 bg-base-100 rounded-xl border border-base-200">
+            <span class="font-medium text-base-content">{label}</span>
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick$={onDecrement$}
+                    disabled={value <= min}
+                    class="btn btn-circle btn-sm btn-outline"
+                >
+                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                    </svg>
+                </button>
+                <span class="text-xl font-bold min-w-[2ch] text-center">{value}</span>
+                <button
+                    type="button"
+                    onClick$={onIncrement$}
+                    disabled={value >= max}
+                    class="btn btn-circle btn-sm btn-outline"
+                >
+                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+});
+
+// Quick date selector
+const QuickDatePicker = component$<{
+    value: string;
+    onSelectToday$: QRL<() => void>;
+    onSelectTomorrow$: QRL<() => void>;
+    onSelectWeekend$: QRL<() => void>;
+    onInputChange$: QRL<(val: string) => void>;
+    name: string;
+    todayStr: string;
+    tomorrowStr: string;
+    weekendStr: string;
+}>(({value, onSelectToday$, onSelectTomorrow$, onSelectWeekend$, onInputChange$, name, todayStr, tomorrowStr, weekendStr}) => {
+    return (
+        <div class="space-y-3">
+            {/* Quick select chips */}
+            <div class="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    onClick$={onSelectToday$}
+                    class={`btn btn-sm ${value === todayStr ? 'btn-primary' : 'btn-outline'}`}
+                >
+                    Today
+                </button>
+                <button
+                    type="button"
+                    onClick$={onSelectTomorrow$}
+                    class={`btn btn-sm ${value === tomorrowStr ? 'btn-primary' : 'btn-outline'}`}
+                >
+                    Tomorrow
+                </button>
+                <button
+                    type="button"
+                    onClick$={onSelectWeekend$}
+                    class={`btn btn-sm ${value === weekendStr ? 'btn-primary' : 'btn-outline'}`}
+                >
+                    This Weekend
+                </button>
+            </div>
+            {/* Calendar input */}
+            <div class="relative">
+                <input
+                    type="date"
+                    name={name}
+                    value={value}
+                    min={todayStr}
+                    onInput$={(e) => onInputChange$((e.target as HTMLInputElement).value)}
+                    class="input input-bordered w-full pl-10"
+                    required
+                />
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            {value && (
+                <p class="text-sm text-base-content/60">
+                    Selected: <span class="font-medium">{formatDateDisplay(new Date(value + 'T00:00:00'))}</span>
+                </p>
+            )}
+        </div>
+    );
+});
+
+// Text input field component
+const TextInputField = component$<{
+    field: BookingFieldDefinition;
+    value: string;
+    onInput$: QRL<(val: string) => void>;
+    error?: string;
+}>(({field, value, onInput$, error}) => {
+    const isValid = value && !error;
+    return (
+        <div class="form-control">
+            <label class="label pb-1">
+                <span class="label-text font-medium">
+                    {field.label}
+                    {field.required && <span class="text-error ml-0.5">*</span>}
+                </span>
+                {isValid && (
+                    <svg class="size-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                )}
+            </label>
+            <input
+                type={field.type}
+                name={field.name}
+                placeholder={field.placeholder}
+                required={field.required}
+                class={`input input-bordered w-full ${error ? 'input-error' : isValid ? 'input-success' : ''}`}
+                value={value || ''}
+                onInput$={(e) => onInput$((e.target as HTMLInputElement).value)}
+                minLength={field.validation?.minLength}
+                maxLength={field.validation?.maxLength}
+                pattern={field.validation?.pattern}
+            />
+            {field.helpText && <span class="text-xs text-base-content/50 mt-1">{field.helpText}</span>}
+            {error && <span class="text-xs text-error mt-1">{error}</span>}
+        </div>
+    );
+});
+
+// Textarea field component
+const TextareaField = component$<{
+    field: BookingFieldDefinition;
+    value: string;
+    onInput$: QRL<(val: string) => void>;
+    error?: string;
+}>(({field, value, onInput$, error}) => {
+    return (
+        <div class="form-control">
+            <label class="label pb-1">
+                <span class="label-text font-medium">
+                    {field.label}
+                    {field.required && <span class="text-error ml-0.5">*</span>}
+                </span>
+            </label>
+            <textarea
+                name={field.name}
+                placeholder={field.placeholder}
+                required={field.required}
+                class={`textarea textarea-bordered w-full ${error ? 'textarea-error' : ''}`}
+                value={value || ''}
+                onInput$={(e) => onInput$((e.target as HTMLTextAreaElement).value)}
+                rows={3}
+            />
+            {field.helpText && <span class="text-xs text-base-content/50 mt-1">{field.helpText}</span>}
+            {error && <span class="text-xs text-error mt-1">{error}</span>}
+        </div>
+    );
+});
+
+// Select field component
+const SelectField = component$<{
+    field: BookingFieldDefinition;
+    value: string;
+    onInput$: QRL<(val: string) => void>;
+    error?: string;
+}>(({field, value, onInput$, error}) => {
+    return (
+        <div class="form-control">
+            <label class="label pb-1">
+                <span class="label-text font-medium">
+                    {field.label}
+                    {field.required && <span class="text-error ml-0.5">*</span>}
+                </span>
+            </label>
+            <select
+                name={field.name}
+                required={field.required}
+                class={`select select-bordered w-full ${error ? 'select-error' : ''}`}
+                value={value || ''}
+                onChange$={(e) => onInput$((e.target as HTMLSelectElement).value)}
+            >
+                <option value="" disabled>{field.placeholder || `Select ${field.label}`}</option>
+                {field.options?.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                ))}
+            </select>
+            {field.helpText && <span class="text-xs text-base-content/50 mt-1">{field.helpText}</span>}
+            {error && <span class="text-xs text-error mt-1">{error}</span>}
+        </div>
+    );
+});
+
+// Checkbox field component
+const CheckboxField = component$<{
+    field: BookingFieldDefinition;
+    value: boolean;
+    onInput$: QRL<(val: boolean) => void>;
+}>(({field, value, onInput$}) => {
+    return (
+        <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input
+                    type="checkbox"
+                    name={field.name}
+                    class="checkbox checkbox-primary"
+                    checked={value || false}
+                    onChange$={(e) => onInput$((e.target as HTMLInputElement).checked)}
+                />
+                <span class="label-text">{field.label}</span>
+            </label>
+            {field.helpText && <span class="text-xs text-base-content/50 mt-1">{field.helpText}</span>}
+        </div>
+    );
 });
 
 export default component$(() => {
@@ -123,37 +485,47 @@ export default component$(() => {
     const createBookingAction = useCreateBooking();
 
     const lang = location.params.lang || 'en';
-    const packageId = location.url.searchParams.get('package');
+    const urlPackageId = location.url.searchParams.get('package');
 
-    // Form values store for conditional field logic
-    const formValues = useStore<Record<string, any>>({});
+    // State management
+    const currentStep = useSignal(0);
+    const selectedPackageId = useSignal<string | null>(urlPackageId);
+    const formValues = useStore<Record<string, any>>({
+        number_of_people: 1,
+        payment_method: 'pay_on_arrival',
+    });
 
     // Handle error state
     if (!activityDataResponse.value.success || !activityDataResponse.value.data) {
         return (
-            <div class="min-h-screen bg-gray-50">
-                <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
-                    <div class="text-center">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-4">{t('booking.error.title@@Activity Not Found')}</h1>
-                        <p class="text-gray-600 mb-6">{activityDataResponse.value.error}</p>
-                        <a href={`/${lang}/activities`} class="btn btn-primary">
-                            {t('booking.error.backToActivities@@Back to Activities')}
-                        </a>
+            <div class="min-h-screen bg-base-100 flex items-center justify-center p-4">
+                <div class="text-center max-w-md">
+                    <div class="size-20 mx-auto mb-4 rounded-full bg-error/10 flex items-center justify-center">
+                        <svg class="size-10 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
                     </div>
+                    <h1 class="text-2xl font-bold text-base-content mb-2">{t('booking.error.title@@Activity Not Found')}</h1>
+                    <p class="text-base-content/60 mb-6">{activityDataResponse.value.error}</p>
+                    <a href={`/${lang}/activities`} class="btn btn-primary">
+                        {t('booking.error.backToActivities@@Back to Activities')}
+                    </a>
                 </div>
             </div>
         );
     }
 
     const activity = activityDataResponse.value.data;
-    const selectedPackage = activity.packages?.find(p => p.id === packageId);
+    const packages = activity.packages || [];
+    const hasMultiplePackages = packages.length > 1;
     const title = activity.translations?.[lang]?.title || activity.slug;
 
-    // Debug price data
-    console.log('Activity base_price:', activity.base_price);
-    console.log('Activity packages:', activity.packages);
-    console.log('Selected package:', selectedPackage);
-    console.log('Package ID from URL:', packageId);
+    // Auto-select single package
+    if (packages.length === 1 && !selectedPackageId.value) {
+        selectedPackageId.value = packages[0].id;
+    }
+
+    const selectedPackage = packages.find(p => p.id === selectedPackageId.value);
 
     // Get booking configuration
     const bookingType = (activity.booking_type || 'standard') as BookingType;
@@ -161,284 +533,573 @@ export default component$(() => {
     const activityConfig = activity.booking_field_config as BookingFieldConfig | undefined;
     const finalConfig = mergeBookingConfigs(baseConfig, activityConfig);
 
-    // Debug logging
-    console.log('Booking Type:', bookingType);
-    console.log('Base Config:', baseConfig);
-    console.log('Activity Config:', activityConfig);
-    console.log('Final Config:', finalConfig);
+    // Determine steps based on booking type
+    const needsPackageStep = hasMultiplePackages && !urlPackageId;
+    const needsDateStep = !finalConfig.hide_fields?.includes('booking_date') &&
+                          !finalConfig.hide_fields?.includes('check_in_date');
+    const needsGuestStep = !finalConfig.hide_fields?.includes('number_of_people');
 
-    // Get all fields to display
-    const allFields = getFieldsForConfig(finalConfig);
-    console.log('All Fields:', allFields.map(f => f.name));
+    const steps: {title: string; key: string}[] = [];
+    if (needsPackageStep) steps.push({title: 'Package', key: 'package'});
+    if (needsDateStep) steps.push({title: 'Date', key: 'date'});
+    if (needsGuestStep) steps.push({title: 'Guests', key: 'guests'});
+    steps.push({title: 'Details', key: 'details'});
+    steps.push({title: 'Confirm', key: 'confirm'});
+
+    const totalSteps = steps.length;
 
     // Initialize form values with defaults
     if (session.value?.user) {
-        formValues.full_name = formValues.full_name || session.value.user.name || '';
-        formValues.email = formValues.email || session.value.user.email || '';
+        if (!formValues.full_name) formValues.full_name = session.value.user.name || '';
+        if (!formValues.email) formValues.email = session.value.user.email || '';
     }
 
-    // Get price information
-    const getPrice = () => {
-        const numPeople = formValues.number_of_people || 1;
-        if (selectedPackage) {
-            const price = selectedPackage.prices?.find(p => p.currency_code === 'USD');
-            return price ? price.amount * numPeople : 0;
-        }
-        return (activity.base_price || 0) * numPeople;
-    };
+    // Get all form fields
+    const allFields = getFieldsForConfig(finalConfig);
 
-    // Handle form submission success
-    if (createBookingAction.value?.success) {
-        const booking = createBookingAction.value.data;
-        if (typeof window !== 'undefined') {
-            window.location.href = `/${lang}/bookings/${booking?.id}/confirmation`;
-        }
-    }
+    // Separate contact fields from other fields
+    const contactFields = allFields.filter(f =>
+        ['full_name', 'email', 'phone', 'nationality'].includes(f.name)
+    );
+    const otherFields = allFields.filter(f =>
+        !['full_name', 'email', 'phone', 'nationality', 'booking_date', 'check_in_date', 'check_out_date', 'number_of_people'].includes(f.name)
+    );
 
-    // Group fields if configured
-    const fieldGroups = finalConfig.field_groups || [{
-        title: 'Booking Information',
-        fields: allFields.map(f => f.name)
-    }];
+    // Price calculations - computed outside to avoid function in render
+    const packageConfig = selectedPackage?.options_config as any;
+    const pricingTiers = packageConfig?.pricingTiers || [];
+    const dbPrice = selectedPackage?.prices?.[0];
+    const baseUnitPrice = pricingTiers[0]?.price ?? dbPrice?.amount ?? activity.base_price ?? 0;
+
+    const unitPrice = useComputed$(() => baseUnitPrice);
+    const totalPrice = useComputed$(() => baseUnitPrice * (formValues.number_of_people || 1));
+
+    // Package details
+    const packageTitle = selectedPackage
+        ? (selectedPackage.translations?.[lang]?.name || packageConfig?.title || selectedPackage.name_internal)
+        : '';
+
+    // Navigation handlers
+    const goNext = $(() => {
+        if (currentStep.value < totalSteps - 1) {
+            currentStep.value++;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+    });
+
+    const goBack = $(() => {
+        if (currentStep.value > 0) {
+            currentStep.value--;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+    });
+
+    const canProceed = useComputed$(() => {
+        const step = steps[currentStep.value];
+        switch (step?.key) {
+            case 'package':
+                return !!selectedPackageId.value;
+            case 'date':
+                return !!(formValues.booking_date || formValues.check_in_date);
+            case 'guests':
+                return formValues.number_of_people >= 1;
+            case 'details':
+                return !!(formValues.full_name && formValues.email && formValues.phone);
+            case 'confirm':
+                return true;
+            default:
+                return true;
+        }
+    });
+
+    const currentStepKey = steps[currentStep.value]?.key;
+
+    // Calculate date strings for quick date picker
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 86400000);
+    const weekend = getNextWeekend(today);
+    const todayStr = formatDateISO(today);
+    const tomorrowStr = formatDateISO(tomorrow);
+    const weekendStr = formatDateISO(weekend);
 
     return (
-        <div class="min-h-screen bg-gray-50">
+        <div class="min-h-screen bg-base-200/50">
             {/* Header */}
-            <div class="bg-white border-b border-gray-200">
-                <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
-                    <div class="flex items-center justify-between">
-                        <h1 class="text-2xl font-bold text-gray-800">{t('booking.title@@Complete Your Booking')}</h1>
+            <div class="bg-base-100 border-b border-base-200 sticky top-0 z-50">
+                <div class="container mx-auto max-w-4xl px-4 py-3">
+                    <div class="flex items-center gap-4">
                         <button
+                            type="button"
                             onClick$={() => nav(`/${lang}/activities/${activity.slug}`)}
-                            class="btn btn-ghost btn-sm"
+                            class="btn btn-ghost btn-sm btn-circle"
                         >
-                            {t('booking.cancel@@Cancel')}
+                            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
                         </button>
+                        <div class="flex-1 min-w-0">
+                            <h1 class="text-lg font-bold text-base-content truncate">{title}</h1>
+                            <p class="text-sm text-base-content/60">{steps[currentStep.value]?.title}</p>
+                        </div>
+                        {/* Price badge - always visible */}
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-primary">${totalPrice.value.toFixed(2)}</div>
+                            <div class="text-xs text-base-content/50">Total</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="container mx-auto py-3 max-w-7xl px-6 lg:px-8">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Form */}
-                    <div class="lg:col-span-2">
-                        <Form action={createBookingAction} class="bg-white rounded-lg shadow-md p-6">
-                            <input type="hidden" name="activity_id" value={activity.id}/>
-                            {packageId && <input type="hidden" name="package_id" value={packageId}/>}
+            {/* Step indicator */}
+            <div class="container mx-auto max-w-4xl px-4 pt-6">
+                <StepIndicator currentStep={currentStep.value} totalSteps={totalSteps} />
+            </div>
 
-                            {/* Dynamic Fields Grouped */}
-                            <div class="space-y-8">
-                                {fieldGroups.map((group, groupIdx) => {
-                                    const groupFields = allFields.filter(f => group.fields.includes(f.name));
+            {/* Main content */}
+            <div class="container mx-auto max-w-4xl px-4 pb-32">
+                <Form action={createBookingAction}>
+                    <input type="hidden" name="activity_id" value={activity.id}/>
+                    <input type="hidden" name="package_id" value={selectedPackageId.value || ''}/>
+                    <input type="hidden" name="number_of_people" value={formValues.number_of_people}/>
+                    <input type="hidden" name="payment_method" value={formValues.payment_method}/>
 
-                                    if (groupFields.length === 0) return null;
-
-                                    return (
-                                        <div key={groupIdx}>
-                                            <h2 class="text-xl font-bold text-gray-800 mb-4">
-                                                {group.title}
-                                            </h2>
-                                            {group.description && (
-                                                <p class="text-sm text-gray-600 mb-4">{group.description}</p>
-                                            )}
-
-                                            {/* Grid layout for fields */}
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {groupFields.map((field) => (
-                                                    <DynamicFormField
-                                                        key={field.name}
-                                                        field={field}
-                                                        formValues={formValues}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-
-                                {/* Payment Method - Always show */}
-                                {!finalConfig.hide_fields?.includes('payment_method') && (
-                                    <>
-                                        <div class="divider"></div>
-
-                                        <div>
-                                            <h2 class="text-xl font-bold text-gray-800 mb-4">
-                                                {t('booking.payment.title@@Payment Method')}
-                                            </h2>
-
-                                            <div class="space-y-3">
-                                                <div class="form-control">
-                                                    <label class="label cursor-pointer justify-start gap-4">
-                                                        <input type="radio" name="payment_method" value="pay_on_arrival"
-                                                               class="radio" checked/>
-                                                        <div>
-                                                            <span class="label-text font-semibold">
-                                                                {t('booking.payOnArrival@@Pay on Arrival')}
-                                                            </span>
-                                                            <p class="text-sm text-gray-500">
-                                                                {t('booking.payOnArrivalDesc@@Pay when you arrive at the activity location')}
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-
-                                                <div class="form-control">
-                                                    <label class="label cursor-pointer justify-start gap-4">
-                                                        <input type="radio" name="payment_method" value="bank_transfer"
-                                                               class="radio"/>
-                                                        <div>
-                                                            <span class="label-text font-semibold">
-                                                                {t('booking.bankTransfer@@Bank Transfer')}
-                                                            </span>
-                                                            <p class="text-sm text-gray-500">
-                                                                {t('booking.bankTransferDesc@@We will send you bank details via email')}
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* Error Display */}
-                                {createBookingAction.value?.error && (
-                                    <div role="alert" class="alert alert-error shadow-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6"
-                                             fill="none" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <div>
-                                            <h3 class="font-bold">{t('booking.error.title@@Booking Error')}</h3>
-                                            <div class="text-sm">{createBookingAction.value.error}</div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Submit Button */}
-                                <div class="flex justify-end">
-                                    <button
-                                        type="submit"
-                                        class="btn btn-primary btn-lg"
-                                        disabled={createBookingAction.isRunning}
-                                    >
-                                        {createBookingAction.isRunning ? (
-                                            <>
-                                                <span class="loading loading-spinner"></span>
-                                                {t('booking.processing@@Processing...')}
-                                            </>
-                                        ) : (
-                                            t('booking.confirmBooking@@Confirm Booking')
-                                        )}
-                                    </button>
-                                </div>
+                    {/* Step: Package Selection */}
+                    {currentStepKey === 'package' && (
+                        <div class="space-y-4">
+                            <div class="text-center mb-6">
+                                <h2 class="text-2xl font-bold text-base-content">Choose Your Package</h2>
+                                <p class="text-base-content/60 mt-1">Select the option that suits you best</p>
                             </div>
-                        </Form>
-                    </div>
+                            <div class="space-y-3">
+                                {packages.map((pkg) => (
+                                    <PackageCard
+                                        key={pkg.id}
+                                        pkg={pkg}
+                                        lang={lang}
+                                        isSelected={selectedPackageId.value === pkg.id}
+                                        onSelect$={$(() => { selectedPackageId.value = pkg.id; })}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
-                    {/* Booking Summary Sidebar */}
-                    <div class="lg:col-span-1">
-                        <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">
-                                {t('booking.summary@@Booking Summary')}
-                            </h3>
-
-                            {/* Activity Info */}
-                            <div class="space-y-4">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">{title}</h4>
-                                    {selectedPackage && (
-                                        <p class="text-sm text-gray-600">
-                                            {selectedPackage.translations?.[lang]?.name || selectedPackage.name_internal}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div class="divider my-2"></div>
-
-                                {/* Booking Type Badge */}
-                                <div class="flex items-center gap-2">
-                                    <span class="badge badge-outline capitalize">{bookingType.replace('_', ' ')}</span>
-                                </div>
-
-                                {/* Dynamic Summary Fields */}
-                                {formValues.booking_date && (
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600">{t('booking.summary.date@@Date')}</span>
-                                        <span class="font-semibold">
-                                            {new Date(formValues.booking_date).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {formValues.check_in_date && formValues.check_out_date && (
-                                    <>
-                                        <div class="flex justify-between text-sm">
-                                            <span class="text-gray-600">Check-in</span>
-                                            <span class="font-semibold">
-                                                {new Date(formValues.check_in_date).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div class="flex justify-between text-sm">
-                                            <span class="text-gray-600">Check-out</span>
-                                            <span class="font-semibold">
-                                                {new Date(formValues.check_out_date).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </>
-                                )}
-
-                                {formValues.number_of_people && (
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600">
-                                            {bookingType === 'accommodation' ? 'Guests' : 'People'}
-                                        </span>
-                                        <span class="font-semibold">{formValues.number_of_people}</span>
-                                    </div>
-                                )}
-
-                                <div class="divider my-2"></div>
-
-                                {/* Price */}
-                                {formValues.number_of_people && (
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600">
-                                            ${(getPrice() / formValues.number_of_people).toFixed(2)} × {formValues.number_of_people}
-                                        </span>
-                                        <span class="font-semibold">${getPrice().toFixed(2)}</span>
-                                    </div>
-                                )}
-
-                                <div class="divider my-2"></div>
-
-                                {/* Total */}
-                                <div class="flex justify-between items-center">
-                                    <span class="text-lg font-bold">{t('booking.summary.total@@Total')}</span>
-                                    <span class="text-2xl font-bold text-primary">${getPrice().toFixed(2)}</span>
-                                </div>
-
-                                {/* Cancellation Policy */}
-                                <div class="mt-6 p-3 bg-blue-50 rounded-lg">
-                                    <div class="flex items-start gap-2 text-sm text-blue-800">
-                                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor"
-                                             viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd"
-                                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                                  clip-rule="evenodd"/>
-                                        </svg>
+                    {/* Step: Date Selection */}
+                    {currentStepKey === 'date' && (
+                        <div class="space-y-4">
+                            <div class="text-center mb-6">
+                                <h2 class="text-2xl font-bold text-base-content">
+                                    {bookingType === 'accommodation' ? 'Select Your Dates' : 'When would you like to go?'}
+                                </h2>
+                                <p class="text-base-content/60 mt-1">
+                                    {bookingType === 'accommodation'
+                                        ? 'Choose your check-in and check-out dates'
+                                        : 'Pick a date that works for you'}
+                                </p>
+                            </div>
+                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                {bookingType === 'accommodation' ? (
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <p class="font-semibold">
-                                                {t('booking.cancellationPolicy@@Free Cancellation')}
-                                            </p>
-                                            <p class="text-xs mt-1">
-                                                {t('booking.cancellationPolicyDesc@@Cancel up to 24 hours before for a full refund')}
-                                            </p>
+                                            <label class="label"><span class="label-text font-medium">Check-in</span></label>
+                                            <input
+                                                type="date"
+                                                name="check_in_date"
+                                                value={formValues.check_in_date || ''}
+                                                min={todayStr}
+                                                onInput$={(e) => formValues.check_in_date = (e.target as HTMLInputElement).value}
+                                                class="input input-bordered w-full"
+                                                required
+                                            />
                                         </div>
+                                        <div>
+                                            <label class="label"><span class="label-text font-medium">Check-out</span></label>
+                                            <input
+                                                type="date"
+                                                name="check_out_date"
+                                                value={formValues.check_out_date || ''}
+                                                min={formValues.check_in_date || todayStr}
+                                                onInput$={(e) => formValues.check_out_date = (e.target as HTMLInputElement).value}
+                                                class="input input-bordered w-full"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <QuickDatePicker
+                                        value={formValues.booking_date || ''}
+                                        onSelectToday$={$(() => formValues.booking_date = todayStr)}
+                                        onSelectTomorrow$={$(() => formValues.booking_date = tomorrowStr)}
+                                        onSelectWeekend$={$(() => formValues.booking_date = weekendStr)}
+                                        onInputChange$={$((val: string) => formValues.booking_date = val)}
+                                        name="booking_date"
+                                        todayStr={todayStr}
+                                        tomorrowStr={tomorrowStr}
+                                        weekendStr={weekendStr}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step: Guests */}
+                    {currentStepKey === 'guests' && (
+                        <div class="space-y-4">
+                            <div class="text-center mb-6">
+                                <h2 class="text-2xl font-bold text-base-content">How many guests?</h2>
+                                <p class="text-base-content/60 mt-1">
+                                    ${unitPrice.value.toFixed(2)} per person
+                                </p>
+                            </div>
+                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                <GuestCounter
+                                    value={formValues.number_of_people}
+                                    onIncrement$={$(() => {
+                                        if (formValues.number_of_people < (activity.max_participants || 20)) {
+                                            formValues.number_of_people++;
+                                        }
+                                    })}
+                                    onDecrement$={$(() => {
+                                        if (formValues.number_of_people > 1) {
+                                            formValues.number_of_people--;
+                                        }
+                                    })}
+                                    min={1}
+                                    max={activity.max_participants || 20}
+                                    label={bookingType === 'accommodation' ? 'Guests' : 'People'}
+                                />
+                                {/* Price breakdown */}
+                                <div class="mt-6 pt-4 border-t border-base-200">
+                                    <div class="flex justify-between items-center text-base-content/70">
+                                        <span>${unitPrice.value.toFixed(2)} x {formValues.number_of_people} {formValues.number_of_people === 1 ? 'person' : 'people'}</span>
+                                        <span class="font-semibold text-base-content">${totalPrice.value.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Step: Details (Contact Info + Custom Fields) */}
+                    {currentStepKey === 'details' && (
+                        <div class="space-y-6">
+                            <div class="text-center mb-6">
+                                <h2 class="text-2xl font-bold text-base-content">Your Details</h2>
+                                <p class="text-base-content/60 mt-1">We'll use this to confirm your booking</p>
+                            </div>
+
+                            {/* Contact Information */}
+                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                <h3 class="font-semibold text-base-content mb-4 flex items-center gap-2">
+                                    <svg class="size-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    Contact Information
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {contactFields.map((field) => {
+                                        if (field.type === 'text' || field.type === 'email' || field.type === 'tel') {
+                                            return (
+                                                <TextInputField
+                                                    key={field.name}
+                                                    field={field}
+                                                    value={formValues[field.name] || ''}
+                                                    onInput$={$((val: string) => formValues[field.name] = val)}
+                                                />
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Custom/Other Fields */}
+                            {otherFields.length > 0 && (
+                                <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                    <h3 class="font-semibold text-base-content mb-4 flex items-center gap-2">
+                                        <svg class="size-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        Additional Information
+                                    </h3>
+                                    <div class="grid grid-cols-1 gap-4">
+                                        {otherFields.map((field) => {
+                                            if (field.type === 'textarea') {
+                                                return (
+                                                    <TextareaField
+                                                        key={field.name}
+                                                        field={field}
+                                                        value={formValues[field.name] || ''}
+                                                        onInput$={$((val: string) => formValues[field.name] = val)}
+                                                    />
+                                                );
+                                            }
+                                            if (field.type === 'select') {
+                                                return (
+                                                    <SelectField
+                                                        key={field.name}
+                                                        field={field}
+                                                        value={formValues[field.name] || ''}
+                                                        onInput$={$((val: string) => formValues[field.name] = val)}
+                                                    />
+                                                );
+                                            }
+                                            if (field.type === 'checkbox') {
+                                                return (
+                                                    <CheckboxField
+                                                        key={field.name}
+                                                        field={field}
+                                                        value={formValues[field.name] || false}
+                                                        onInput$={$((val: boolean) => formValues[field.name] = val)}
+                                                    />
+                                                );
+                                            }
+                                            if (field.type === 'text' || field.type === 'email' || field.type === 'tel') {
+                                                return (
+                                                    <TextInputField
+                                                        key={field.name}
+                                                        field={field}
+                                                        value={formValues[field.name] || ''}
+                                                        onInput$={$((val: string) => formValues[field.name] = val)}
+                                                    />
+                                                );
+                                            }
+                                            return null;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Step: Confirm & Pay */}
+                    {currentStepKey === 'confirm' && (
+                        <div class="space-y-6">
+                            <div class="text-center mb-6">
+                                <h2 class="text-2xl font-bold text-base-content">Review & Confirm</h2>
+                                <p class="text-base-content/60 mt-1">Make sure everything looks right</p>
+                            </div>
+
+                            {/* Booking Summary Card */}
+                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                <h3 class="font-semibold text-base-content mb-4">Booking Summary</h3>
+
+                                {/* Activity & Package */}
+                                <div class="flex gap-4 pb-4 border-b border-base-200">
+                                    {activity.images && (
+                                        <div class="size-20 rounded-lg overflow-hidden flex-shrink-0 bg-base-200">
+                                            <img
+                                                src={Array.isArray(activity.images) ? activity.images[0] : activity.images}
+                                                alt={title}
+                                                class="size-full object-cover"
+                                                width={80}
+                                                height={80}
+                                            />
+                                        </div>
+                                    )}
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-semibold text-base-content">{title}</h4>
+                                        {packageTitle && (
+                                            <p class="text-sm text-primary font-medium">{packageTitle}</p>
+                                        )}
+                                        <div class="flex flex-wrap gap-2 mt-2">
+                                            {(formValues.booking_date || formValues.check_in_date) && (
+                                                <span class="badge badge-outline badge-sm">
+                                                    {formatDateDisplay(new Date((formValues.booking_date || formValues.check_in_date) + 'T00:00:00'))}
+                                                </span>
+                                            )}
+                                            <span class="badge badge-outline badge-sm">
+                                                {formValues.number_of_people} {formValues.number_of_people === 1 ? 'person' : 'people'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Price Breakdown */}
+                                <div class="py-4 space-y-2">
+                                    <div class="flex justify-between text-sm text-base-content/70">
+                                        <span>${unitPrice.value.toFixed(2)} x {formValues.number_of_people}</span>
+                                        <span>${totalPrice.value.toFixed(2)}</span>
+                                    </div>
+                                    <div class="flex justify-between text-lg font-bold text-base-content pt-2 border-t border-base-200">
+                                        <span>Total</span>
+                                        <span class="text-primary">${totalPrice.value.toFixed(2)} USD</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contact Summary */}
+                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold text-base-content">Contact Details</h3>
+                                    <button
+                                        type="button"
+                                        onClick$={() => {
+                                            const detailsStepIndex = steps.findIndex(s => s.key === 'details');
+                                            if (detailsStepIndex >= 0) currentStep.value = detailsStepIndex;
+                                        }}
+                                        class="btn btn-ghost btn-xs"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="size-4 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        <span>{formValues.full_name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="size-4 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span>{formValues.email}</span>
+                                    </div>
+                                    {formValues.phone && (
+                                        <div class="flex items-center gap-2">
+                                            <svg class="size-4 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                            </svg>
+                                            <span>{formValues.phone}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Payment Method */}
+                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                <h3 class="font-semibold text-base-content mb-4">Payment Method</h3>
+                                <div class="space-y-3">
+                                    <label class="flex items-start gap-4 p-4 rounded-xl border-2 border-base-200 cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                                        <input
+                                            type="radio"
+                                            name="payment_method_select"
+                                            value="pay_on_arrival"
+                                            class="radio radio-primary mt-0.5"
+                                            checked={formValues.payment_method === 'pay_on_arrival'}
+                                            onChange$={() => formValues.payment_method = 'pay_on_arrival'}
+                                        />
+                                        <div class="flex-1">
+                                            <span class="font-semibold text-base-content">Pay on Arrival</span>
+                                            <p class="text-sm text-base-content/60 mt-0.5">Pay when you arrive at the location</p>
+                                        </div>
+                                        <svg class="size-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                    </label>
+                                    <label class="flex items-start gap-4 p-4 rounded-xl border-2 border-base-200 cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                                        <input
+                                            type="radio"
+                                            name="payment_method_select"
+                                            value="bank_transfer"
+                                            class="radio radio-primary mt-0.5"
+                                            checked={formValues.payment_method === 'bank_transfer'}
+                                            onChange$={() => formValues.payment_method = 'bank_transfer'}
+                                        />
+                                        <div class="flex-1">
+                                            <span class="font-semibold text-base-content">Bank Transfer</span>
+                                            <p class="text-sm text-base-content/60 mt-0.5">We'll email you the bank details</p>
+                                        </div>
+                                        <svg class="size-6 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                        </svg>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Trust Indicators */}
+                            <div class="bg-success/10 rounded-2xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="size-6 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="font-semibold text-success">Free Cancellation</p>
+                                        <p class="text-sm text-base-content/70 mt-0.5">
+                                            Cancel up to 24 hours before for a full refund
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Error Display */}
+                            {createBookingAction.value?.error && (
+                                <div role="alert" class="alert alert-error">
+                                    <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <span>{createBookingAction.value.error}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </Form>
+            </div>
+
+            {/* Fixed Bottom Navigation */}
+            <div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 p-4 shadow-lg">
+                <div class="container mx-auto max-w-4xl">
+                    <div class="flex items-center gap-4">
+                        {/* Back button */}
+                        {currentStep.value > 0 && (
+                            <button
+                                type="button"
+                                onClick$={goBack}
+                                class="btn btn-ghost"
+                            >
+                                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                Back
+                            </button>
+                        )}
+
+                        <div class="flex-1"/>
+
+                        {/* Price summary on mobile */}
+                        <div class="text-right mr-2 lg:hidden">
+                            <div class="text-xs text-base-content/60">Total</div>
+                            <div class="font-bold text-primary">${totalPrice.value.toFixed(2)}</div>
+                        </div>
+
+                        {/* Next/Submit button */}
+                        {currentStepKey !== 'confirm' ? (
+                            <button
+                                type="button"
+                                onClick$={goNext}
+                                disabled={!canProceed.value}
+                                class="btn btn-primary min-w-[120px]"
+                            >
+                                Continue
+                                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick$={() => {
+                                    const form = document.querySelector('form');
+                                    if (form) form.requestSubmit();
+                                }}
+                                disabled={createBookingAction.isRunning}
+                                class="btn btn-primary min-w-[160px]"
+                            >
+                                {createBookingAction.isRunning ? (
+                                    <>
+                                        <span class="loading loading-spinner loading-sm"></span>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Confirm Booking
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

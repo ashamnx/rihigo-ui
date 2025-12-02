@@ -65,7 +65,9 @@ export interface VendorBooking {
     taxes: number;
     fees: number;
     total: number;
-    currency: string;
+    currency: string; // Always USD (base currency)
+    display_currency?: string; // Display currency
+    exchange_rate_at_booking?: number; // Exchange rate at time of booking
     commission_amount?: number;
     net_revenue: number;
     pricing_breakdown?: PricingBreakdown;
@@ -145,7 +147,8 @@ export interface BookingCreateInput {
     taxes?: number;
     fees?: number;
     total?: number;
-    currency?: string;
+    currency?: string; // Display currency (stored amounts are in USD)
+    display_currency?: string; // Alias for currency field
     commission_amount?: number;
     pricing_breakdown?: PricingBreakdown;
 

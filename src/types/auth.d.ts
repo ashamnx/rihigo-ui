@@ -11,7 +11,7 @@ declare module "@auth/core/types" {
       nationality?: string;
       preferences?: {
         language: string;
-        currency: string;
+        preferred_currency: string; // User's preferred display currency
         notifications: boolean;
       };
       linkedAccounts?: string[];
@@ -28,7 +28,7 @@ declare module "@auth/core/types" {
     nationality?: string;
     preferences?: {
       language: string;
-      currency: string;
+      preferred_currency: string; // User's preferred display currency
       notifications: boolean;
     };
     linkedAccounts?: string[];
@@ -42,7 +42,7 @@ declare module "@auth/core/types" {
     nationality?: string;
     preferences?: {
       language: string;
-      currency: string;
+      preferred_currency: string; // User's preferred display currency
       notifications: boolean;
     };
     linkedAccounts?: string[];

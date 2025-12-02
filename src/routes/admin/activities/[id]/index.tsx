@@ -2,8 +2,8 @@ import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
-import {getActivityById, getAtolls, getIslands, updateActivity} from "~/services/activity-api";
-import type {UpdateActivityInput} from '~/types/activity';
+import { getActivityById, getAtolls, getIslands, updateActivity } from "~/services/activity-api";
+import type { UpdateActivityInput, Activity } from '~/types/activity';
 
 export const useActivity = routeLoader$(async (requestEvent) => {
   const activityId = requestEvent.params.id;
@@ -42,6 +42,25 @@ export const useVendors = routeLoader$(async (requestEvent) => {
     } catch (error) {
       console.error('Failed to load vendors:', error);
       return { success: false, data: [], error_message: 'Failed to load vendors' };
+    }
+  });
+});
+
+export const useRelatedActivities = routeLoader$(async (requestEvent) => {
+  const activityId = requestEvent.params.id;
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      const response = await apiClient.activities.listAdmin(1, 10, token);
+      if (response.success && response.data) {
+        // Filter out current activity and limit to 4
+        const related = (response.data as Activity[])
+          .filter(a => a.id !== activityId)
+          .slice(0, 4);
+        return { success: true, data: related };
+      }
+      return { success: false, data: [] };
+    } catch {
+      return { success: false, data: [] };
     }
   });
 });
@@ -88,22 +107,40 @@ export const useUpdateActivity = routeAction$(async (data, requestEvent) => {
   });
 });
 
+const sections = [
+  { id: 'basic', label: 'Basic Info', icon: 'M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z' },
+  { id: 'location', label: 'Location', icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z' },
+  { id: 'seo', label: 'SEO', icon: 'M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z' },
+  { id: 'stats', label: 'Stats', icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
+  { id: 'layout', label: 'Layout', icon: 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z' },
+];
+
 export default component$(() => {
   const activityData = useActivity();
   const atolls = useAtolls();
   const islands = useIslands();
   const vendorsResponse = useVendors();
+  const relatedActivitiesData = useRelatedActivities();
   const updateActivityAction = useUpdateActivity();
   const selectedAtoll = useSignal<number | undefined>();
+  const activeSection = useSignal('basic');
 
   // Handle not found
   if (!activityData.value.success || !activityData.value.data) {
     return (
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">🏝️</div>
-        <h1 class="text-2xl font-bold mb-4">Activity Not Found</h1>
-        <p class="text-base-content/70 mb-6">The activity you are looking for does not exist.</p>
-        <Link href="/admin/activities" class="btn btn-primary">Back to Activities</Link>
+      <div class="min-h-[60vh] flex items-center justify-center">
+        <div class="text-center">
+          <div class="size-20 rounded-full bg-base-200 flex items-center justify-center mx-auto mb-6">
+            <svg class="size-10 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold mb-2">Activity Not Found</h1>
+          <p class="text-base-content/60 mb-6">The activity you are looking for does not exist or has been removed.</p>
+          <Link href="/admin/activities" class="btn btn-primary">
+            Back to Activities
+          </Link>
+        </div>
       </div>
     );
   }
@@ -116,331 +153,567 @@ export default component$(() => {
     : islands.value;
 
   const vendors = vendorsResponse.value.data || [];
+  const relatedActivities = relatedActivitiesData.value.data || [];
 
   const title = activity.translations?.en?.title || activity.seo_metadata.title || activity.slug;
   const packageCount = activity.packages?.length || 0;
 
   return (
-    <div>
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <div>
-          <div class="breadcrumbs text-sm">
-            <ul>
-              <li><Link href="/admin/activities">Activities</Link></li>
-              <li>{title}</li>
-            </ul>
-          </div>
-          <h1 class="text-2xl font-bold">Edit Activity</h1>
-          <div class="flex items-center gap-4 mt-2">
-            <div class={`badge ${activity.status === 'published' ? 'badge-success' : activity.status === 'draft' ? 'badge-warning' : 'badge-error'}`}>
-              {activity.status}
-            </div>
-            <div class="text-sm text-base-content/70">
-              {packageCount} package{packageCount !== 1 ? 's' : ''}
-            </div>
-            {activity.review_count > 0 && (
-              <div class="text-sm text-base-content/70">
-                ⭐ {activity.review_score.toFixed(1)} ({activity.review_count} reviews)
+    <div class="min-h-screen">
+      {/* Sticky Header */}
+      <div class="sticky top-0 z-30 bg-base-100/95 backdrop-blur-sm border-b border-base-200 -mx-4 px-4 lg:-mx-6 lg:px-6">
+        <div class="py-4">
+          {/* Breadcrumb & Title Row */}
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="min-w-0">
+              <div class="breadcrumbs text-sm mb-1">
+                <ul>
+                  <li><Link href="/admin" class="text-base-content/60 hover:text-base-content">Dashboard</Link></li>
+                  <li><Link href="/admin/activities" class="text-base-content/60 hover:text-base-content">Activities</Link></li>
+                  <li class="text-base-content/40 truncate max-w-[200px]">{title}</li>
+                </ul>
               </div>
-            )}
-          </div>
-        </div>
-        <div class="mt-4 sm:mt-0 flex gap-2">
-          <Link
-            href={`/admin/activities/${activity.id}/builder`}
-            class="btn btn-outline btn-sm"
-          >
-            🎨 Page Builder
-          </Link>
-          <Link
-            href={`/admin/activities/${activity.id}/packages`}
-            class="btn btn-outline btn-sm"
-          >
-            📦 Packages ({packageCount})
-          </Link>
-          <Link href="/admin/activities" class="btn btn-outline">
-            Back to Activities
-          </Link>
-        </div>
-      </div>
-
-      {/* Success message */}
-      {updateActivityAction.value?.success && (
-        <div class="alert alert-success mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{updateActivityAction.value.message}</span>
-        </div>
-      )}
-
-      {/* Error message */}
-      {updateActivityAction.value?.success === false && (
-        <div class="alert alert-error mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{updateActivityAction.value.message}</span>
-        </div>
-      )}
-
-      <Form action={updateActivityAction} class="space-y-8">
-          <input type="hidden" value={activity.id} name="id"/>
-        {/* Basic Information */}
-        <div class="card bg-base-100 shadow-md">
-          <div class="card-body">
-            <h2 class="card-title">Basic Information</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="form-control md:col-span-2">
-                <label class="label">
-                  <span class="label-text">Activity Slug *</span>
-                  <span class="label-text-alt">Used in URL</span>
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  class="input input-bordered"
-                  value={activity.slug}
-                  required
-                  pattern="[a-z0-9-]+"
-                  title="Only lowercase letters, numbers, and hyphens"
-                />
-                <label class="label">
-                  <span class="label-text-alt text-warning">
-                    Current URL: /en/activities/{activity.slug}
-                  </span>
-                </label>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Category ID</span>
-                </label>
-                <input
-                  type="number"
-                  name="category_id"
-                  class="input input-bordered"
-                  value={activity.category_id || ''}
-                  placeholder="e.g., 5 for fishing"
-                  min="1"
-                />
-                {activity.category && (
-                  <label class="label">
-                    <span class="label-text-alt">
-                      Current: {activity.category.icon} {activity.category.name}
-                    </span>
-                  </label>
-                )}
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Status *</span>
-                </label>
-                <select name="status" class="select select-bordered" value={activity.status} required>
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Vendor</span>
-                </label>
-                <select
-                  name="vendor_id"
-                  class="select select-bordered"
-                  value={activity.vendor_id || ''}
-                >
-                  <option value="">Select Vendor (optional)</option>
-                  {vendors.map((vendor: any) => {
-                    const label = vendor.status !== 'verified'
-                      ? `${vendor.business_name} (${vendor.status})`
-                      : vendor.business_name;
-                    return (
-                      <option key={vendor.id} value={vendor.id}>
-                        {label}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Atoll</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  value={activity.island?.atoll_id || ''}
-                  onChange$={(e) => {
-                    const value = (e.target as HTMLSelectElement).value;
-                    selectedAtoll.value = value ? parseInt(value) : undefined;
-                  }}
-                >
-                  <option value="">Select Atoll (optional)</option>
-                  {atolls.value.map((atoll) => (
-                    <option key={atoll.id} value={atoll.id}>
-                      {atoll.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Island</span>
-                </label>
-                <select name="island_id" class="select select-bordered" value={activity.island_id || ''}>
-                  <option value="">Select Island (optional)</option>
-                  {filteredIslands.map((island) => (
-                    <option key={island.id} value={island.id}>
-                      {`${island.name} (${island.type})`}
-                    </option>
-                  ))}
-                </select>
-                {activity.island && (
-                  <label class="label">
-                    <span class="label-text-alt">
-                      Current: {activity.island.name} ({activity.island.type})
-                    </span>
-                  </label>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SEO Metadata */}
-        <div class="card bg-base-100 shadow-md">
-          <div class="card-body">
-            <h2 class="card-title">SEO & Preview</h2>
-            <p class="text-sm text-base-content/70">
-              This information is used for search engines and social media previews.
-            </p>
-
-            <div class="space-y-4">
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">SEO Title *</span>
-                  <span class="label-text-alt">50-60 characters recommended</span>
-                </label>
-                <input
-                  type="text"
-                  name="seo_title"
-                  class="input input-bordered"
-                  value={activity.seo_metadata.title || ''}
-                  required
-                  maxLength={60}
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">SEO Description *</span>
-                  <span class="label-text-alt">150-160 characters recommended</span>
-                </label>
-                <textarea
-                  name="seo_description"
-                  class="textarea textarea-bordered h-24"
-                  required
-                  maxLength={160}
-                >{activity.seo_metadata.description || ''}</textarea>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Keywords</span>
-                  <span class="label-text-alt">Comma-separated</span>
-                </label>
-                <input
-                  type="text"
-                  name="seo_keywords"
-                  class="input input-bordered"
-                  value={activity.seo_metadata.keywords?.join(', ') || ''}
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Open Graph Image URL</span>
-                  <span class="label-text-alt">For social media sharing</span>
-                </label>
-                <input
-                  type="url"
-                  name="og_image"
-                  class="input input-bordered"
-                  value={activity.seo_metadata.og_image || ''}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Stats */}
-        <div class="card bg-base-100 shadow-md">
-          <div class="card-body">
-            <h2 class="card-title">Activity Statistics</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="stat">
-                <div class="stat-title">Reviews</div>
-                <div class="stat-value text-primary">{activity.review_count}</div>
-                <div class="stat-desc">Average: {activity.review_score.toFixed(1)} ⭐</div>
-              </div>
-              <div class="stat">
-                <div class="stat-title">Packages</div>
-                <div class="stat-value text-primary">{packageCount}</div>
-                <div class="stat-desc">
-                  <Link href={`/admin/activities/${activity.id}/packages`} class="link">
-                    Manage packages
-                  </Link>
+              <div class="flex items-center gap-3">
+                <h1 class="text-xl font-bold truncate">{title}</h1>
+                <div class={`badge badge-sm ${activity.status === 'published' ? 'badge-success' : activity.status === 'draft' ? 'badge-warning' : 'badge-error'}`}>
+                  {activity.status}
                 </div>
               </div>
-              <div class="stat">
-                <div class="stat-title">Min Price</div>
-                <div class="stat-value text-accent">${activity.min_price_usd.toFixed(2)}</div>
-                <div class="stat-desc">Starting from (USD)</div>
-              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Page Layout Info */}
-        <div class="card bg-base-100 shadow-md">
-          <div class="card-body">
-            <h2 class="card-title">Page Layout</h2>
-            <p class="text-sm text-base-content/70">
-              The page layout is managed via the Page Builder. Current layout has {activity.page_layout.length || 0} components.
-            </p>
-            <div class="mt-4">
+            {/* Quick Actions */}
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <a
+                href={`/en-US/activities/${activity.slug}`}
+                target="_blank"
+                class="btn btn-ghost btn-sm gap-2"
+              >
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                <span class="hidden sm:inline">Preview</span>
+              </a>
               <Link
                 href={`/admin/activities/${activity.id}/builder`}
-                class="btn btn-primary"
+                class="btn btn-outline btn-sm gap-2"
               >
-                Open Page Builder
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span class="hidden sm:inline">Page Builder</span>
+              </Link>
+              <Link
+                href={`/admin/activities/${activity.id}/packages`}
+                class="btn btn-primary btn-sm gap-2"
+              >
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+                <span class="hidden sm:inline">Packages</span>
+                <span class="badge badge-sm">{packageCount}</span>
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* Submit Actions */}
-        <div class="flex justify-end gap-2">
-          <Link href="/admin/activities" class="btn btn-ghost">
-            Cancel
-          </Link>
-          <button type="submit" class="btn btn-primary">
-            Update Activity
-          </button>
+          {/* Section Navigation */}
+          <div class="flex items-center gap-1 mt-4 overflow-x-auto pb-1 scrollbar-none">
+            {sections.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                class={`btn btn-sm gap-2 flex-shrink-0 ${activeSection.value === section.id ? 'btn-primary' : 'btn-ghost'}`}
+                onClick$={() => activeSection.value = section.id}
+              >
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d={section.icon} />
+                </svg>
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      <div class="mt-6 space-y-3">
+        {updateActivityAction.value?.success && (
+          <div class="alert alert-success">
+            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{updateActivityAction.value.message}</span>
+          </div>
+        )}
+
+        {updateActivityAction.value?.success === false && (
+          <div class="alert alert-error">
+            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span>{updateActivityAction.value.message}</span>
+          </div>
+        )}
+      </div>
+
+      <Form action={updateActivityAction} class="mt-6">
+        <input type="hidden" value={activity.id} name="id" />
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Main Content - Left Column */}
+          <div class="xl:col-span-2 space-y-6">
+            {/* Basic Information */}
+            <section id="basic" class="scroll-mt-40">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <svg class="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 class="font-semibold">Basic Information</h2>
+                      <p class="text-sm text-base-content/60">Core activity details and settings</p>
+                    </div>
+                  </div>
+
+                  <div class="space-y-4">
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">URL Slug</span>
+                        <span class="label-text-alt text-base-content/50">Used in the URL path</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="slug"
+                        class="input input-bordered bg-base-100"
+                        value={activity.slug}
+                        required
+                        pattern="[a-z0-9-]+"
+                        title="Only lowercase letters, numbers, and hyphens"
+                      />
+                      <label class="label">
+                        <span class="label-text-alt text-base-content/50">
+                          /en-US/activities/{activity.slug}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div class="form-control">
+                        <label class="label">
+                          <span class="label-text font-medium">Category</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="category_id"
+                          class="input input-bordered bg-base-100"
+                          value={activity.category_id || ''}
+                          placeholder="Category ID"
+                          min="1"
+                        />
+                        {activity.category && (
+                          <label class="label">
+                            <span class="label-text-alt text-base-content/50">
+                              {activity.category.icon} {activity.category.name}
+                            </span>
+                          </label>
+                        )}
+                      </div>
+
+                      <div class="form-control">
+                        <label class="label">
+                          <span class="label-text font-medium">Status</span>
+                        </label>
+                        <select name="status" class="select select-bordered bg-base-100" value={activity.status} required>
+                          <option value="draft">Draft</option>
+                          <option value="published">Published</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Vendor</span>
+                      </label>
+                      <select
+                        name="vendor_id"
+                        class="select select-bordered bg-base-100"
+                        value={activity.vendor_id || ''}
+                      >
+                        <option value="">No vendor assigned</option>
+                        {vendors.map((vendor: any) => {
+                          const label = vendor.status !== 'verified'
+                            ? `${vendor.business_name} (${vendor.status})`
+                            : vendor.business_name;
+                          return (
+                            <option key={vendor.id} value={vendor.id}>
+                              {label}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Location */}
+            <section id="location" class="scroll-mt-40">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="size-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                      <svg class="size-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 class="font-semibold">Location</h2>
+                      <p class="text-sm text-base-content/60">Where this activity takes place</p>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Atoll</span>
+                      </label>
+                      <select
+                        class="select select-bordered bg-base-100"
+                        value={activity.island?.atoll_id || ''}
+                        onChange$={(e) => {
+                          const value = (e.target as HTMLSelectElement).value;
+                          selectedAtoll.value = value ? parseInt(value) : undefined;
+                        }}
+                      >
+                        <option value="">Select atoll</option>
+                        {atolls.value.map((atoll) => (
+                          <option key={atoll.id} value={atoll.id}>
+                            {atoll.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Island</span>
+                      </label>
+                      <select name="island_id" class="select select-bordered bg-base-100" value={activity.island_id || ''}>
+                        <option value="">Select island</option>
+                        {filteredIslands.map((island) => (
+                          <option key={island.id} value={island.id}>
+                            {`${island.name} (${island.type})`}
+                          </option>
+                        ))}
+                      </select>
+                      {activity.island && (
+                        <label class="label">
+                          <span class="label-text-alt text-base-content/50">
+                            Current: {activity.island.name}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SEO */}
+            <section id="seo" class="scroll-mt-40">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="size-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <svg class="size-5 text-accent" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 class="font-semibold">SEO & Social</h2>
+                      <p class="text-sm text-base-content/60">Search engine and social media optimization</p>
+                    </div>
+                  </div>
+
+                  <div class="space-y-4">
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Meta Title</span>
+                        <span class="label-text-alt text-base-content/50">50-60 characters</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="seo_title"
+                        class="input input-bordered bg-base-100"
+                        value={activity.seo_metadata.title || ''}
+                        required
+                        maxLength={60}
+                      />
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Meta Description</span>
+                        <span class="label-text-alt text-base-content/50">150-160 characters</span>
+                      </label>
+                      <textarea
+                        name="seo_description"
+                        class="textarea textarea-bordered bg-base-100 h-24"
+                        required
+                        maxLength={160}
+                      >{activity.seo_metadata.description || ''}</textarea>
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Keywords</span>
+                        <span class="label-text-alt text-base-content/50">Comma separated</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="seo_keywords"
+                        class="input input-bordered bg-base-100"
+                        value={activity.seo_metadata.keywords?.join(', ') || ''}
+                        placeholder="maldives, snorkeling, diving..."
+                      />
+                    </div>
+
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text font-medium">Social Image URL</span>
+                        <span class="label-text-alt text-base-content/50">For Facebook, Twitter cards</span>
+                      </label>
+                      <input
+                        type="url"
+                        name="og_image"
+                        class="input input-bordered bg-base-100"
+                        value={activity.seo_metadata.og_image || ''}
+                        placeholder="https://..."
+                      />
+                    </div>
+
+                    {/* Search Preview */}
+                    <div class="mt-4 p-4 bg-base-100 rounded-lg">
+                      <p class="text-xs text-base-content/50 mb-2">Search Preview</p>
+                      <div class="space-y-1">
+                        <p class="text-blue-600 text-lg hover:underline cursor-pointer truncate">
+                          {activity.seo_metadata.title || title}
+                        </p>
+                        <p class="text-green-700 text-sm">
+                          rihigo.com/en-US/activities/{activity.slug}
+                        </p>
+                        <p class="text-sm text-base-content/70 line-clamp-2">
+                          {activity.seo_metadata.description || 'No description set'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Page Layout */}
+            <section id="layout" class="scroll-mt-40">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                      <div class="size-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                        <svg class="size-5 text-warning" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 class="font-semibold">Page Layout</h2>
+                        <p class="text-sm text-base-content/60">{activity.page_layout.length || 0} components configured</p>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/admin/activities/${activity.id}/builder`}
+                      class="btn btn-primary btn-sm gap-2"
+                    >
+                      <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                      </svg>
+                      Edit Layout
+                    </Link>
+                  </div>
+
+                  {activity.page_layout.length > 0 ? (
+                    <div class="flex flex-wrap gap-2">
+                      {activity.page_layout.map((component, index) => (
+                        <div key={index} class="badge badge-lg badge-outline gap-2">
+                          <span class="capitalize">{component.type.replace('-', ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div class="text-center py-8 text-base-content/50">
+                      <svg class="size-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6z" />
+                      </svg>
+                      <p>No layout components yet</p>
+                      <p class="text-sm">Use the Page Builder to add content</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar - Right Column */}
+          <div class="space-y-6">
+            {/* Stats Card */}
+            <section id="stats" class="scroll-mt-40">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <h3 class="font-semibold mb-4">Performance</h3>
+                  <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                      <span class="text-base-content/60">Reviews</span>
+                      <div class="text-right">
+                        <span class="font-semibold">{activity.review_count}</span>
+                        {activity.review_count > 0 && (
+                          <span class="text-warning ml-2">
+                            {activity.review_score.toFixed(1)} ★
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-base-content/60">Packages</span>
+                      <span class="font-semibold">{packageCount}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-base-content/60">Starting Price</span>
+                      <span class="font-semibold text-primary">
+                        ${activity.min_price_usd.toFixed(0)} USD
+                      </span>
+                    </div>
+                    <div class="divider my-2"></div>
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-base-content/60">Created</span>
+                      <span>{new Date(activity.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-base-content/60">Updated</span>
+                      <span>{new Date(activity.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Quick Links */}
+            <div class="card bg-base-200">
+              <div class="card-body">
+                <h3 class="font-semibold mb-4">Quick Links</h3>
+                <div class="space-y-2">
+                  <Link
+                    href={`/admin/activities/${activity.id}/packages`}
+                    class="btn btn-ghost btn-sm w-full justify-start gap-3"
+                  >
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                    </svg>
+                    Manage Packages
+                    <span class="badge badge-sm ml-auto">{packageCount}</span>
+                  </Link>
+                  <Link
+                    href={`/admin/activities/${activity.id}/builder`}
+                    class="btn btn-ghost btn-sm w-full justify-start gap-3"
+                  >
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    Page Builder
+                  </Link>
+                  <a
+                    href={`/en-US/activities/${activity.slug}`}
+                    target="_blank"
+                    class="btn btn-ghost btn-sm w-full justify-start gap-3"
+                  >
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    View Live Page
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button (Sticky on Desktop) */}
+            <div class="card bg-base-200 xl:sticky xl:top-44">
+              <div class="card-body">
+                <button type="submit" class="btn btn-primary w-full gap-2">
+                  <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  Save Changes
+                </button>
+                <Link href="/admin/activities" class="btn btn-ghost btn-sm w-full mt-2">
+                  Cancel
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </Form>
+
+      {/* Related Activities */}
+      {relatedActivities.length > 0 && (
+        <section class="mt-12">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Other Activities</h2>
+            <Link href="/admin/activities" class="btn btn-ghost btn-sm">
+              View All
+            </Link>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {relatedActivities.map((related: Activity) => {
+              const relatedTitle = related.translations?.en?.title || related.seo_metadata.title || related.slug;
+              return (
+                <Link
+                  key={related.id}
+                  href={`/admin/activities/${related.id}`}
+                  class="card bg-base-200 hover:bg-base-300 transition-colors"
+                >
+                  <div class="card-body p-4">
+                    <div class="flex items-start justify-between gap-2">
+                      <h3 class="font-medium line-clamp-2 text-sm">{relatedTitle}</h3>
+                      <span class={`badge badge-xs flex-shrink-0 ${
+                        related.status === 'published' ? 'badge-success' :
+                        related.status === 'draft' ? 'badge-warning' : 'badge-ghost'
+                      }`}>
+                        {related.status}
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between mt-2 text-xs text-base-content/60">
+                      {related.category && (
+                        <span>{related.category.icon} {related.category.name}</span>
+                      )}
+                      {related.min_price_usd > 0 && (
+                        <span class="font-medium text-primary">${related.min_price_usd.toFixed(0)}</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 });
 
 export const head: DocumentHead = {
-  title: "Edit Activity • Admin • Rihigo",
+  title: "Edit Activity | Admin | Rihigo",
   meta: [
     {
       name: "description",

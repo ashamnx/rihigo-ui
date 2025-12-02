@@ -175,6 +175,26 @@ export default component$(() => {
         }).format(amount);
     };
 
+    // Format payment amount with exchange rate info
+    const formatPaymentAmount = (payment: Payment) => {
+        const amount = payment.amount;
+        const currency = payment.currency || 'USD';
+
+        // If payment was in a different currency, show both
+        if (currency !== 'USD' && payment.exchange_rate && payment.amount_in_base_currency) {
+            return {
+                primary: formatCurrency(amount, currency),
+                secondary: `${formatCurrency(payment.amount_in_base_currency, 'USD')} USD`,
+                hasExchange: true,
+            };
+        }
+        return {
+            primary: formatCurrency(amount, currency),
+            secondary: null,
+            hasExchange: false,
+        };
+    };
+
     // Calculate stats
     const totalReceived = payments
         .filter((p) => p.status === 'completed')
@@ -299,7 +319,12 @@ export default component$(() => {
                                         </div>
                                     </td>
                                     <td class="font-medium">
-                                        {formatCurrency(payment.amount, payment.currency)}
+                                        <div>{formatPaymentAmount(payment).primary}</div>
+                                        {formatPaymentAmount(payment).hasExchange && (
+                                            <div class="text-xs text-base-content/50">
+                                                {formatPaymentAmount(payment).secondary}
+                                            </div>
+                                        )}
                                     </td>
                                     <td>
                                         <span class={`badge badge-sm ${paymentStatusColors[payment.status]}`}>

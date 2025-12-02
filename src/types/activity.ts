@@ -220,8 +220,8 @@ export interface ActivityPackage {
 export interface PackagePrice {
     id: number;
     package_id: string;
-    currency_code: string;
-    amount: number;
+    currency_code: string; // Always 'USD' - base currency
+    amount: number; // Always in USD
     market_segment: string;
     created_at: string;
     updated_at: string;
@@ -297,8 +297,8 @@ export interface BulkTranslationsInput {
 
 export interface CreatePackagePriceInput {
     package_id: string;
-    currency_code: string;
-    amount: number;
+    currency_code?: string; // Defaults to 'USD' - base currency
+    amount: number; // Always in USD
     market_segment?: string;
 }
 

@@ -462,13 +462,42 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
 
     // Truncate description
     const truncatedDescription =
-      activity.seo_metadata.description &&
+      activity.seo_metadata?.description &&
       activity.seo_metadata.description.length > 120
         ? activity.seo_metadata.description.substring(0, 120) + "..."
-        : activity.seo_metadata.description;
+        : activity.seo_metadata?.description;
 
     // Create activity URL with current locale
     const activityUrl = `/${locale}/activities/${activity.slug}`;
+
+    // Get price from multiple sources: base_price, min_price_usd, or packages
+    const getPrice = () => {
+      // Check base_price first
+      if (activity.base_price && activity.base_price > 0) {
+        return activity.base_price;
+      }
+      // Check min_price_usd
+      if (activity.min_price_usd && activity.min_price_usd > 0) {
+        return activity.min_price_usd;
+      }
+      // Check packages for pricing
+      if (activity.packages && activity.packages.length > 0) {
+        for (const pkg of activity.packages) {
+          // Check pricingTiers in options_config
+          const config = pkg.options_config as any;
+          if (config?.pricingTiers?.[0]?.price) {
+            return config.pricingTiers[0].price;
+          }
+          // Check prices array
+          if (pkg.prices?.[0]?.amount) {
+            return pkg.prices[0].amount;
+          }
+        }
+      }
+      return null;
+    };
+
+    const price = getPrice();
 
     return (
       <Link href={activityUrl}>
@@ -507,7 +536,7 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
           {/* Activity Content */}
           <div class="p-6">
             <h3 class="group-hover:text-primary mb-2 text-xl font-semibold text-gray-900 transition-colors">
-              {activity.seo_metadata.title}
+              {activity.translations?.[locale]?.title || activity.seo_metadata?.title || activity.name || activity.slug}
             </h3>
 
             {activity.location && (
@@ -585,10 +614,14 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
             {/* Price and CTA */}
             <div class="flex items-center justify-between">
               <div class="text-left">
-                <p class="text-2xl font-bold text-gray-900">
-                  {activity.base_price}
-                  <span class="text-base font-normal text-gray-500"></span>
-                </p>
+                {price ? (
+                  <p class="text-2xl font-bold text-gray-900">
+                    ${typeof price === 'number' ? price.toFixed(2) : price}
+                    <span class="text-sm font-normal text-gray-500 ml-1">USD</span>
+                  </p>
+                ) : (
+                  <p class="text-lg font-medium text-primary">View Details</p>
+                )}
               </div>
             </div>
           </div>

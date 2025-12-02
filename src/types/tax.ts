@@ -1,13 +1,19 @@
 // Tax Configuration Types
 import type { ServiceType } from './resource';
 
-// Legacy types (keep for backwards compatibility)
+// ====================================
+// Admin Tax Rules (Legacy API)
+// /api/admin/tax-rules
+// ====================================
+
+export type AdminTaxRuleType = 'percentage' | 'fixed_per_person';
+
 export interface TaxRule {
   id: string;
   name: string;
   rate: number;
-  type: 'percentage' | 'fixed_per_person';
-  booking_type?: string;
+  type: AdminTaxRuleType;
+  booking_type?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -16,8 +22,16 @@ export interface TaxRule {
 export interface CreateTaxRuleInput {
   name: string;
   rate: number;
-  type: 'percentage' | 'fixed_per_person';
-  booking_type?: string;
+  type: AdminTaxRuleType;
+  booking_type?: string | null;
+}
+
+export interface UpdateTaxRuleInput {
+  name?: string;
+  rate?: number;
+  type?: AdminTaxRuleType;
+  booking_type?: string | null;
+  is_active?: boolean;
 }
 
 export interface BookingTax {
@@ -30,26 +44,72 @@ export interface BookingTax {
   created_at: string;
 }
 
-// New Vendor Tax Types
+// ====================================
+// Vendor Tax Rates (New API)
+// /api/vendor/tax-rates
+// ====================================
+
+export type VendorTaxRateType = 'percentage' | 'fixed_per_night' | 'fixed_per_person' | 'fixed_per_booking';
+
+// Legacy alias for backward compatibility
 export type TaxRateType = 'percentage' | 'fixed_per_unit' | 'fixed_per_booking';
+
+export interface TaxRateAppliesTo {
+    service_types?: ServiceType[];
+    category_ids?: number[];
+    activity_ids?: string[];
+}
 
 export interface TaxRate {
     id: string;
-    vendor_id?: string; // null = system-wide
+    vendor_id?: string | null; // null = system-wide
     name: string;
     code: string;
+    description?: string;
     rate: number;
-    rate_type: TaxRateType;
-    applies_to: ServiceType[];
+    rate_type: VendorTaxRateType;
+    applies_to: TaxRateAppliesTo;
     applies_to_foreigners_only: boolean;
     effective_from: string;
-    effective_to?: string;
+    effective_to?: string | null;
     is_active: boolean;
     is_inclusive: boolean;
     show_on_invoice: boolean;
     sort_order: number;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface CreateVendorTaxRateInput {
+    name: string;
+    code: string;
+    description?: string;
+    rate: number;
+    rate_type: VendorTaxRateType;
+    applies_to?: TaxRateAppliesTo;
+    applies_to_foreigners_only?: boolean;
+    effective_from: string;
+    effective_to?: string | null;
+    is_active?: boolean;
+    is_inclusive?: boolean;
+    show_on_invoice?: boolean;
+    sort_order?: number;
+}
+
+export interface UpdateVendorTaxRateInput {
+    name?: string;
+    code?: string;
+    description?: string;
+    rate?: number;
+    rate_type?: VendorTaxRateType;
+    applies_to?: TaxRateAppliesTo;
+    applies_to_foreigners_only?: boolean;
+    effective_from?: string;
+    effective_to?: string | null;
+    is_active?: boolean;
+    is_inclusive?: boolean;
+    show_on_invoice?: boolean;
+    sort_order?: number;
 }
 
 export interface VendorTaxSetting {
@@ -148,6 +208,19 @@ export const MALDIVES_TAX_RATES = {
 };
 
 // Display helpers
+export const adminTaxRuleTypeLabels: Record<AdminTaxRuleType, string> = {
+    percentage: 'Percentage',
+    fixed_per_person: 'Fixed Per Person',
+};
+
+export const vendorTaxRateTypeLabels: Record<VendorTaxRateType, string> = {
+    percentage: 'Percentage',
+    fixed_per_night: 'Fixed Per Night',
+    fixed_per_person: 'Fixed Per Person',
+    fixed_per_booking: 'Fixed Per Booking',
+};
+
+// Legacy alias
 export const taxRateTypeLabels: Record<TaxRateType, string> = {
     percentage: 'Percentage',
     fixed_per_unit: 'Fixed Per Unit',
@@ -187,9 +260,12 @@ export const calculateTaxAmount = (
     switch (taxRate.rate_type) {
         case 'percentage':
             return amount * (rate / 100);
-        case 'fixed_per_unit':
-            // For accommodation: per night per guest (like Green Tax)
-            return rate * nights * guests;
+        case 'fixed_per_night':
+            // Per night (like Green Tax)
+            return rate * nights;
+        case 'fixed_per_person':
+            // Per person
+            return rate * guests;
         case 'fixed_per_booking':
             return rate;
         default:
@@ -204,7 +280,8 @@ export const doesTaxApply = (
     isForeigner: boolean = true
 ): boolean => {
     // Check service type
-    if (!taxRate.applies_to.includes(serviceType)) {
+    const serviceTypes = taxRate.applies_to?.service_types || [];
+    if (serviceTypes.length > 0 && !serviceTypes.includes(serviceType)) {
         return false;
     }
 
