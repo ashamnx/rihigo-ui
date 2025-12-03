@@ -7,8 +7,8 @@ import { CurrencyProvider, DEFAULT_CURRENCIES, type CurrencyData } from "~/conte
 export const useCurrencyData = routeLoader$(async (requestEvent) => {
   requestEvent.cacheControl({
     maxAge: 60,
-    sMaxAge: 3600,
-    staleWhileRevalidate: 60 * 60 * 24 * 4, // 4 days
+    sMaxAge: 60,
+    staleWhileRevalidate: 60 * 60, // 4 days
   });
 
   // Try to fetch from API, fallback to defaults
