@@ -375,13 +375,45 @@ export const apiClient = {
             }, token);
         },
 
-        // Vendor User Management
+        // Verify vendor
+        async verify(id: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${id}/verify`, {
+                method: 'POST',
+            }, token);
+        },
+
+        // Update vendor status
+        async updateStatus(id: string, status: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${id}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ status }),
+            }, token);
+        },
+
+        // Vendor Staff Management
+        async getStaff(vendorId: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {}, token);
+        },
+
+        async addStaff(vendorId: string, data: { user_email: string; role: string }, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        // Vendor Activity Logs
+        async getLogs(vendorId: string, token: string, page = 1, pageSize = 20): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/logs?page=${page}&page_size=${pageSize}`, {}, token);
+        },
+
+        // Legacy user management methods (kept for backward compatibility, but use staff methods instead)
         async getUsers(vendorId: string, token: string): Promise<ApiResponse> {
-            return apiRequest(`/api/admin/vendors/${vendorId}/users`, {}, token);
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {}, token);
         },
 
         async addUser(vendorId: string, data: any, token: string): Promise<ApiResponse> {
-            return apiRequest(`/api/admin/vendors/${vendorId}/users`, {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {
                 method: 'POST',
                 body: JSON.stringify(data),
             }, token);

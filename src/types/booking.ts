@@ -36,7 +36,7 @@ export interface Booking {
 }
 
 export interface CustomerInfo {
-  full_name: string;
+  name: string;
   email: string;
   phone: string;
   nationality?: string;

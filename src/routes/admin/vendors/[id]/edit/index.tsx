@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeLoader$, routeAction$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
@@ -38,22 +38,36 @@ export const useUpdateVendor = routeAction$(async (data, requestEvent) => {
       status: data.status as 'pending' | 'active' | 'suspended' | 'inactive',
     };
 
-    const response = await apiClient.vendors.update(vendorId, vendorData, token);
+    return await apiClient.vendors.update(vendorId, vendorData, token);
+  });
+});
 
-    if (response.success) {
-      throw requestEvent.redirect(302, '/admin/vendors');
-    }
+export const useVerifyVendor = routeAction$(async (_, requestEvent) => {
+  const vendorId = requestEvent.params.id;
+  return authenticatedRequest(requestEvent, async (token) => {
+    return await apiClient.vendors.verify(vendorId, token);
+  });
+});
 
-    return response;
+export const useUpdateStatus = routeAction$(async (data, requestEvent) => {
+  const vendorId = requestEvent.params.id;
+  return authenticatedRequest(requestEvent, async (token) => {
+    return await apiClient.vendors.updateStatus(vendorId, data.status as string, token);
   });
 });
 
 export default component$(() => {
   const vendorResponse = useVendor();
   const updateAction = useUpdateVendor();
+  const verifyAction = useVerifyVendor();
+  const statusAction = useUpdateStatus();
   const islandsResponse = useIslands();
 
-  const vendor = vendorResponse.value.data;
+  const showStatusModal = useSignal(false);
+  const selectedStatus = useSignal<string>('');
+
+  // Use the updated vendor from actions if available
+  const vendor = verifyAction.value?.data || statusAction.value?.data || updateAction.value?.data || vendorResponse.value.data;
   const islands = islandsResponse.value.data || [];
 
   if (!vendor) {
@@ -102,9 +116,39 @@ export default component$(() => {
       {/* Navigation Tabs */}
       <div class="tabs tabs-boxed mb-6">
         <Link href={`/admin/vendors/${vendor.id}/edit`} class="tab tab-active">Details</Link>
-        <Link href={`/admin/vendors/${vendor.id}/users`} class="tab">Users</Link>
+        <Link href={`/admin/vendors/${vendor.id}/users`} class="tab">Staff</Link>
+        <Link href={`/admin/vendors/${vendor.id}/logs`} class="tab">Activity Logs</Link>
       </div>
 
+      {/* Success Alerts */}
+      {updateAction.value?.success && (
+        <div class="alert alert-success mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Vendor updated successfully</span>
+        </div>
+      )}
+
+      {verifyAction.value?.success && (
+        <div class="alert alert-success mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Vendor verified successfully</span>
+        </div>
+      )}
+
+      {statusAction.value?.success && (
+        <div class="alert alert-success mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Vendor status updated successfully</span>
+        </div>
+      )}
+
+      {/* Error Alerts */}
       {updateAction.value?.success === false && (
         <div class="alert alert-error mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -113,6 +157,85 @@ export default component$(() => {
           <span>{updateAction.value.error_message || 'Failed to update vendor'}</span>
         </div>
       )}
+
+      {verifyAction.value?.success === false && (
+        <div class="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{verifyAction.value.error_message || 'Failed to verify vendor'}</span>
+        </div>
+      )}
+
+      {statusAction.value?.success === false && (
+        <div class="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{statusAction.value.error_message || 'Failed to update vendor status'}</span>
+        </div>
+      )}
+
+      {/* Quick Actions Card */}
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+          <h2 class="card-title text-lg mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Quick Actions
+          </h2>
+          <div class="flex flex-wrap gap-3">
+            {/* Verify Button */}
+            {!vendor.is_verified && (
+              <Form action={verifyAction}>
+                <button
+                  type="submit"
+                  class="btn btn-success"
+                  disabled={verifyAction.isRunning}
+                >
+                  {verifyAction.isRunning ? (
+                    <>
+                      <span class="loading loading-spinner loading-sm"></span>
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      Verify Vendor
+                    </>
+                  )}
+                </button>
+              </Form>
+            )}
+
+            {/* Status Change Button */}
+            <button
+              class="btn btn-outline"
+              onClick$={() => {
+                selectedStatus.value = vendor.status;
+                showStatusModal.value = true;
+              }}
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Change Status
+            </button>
+
+            {/* Current Status Badge */}
+            <div class="flex items-center gap-2 ml-auto">
+              <span class="text-sm text-gray-500">Current Status:</span>
+              {vendor.status === 'active' && <span class="badge badge-success">Active</span>}
+              {vendor.status === 'pending' && <span class="badge badge-warning">Pending</span>}
+              {vendor.status === 'suspended' && <span class="badge badge-error">Suspended</span>}
+              {vendor.status === 'inactive' && <span class="badge badge-ghost">Inactive</span>}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <Form action={updateAction}>
         {/* Business Information */}
@@ -478,6 +601,64 @@ export default component$(() => {
           </button>
         </div>
       </Form>
+
+      {/* Status Change Modal */}
+      {showStatusModal.value && (
+        <dialog class="modal modal-open">
+          <div class="modal-box">
+            <h3 class="font-bold text-lg mb-4">Change Vendor Status</h3>
+            <Form action={statusAction} onSubmitCompleted$={() => {
+              if (statusAction.value?.success) {
+                showStatusModal.value = false;
+              }
+            }}>
+              <div class="form-control w-full mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">New Status</span>
+                </label>
+                <select
+                  name="status"
+                  class="select select-bordered w-full"
+                  value={selectedStatus.value}
+                  onChange$={(e) => selectedStatus.value = (e.target as HTMLSelectElement).value}
+                >
+                  <option value="pending">Pending - Awaiting approval</option>
+                  <option value="active">Active - Fully operational</option>
+                  <option value="suspended">Suspended - Temporarily disabled</option>
+                  <option value="inactive">Inactive - Deactivated</option>
+                </select>
+              </div>
+
+              <div class="modal-action">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  onClick$={() => showStatusModal.value = false}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  disabled={statusAction.isRunning}
+                >
+                  {statusAction.isRunning ? (
+                    <>
+                      <span class="loading loading-spinner"></span>
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Status'
+                  )}
+                </button>
+              </div>
+            </Form>
+          </div>
+          <form method="dialog" class="modal-backdrop">
+            <button onClick$={() => showStatusModal.value = false}>close</button>
+          </form>
+        </dialog>
+      )}
     </div>
   );
 });

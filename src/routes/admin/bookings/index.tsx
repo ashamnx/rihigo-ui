@@ -68,7 +68,7 @@ export default component$(() => {
     const matchesStatus = filterStatus.value === 'all' || booking.status === filterStatus.value;
     const matchesSearch = searchTerm.value === '' ||
       booking.id.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      booking.customer_info.full_name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+      booking.customer_info.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
       booking.activity?.title.toLowerCase().includes(searchTerm.value.toLowerCase());
 
     return matchesStatus && matchesSearch;
@@ -264,7 +264,7 @@ export default component$(() => {
                       </td>
                       <td>
                         <div>
-                          <div class="font-medium">{booking.customer_info.full_name}</div>
+                          <div class="font-medium">{booking.customer_info.name}</div>
                           <div class="text-xs text-base-content/50">{booking.customer_info.email}</div>
                         </div>
                       </td>
@@ -348,7 +348,7 @@ export default component$(() => {
               <p class="text-sm text-base-content/60">
                 <span class="font-mono text-xs">{selectedBooking.value.id.substring(0, 8)}...</span>
               </p>
-              <p class="font-medium">{selectedBooking.value.customer_info.full_name}</p>
+              <p class="font-medium">{selectedBooking.value.customer_info.name}</p>
               <p class="text-sm text-base-content/60">{selectedBooking.value.activity?.title}</p>
             </div>
 

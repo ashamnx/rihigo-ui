@@ -7,7 +7,7 @@ import {
   useSpeakConfig,
   useSpeakLocale,
 } from "qwik-speak";
-import { useCurrencyData } from "~/routes/(website)/[lang]/layout";
+import { useCurrency } from "~/context/currency-context";
 
 export interface LocaleSelectorProps {
   class?: string;
@@ -46,14 +46,8 @@ export const LocaleSelector = component$<LocaleSelectorProps>(
     const dn = useDisplayName();
     const getPath = localizePath();
 
-    const uniqueCurrencies = useCurrencyData();
-
-    // Get unique currencies from the supported locales
-
-    // Store the selected currency
-    const store = useStore({
-      selectedCurrency: locale.currency || config.defaultLocale.currency,
-    });
+    // Use currency context for persistence
+    const { selectedCurrency, currencies } = useCurrency();
 
     // Calculate panel position to avoid clipping
     // eslint-disable-next-line qwik/no-use-visible-task
@@ -128,7 +122,7 @@ export const LocaleSelector = component$<LocaleSelectorProps>(
         >
           <span class="text-lg">{FLAG_MAP[locale.lang] || "🌐"}</span>
           <span class={`mx-1 h-4 border-l transition-colors ${isScrolled ? 'border-gray-300' : 'border-white/50'}`}></span>
-          <span>{store.selectedCurrency}</span>
+          <span>{selectedCurrency.value}</span>
           <svg
             class={`size-5 flex-none transition-colors ${isScrolled ? 'text-gray-400' : 'text-white/70'}`}
             viewBox="0 0 20 20"
@@ -210,13 +204,13 @@ export const LocaleSelector = component$<LocaleSelectorProps>(
                   {t("app.locale.currency@@Currency")}
                 </h3>
                 <div class="grid grid-cols-3 gap-2">
-                  {uniqueCurrencies.value.data.map((currency) => (
+                  {currencies.value.map((currency) => (
                     <button
                       key={currency.code}
                       type="button"
-                      class={`group relative flex w-full cursor-pointer gap-x-6 rounded-xl px-4 py-2 text-sm/6 hover:bg-gray-50 ${store.selectedCurrency === currency.code ? "border-primary bg-primary/10 border-2" : ""}`}
+                      class={`group relative flex w-full cursor-pointer gap-x-6 rounded-xl px-4 py-2 text-sm/6 hover:bg-gray-50 ${selectedCurrency.value === currency.code ? "border-primary bg-primary/10 border-2" : ""}`}
                       onClick$={() => {
-                        store.selectedCurrency = currency.code;
+                        selectedCurrency.value = currency.code;
                         isExpanded.value = false;
                       }}
                     >

@@ -96,8 +96,8 @@ export const STANDARD_FIELDS: Record<string, BookingFieldDefinition> = {
     validation: { min: 1 },
     gridColumns: 1,
   },
-  full_name: {
-    name: 'full_name',
+  name: {
+    name: 'name',
     type: 'text',
     label: 'Full Name',
     required: true,
@@ -145,7 +145,7 @@ export const STANDARD_FIELDS: Record<string, BookingFieldDefinition> = {
 // Preset configurations for common booking types
 export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
   standard: {
-    required_fields: ['booking_date', 'number_of_people', 'full_name', 'email', 'phone'],
+    required_fields: ['booking_date', 'number_of_people', 'name', 'email', 'phone'],
     optional_fields: ['nationality', 'special_requests'],
     field_groups: [
       {
@@ -154,7 +154,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
       },
       {
         title: 'Guest Information',
-        fields: ['full_name', 'email', 'phone', 'nationality'],
+        fields: ['name', 'email', 'phone', 'nationality'],
       },
       {
         title: 'Additional Information',
@@ -184,7 +184,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
   },
 
   accommodation: {
-    required_fields: ['check_in_date', 'check_out_date', 'number_of_people', 'full_name', 'email', 'phone'],
+    required_fields: ['check_in_date', 'check_out_date', 'number_of_people', 'name', 'email', 'phone'],
     hide_fields: ['booking_date'],
     optional_fields: ['special_requests'],
     field_groups: [
@@ -194,7 +194,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
       },
       {
         title: 'Guest Information',
-        fields: ['full_name', 'email', 'phone'],
+        fields: ['name', 'email', 'phone'],
       },
       {
         title: 'Special Requests',
@@ -204,7 +204,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
   },
 
   transfer: {
-    required_fields: ['booking_date', 'number_of_people', 'full_name', 'email', 'phone'],
+    required_fields: ['booking_date', 'number_of_people', 'name', 'email', 'phone'],
     custom_fields: [
       {
         name: 'pickup_location',
@@ -245,13 +245,13 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
       },
       {
         title: 'Passenger Information',
-        fields: ['number_of_people', 'luggage_count', 'full_name', 'email', 'phone'],
+        fields: ['number_of_people', 'luggage_count', 'name', 'email', 'phone'],
       },
     ],
   },
 
   tour: {
-    required_fields: ['booking_date', 'number_of_people', 'full_name', 'email', 'phone'],
+    required_fields: ['booking_date', 'number_of_people', 'name', 'email', 'phone'],
     optional_fields: ['special_requests'],
     custom_fields: [
       {
@@ -281,7 +281,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
       },
       {
         title: 'Guest Information',
-        fields: ['full_name', 'email', 'phone'],
+        fields: ['name', 'email', 'phone'],
       },
       {
         title: 'Pickup Information',
@@ -295,7 +295,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
   },
 
   rental: {
-    required_fields: ['booking_date', 'full_name', 'email', 'phone'],
+    required_fields: ['booking_date', 'name', 'email', 'phone'],
     custom_fields: [
       {
         name: 'rental_duration',
@@ -320,7 +320,7 @@ export const BOOKING_TYPE_PRESETS: Record<BookingType, BookingFieldConfig> = {
       },
       {
         title: 'Renter Information',
-        fields: ['full_name', 'email', 'phone'],
+        fields: ['name', 'email', 'phone'],
       },
     ],
   },

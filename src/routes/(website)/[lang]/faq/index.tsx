@@ -1,6 +1,6 @@
 import {component$, useSignal} from '@builder.io/qwik';
 import type {DocumentHead} from "@builder.io/qwik-city";
-import {routeLoader$, useLocation} from "@builder.io/qwik-city";
+import {routeLoader$} from "@builder.io/qwik-city";
 import {apiClient} from "~/utils/api-client";
 import {inlineTranslate} from "qwik-speak";
 import {ErrorState} from "~/components/error-state/error-state";
@@ -64,8 +64,6 @@ export const useFAQs = routeLoader$(async (requestEvent) => {
 export default component$(() => {
     const t = inlineTranslate();
     const faqsResponse = useFAQs();
-    const location = useLocation();
-    const lang = location.params.lang || 'en-US';
 
     return (
         <div class="bg-white">

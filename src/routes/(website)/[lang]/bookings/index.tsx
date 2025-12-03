@@ -4,20 +4,6 @@ import {inlineTranslate} from 'qwik-speak';
 import type {Booking} from '~/types/booking';
 import {authenticatedRequest, apiClient} from '~/utils/api-client';
 
-export const head: DocumentHead = {
-  title: 'My Bookings | Rihigo',
-  meta: [
-    {
-      name: 'description',
-      content: 'View and manage your bookings',
-    },
-    {
-      name: 'robots',
-      content: 'noindex, nofollow',
-    },
-  ],
-};
-
 export const useUserBookings = routeLoader$(async (requestEvent) => {
   const page = parseInt(requestEvent.url.searchParams.get('page') || '1');
 
@@ -232,8 +218,7 @@ export default component$(() => {
                           <div>
                             <p class="text-gray-600">{t('bookings.card.total@@Total')}</p>
                             <p class="font-semibold text-lg text-primary">
-                              {booking.currency === 'USD' ? '$' : booking.currency}
-                              {booking.total_price.toFixed(2)}
+                              {booking.display_currency}{booking.total_price}
                             </p>
                           </div>
                         </div>
@@ -241,7 +226,7 @@ export default component$(() => {
                         {booking.customer_info && (
                           <div class="mt-4 text-sm">
                             <p class="text-gray-600">
-                              {t('bookings.card.bookedBy@@Booked by')}: <span class="font-semibold">{booking.customer_info.full_name}</span>
+                              {t('bookings.card.bookedBy@@Booked by')}: <span class="font-semibold">{booking.customer_info.name}</span>
                             </p>
                           </div>
                         )}
@@ -255,7 +240,7 @@ export default component$(() => {
 
                         {/* Actions */}
                         <div class="mt-4 flex flex-wrap gap-2">
-                          {booking.payment_status === 'pending' && (
+                          {booking.status === 'confirmed' && booking.payment_status === 'pending' && (
                             <Link
                               href={`/${lang}/bookings/${booking.id}/pay`}
                               class="btn btn-sm btn-success gap-1"
@@ -325,3 +310,17 @@ export default component$(() => {
     </div>
   );
 });
+
+export const head: DocumentHead = {
+  title: 'My Bookings | Rihigo',
+  meta: [
+    {
+      name: 'description',
+      content: 'View and manage your bookings',
+    },
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};

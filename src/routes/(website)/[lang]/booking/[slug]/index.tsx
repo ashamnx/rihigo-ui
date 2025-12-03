@@ -13,6 +13,7 @@ import {
 } from '~/types/booking-fields';
 import {authenticatedRequest, apiClient} from '~/utils/api-client';
 import type {ActivityPackage} from '~/types/activity';
+import {useCurrency, formatPrice} from '~/context/currency-context';
 
 export const head: DocumentHead = {
   title: 'Book Now | Rihigo',
@@ -74,45 +75,30 @@ export const useActivityData = routeLoader$(async (requestEvent) => {
 export const useCreateBooking = routeAction$(async (data, requestEvent) => {
     const lang = requestEvent.params.lang || 'en';
 
-    // Extract all form data including custom fields
-    const customFields: Record<string, any> = {};
-    const standardFieldNames = new Set([
-        'activity_id', 'package_id', 'booking_date', 'check_in_date', 'check_out_date',
-        'number_of_people', 'full_name', 'email', 'phone', 'nationality',
-        'special_requests', 'notes', 'payment_method'
-    ]);
-
-    // Collect custom fields
-    Object.entries(data).forEach(([key, value]) => {
-        if (!standardFieldNames.has(key)) {
-            customFields[key] = value;
-        }
-    });
-
-    // For digital products, use tomorrow's date if booking_date is not provided
+    // Booking date - use booking_date or check_in_date, fallback to tomorrow
     let bookingDate = data.booking_date as string || data.check_in_date as string;
     if (!bookingDate) {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(12, 0, 0, 0);
-        bookingDate = tomorrow.toISOString();
+        bookingDate = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD format
     }
 
+    // Build booking data according to API spec
+    // Required: activity_id, booking_date, number_of_people, customer_info, payment_method
+    // Optional: package_id, display_currency, notes
     const bookingData = {
         activity_id: data.activity_id as string,
-        package_id: data.package_id as string || undefined,
+        package_id: (data.package_id as string) || undefined,
         booking_date: bookingDate,
         number_of_people: data.number_of_people ? parseInt(data.number_of_people as string) : 1,
         customer_info: {
-            full_name: data.full_name as string,
+            name: data.name as string,  // API expects 'name' not 'name'
             email: data.email as string,
             phone: data.phone as string,
-            nationality: data.nationality as string || undefined,
-            special_requests: data.special_requests as string || undefined,
-            ...customFields,
         },
-        payment_method: data.payment_method as string,
-        notes: data.notes as string || undefined,
+        payment_method: data.payment_method as string || 'card',
+        notes: (data.notes as string) || (data.special_requests as string) || undefined,
+        display_currency: (data.display_currency as string) || undefined,
     };
 
     const response = await authenticatedRequest(requestEvent, (token) =>
@@ -138,30 +124,37 @@ export const useCreateBooking = routeAction$(async (data, requestEvent) => {
     };
 });
 
-// Step indicator component
-const StepIndicator = component$<{currentStep: number; totalSteps: number}>(
-    ({currentStep, totalSteps}) => {
+// Step indicator component with labels
+const StepIndicator = component$<{currentStep: number; steps: {title: string; key: string}[]}>(
+    ({currentStep, steps}) => {
         return (
-            <div class="flex items-center justify-center gap-2 mb-6">
-                {Array.from({length: totalSteps}, (_, i) => (
-                    <div key={i} class="flex items-center">
-                        <div class={`flex items-center justify-center size-8 rounded-full text-sm font-semibold transition-all ${
-                            i < currentStep
-                                ? 'bg-success text-success-content'
-                                : i === currentStep
-                                    ? 'bg-primary text-primary-content ring-4 ring-primary/20'
-                                    : 'bg-base-200 text-base-content/50'
-                        }`}>
-                            {i < currentStep ? (
-                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            ) : (
-                                i + 1
-                            )}
+            <div class="flex items-center justify-center gap-1 sm:gap-2 mb-6">
+                {steps.map((step, i) => (
+                    <div key={step.key} class="flex items-center">
+                        <div class="flex flex-col items-center gap-1">
+                            <div class={`flex items-center justify-center size-8 sm:size-10 rounded-full text-sm font-semibold transition-all ${
+                                i < currentStep
+                                    ? 'bg-success text-success-content'
+                                    : i === currentStep
+                                        ? 'bg-primary text-primary-content ring-4 ring-primary/20'
+                                        : 'bg-base-200 text-base-content/50'
+                            }`}>
+                                {i < currentStep ? (
+                                    <svg class="size-4 sm:size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                ) : (
+                                    i + 1
+                                )}
+                            </div>
+                            <span class={`text-xs font-medium hidden sm:block ${
+                                i <= currentStep ? 'text-base-content' : 'text-base-content/50'
+                            }`}>
+                                {step.title}
+                            </span>
                         </div>
-                        {i < totalSteps - 1 && (
-                            <div class={`w-8 sm:w-12 h-0.5 mx-1 transition-colors ${
+                        {i < steps.length - 1 && (
+                            <div class={`w-6 sm:w-12 h-0.5 mx-1 sm:mx-2 mb-4 sm:mb-5 transition-colors ${
                                 i < currentStep ? 'bg-success' : 'bg-base-200'
                             }`}/>
                         )}
@@ -179,10 +172,11 @@ const PackageCard = component$<{
     isSelected: boolean;
     onSelect$: QRL<() => void>;
 }>(({pkg, lang, isSelected, onSelect$}) => {
+    const {selectedCurrency, currencies} = useCurrency();
     const config = pkg.options_config as any;
     const pricingTiers = config?.pricingTiers || [];
     const dbPrice = pkg.prices?.[0];
-    const price = pricingTiers[0]?.price ?? dbPrice?.amount ?? 0;
+    const priceUsd = pricingTiers[0]?.price ?? dbPrice?.amount ?? 0;
     const title = pkg.translations?.[lang]?.name || config?.title || pkg.name_internal;
     const description = pkg.translations?.[lang]?.description || config?.description || '';
     const inclusions = config?.inclusions || [];
@@ -229,8 +223,8 @@ const PackageCard = component$<{
                     </div>
                 </div>
                 <div class="text-right flex-shrink-0">
-                    <div class="text-lg font-bold text-primary">${price}</div>
-                    <div class="text-xs text-base-content/50">USD</div>
+                    <div class="text-lg font-bold text-primary">{formatPrice(priceUsd, selectedCurrency.value, currencies.value)}</div>
+                    <div class="text-xs text-base-content/50">{selectedCurrency.value}</div>
                 </div>
             </div>
             {/* Selection indicator */}
@@ -483,6 +477,7 @@ export default component$(() => {
     const session = useSession();
     const t = inlineTranslate();
     const createBookingAction = useCreateBooking();
+    const {selectedCurrency, currencies} = useCurrency();
 
     const lang = location.params.lang || 'en';
     const urlPackageId = location.url.searchParams.get('package');
@@ -492,7 +487,7 @@ export default component$(() => {
     const selectedPackageId = useSignal<string | null>(urlPackageId);
     const formValues = useStore<Record<string, any>>({
         number_of_people: 1,
-        payment_method: 'pay_on_arrival',
+        payment_method: 'card',
     });
 
     // Handle error state
@@ -533,24 +528,24 @@ export default component$(() => {
     const activityConfig = activity.booking_field_config as BookingFieldConfig | undefined;
     const finalConfig = mergeBookingConfigs(baseConfig, activityConfig);
 
-    // Determine steps based on booking type
-    const needsPackageStep = hasMultiplePackages && !urlPackageId;
-    const needsDateStep = !finalConfig.hide_fields?.includes('booking_date') &&
-                          !finalConfig.hide_fields?.includes('check_in_date');
-    const needsGuestStep = !finalConfig.hide_fields?.includes('number_of_people');
+    // Determine what's shown in the select step
+    const needsPackageSelection = hasMultiplePackages && !urlPackageId;
+    const needsDateSelection = !finalConfig.hide_fields?.includes('booking_date') &&
+                               !finalConfig.hide_fields?.includes('check_in_date');
+    const needsGuestSelection = !finalConfig.hide_fields?.includes('number_of_people');
 
-    const steps: {title: string; key: string}[] = [];
-    if (needsPackageStep) steps.push({title: 'Package', key: 'package'});
-    if (needsDateStep) steps.push({title: 'Date', key: 'date'});
-    if (needsGuestStep) steps.push({title: 'Guests', key: 'guests'});
-    steps.push({title: 'Details', key: 'details'});
-    steps.push({title: 'Confirm', key: 'confirm'});
+    // 3 steps: Select (package + date + guests) -> Details -> Confirm
+    const steps: {title: string; key: string}[] = [
+        {title: t('booking.steps.select@@Select'), key: 'select'},
+        {title: t('booking.steps.details@@Details'), key: 'details'},
+        {title: t('booking.steps.confirm@@Confirm'), key: 'confirm'},
+    ];
 
     const totalSteps = steps.length;
 
     // Initialize form values with defaults
     if (session.value?.user) {
-        if (!formValues.full_name) formValues.full_name = session.value.user.name || '';
+        if (!formValues.name) formValues.name = session.value.user.name || '';
         if (!formValues.email) formValues.email = session.value.user.email || '';
     }
 
@@ -559,10 +554,10 @@ export default component$(() => {
 
     // Separate contact fields from other fields
     const contactFields = allFields.filter(f =>
-        ['full_name', 'email', 'phone', 'nationality'].includes(f.name)
+        ['name', 'email', 'phone', 'nationality'].includes(f.name)
     );
     const otherFields = allFields.filter(f =>
-        !['full_name', 'email', 'phone', 'nationality', 'booking_date', 'check_in_date', 'check_out_date', 'number_of_people'].includes(f.name)
+        !['name', 'email', 'phone', 'nationality', 'booking_date', 'check_in_date', 'check_out_date', 'number_of_people'].includes(f.name)
     );
 
     // Price calculations - computed outside to avoid function in render
@@ -597,14 +592,14 @@ export default component$(() => {
     const canProceed = useComputed$(() => {
         const step = steps[currentStep.value];
         switch (step?.key) {
-            case 'package':
-                return !!selectedPackageId.value;
-            case 'date':
-                return !!(formValues.booking_date || formValues.check_in_date);
-            case 'guests':
-                return formValues.number_of_people >= 1;
+            case 'select':
+                // Must have package (if needed), date (if needed), and guests >= 1
+                const packageOk = !needsPackageSelection || !!selectedPackageId.value;
+                const dateOk = !needsDateSelection || !!(formValues.booking_date || formValues.check_in_date);
+                const guestsOk = formValues.number_of_people >= 1;
+                return packageOk && dateOk && guestsOk;
             case 'details':
-                return !!(formValues.full_name && formValues.email && formValues.phone);
+                return !!(formValues.name && formValues.email && formValues.phone);
             case 'confirm':
                 return true;
             default:
@@ -643,8 +638,8 @@ export default component$(() => {
                         </div>
                         {/* Price badge - always visible */}
                         <div class="text-right">
-                            <div class="text-lg font-bold text-primary">${totalPrice.value.toFixed(2)}</div>
-                            <div class="text-xs text-base-content/50">Total</div>
+                            <div class="text-lg font-bold text-primary">{formatPrice(totalPrice.value, selectedCurrency.value, currencies.value)}</div>
+                            <div class="text-xs text-base-content/50">Total ({selectedCurrency.value})</div>
                         </div>
                     </div>
                 </div>
@@ -652,130 +647,151 @@ export default component$(() => {
 
             {/* Step indicator */}
             <div class="container mx-auto max-w-4xl px-4 pt-6">
-                <StepIndicator currentStep={currentStep.value} totalSteps={totalSteps} />
+                <StepIndicator currentStep={currentStep.value} steps={steps} />
             </div>
 
             {/* Main content */}
             <div class="container mx-auto max-w-4xl px-4 pb-32">
                 <Form action={createBookingAction}>
+                    {/* Hidden inputs for all form values - required for form submission */}
                     <input type="hidden" name="activity_id" value={activity.id}/>
                     <input type="hidden" name="package_id" value={selectedPackageId.value || ''}/>
                     <input type="hidden" name="number_of_people" value={formValues.number_of_people}/>
                     <input type="hidden" name="payment_method" value={formValues.payment_method}/>
+                    <input type="hidden" name="booking_date" value={formValues.booking_date || ''}/>
+                    <input type="hidden" name="check_in_date" value={formValues.check_in_date || ''}/>
+                    <input type="hidden" name="check_out_date" value={formValues.check_out_date || ''}/>
+                    <input type="hidden" name="name" value={formValues.name || ''}/>
+                    <input type="hidden" name="email" value={formValues.email || ''}/>
+                    <input type="hidden" name="phone" value={formValues.phone || ''}/>
+                    <input type="hidden" name="nationality" value={formValues.nationality || ''}/>
+                    <input type="hidden" name="special_requests" value={formValues.special_requests || ''}/>
+                    <input type="hidden" name="notes" value={formValues.notes || ''}/>
+                    <input type="hidden" name="display_currency" value={selectedCurrency.value || 'USD'}/>
 
-                    {/* Step: Package Selection */}
-                    {currentStepKey === 'package' && (
-                        <div class="space-y-4">
+                    {/* Step: Select (Package + Date merged) */}
+                    {currentStepKey === 'select' && (
+                        <div class="space-y-6">
                             <div class="text-center mb-6">
-                                <h2 class="text-2xl font-bold text-base-content">Choose Your Package</h2>
-                                <p class="text-base-content/60 mt-1">Select the option that suits you best</p>
+                                <h2 class="text-2xl font-bold text-base-content">{t('booking.select.title@@Select Your Options')}</h2>
+                                <p class="text-base-content/60 mt-1">{t('booking.select.subtitle@@Choose your package and date')}</p>
                             </div>
-                            <div class="space-y-3">
-                                {packages.map((pkg) => (
-                                    <PackageCard
-                                        key={pkg.id}
-                                        pkg={pkg}
-                                        lang={lang}
-                                        isSelected={selectedPackageId.value === pkg.id}
-                                        onSelect$={$(() => { selectedPackageId.value = pkg.id; })}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
-                    {/* Step: Date Selection */}
-                    {currentStepKey === 'date' && (
-                        <div class="space-y-4">
-                            <div class="text-center mb-6">
-                                <h2 class="text-2xl font-bold text-base-content">
-                                    {bookingType === 'accommodation' ? 'Select Your Dates' : 'When would you like to go?'}
-                                </h2>
-                                <p class="text-base-content/60 mt-1">
-                                    {bookingType === 'accommodation'
-                                        ? 'Choose your check-in and check-out dates'
-                                        : 'Pick a date that works for you'}
-                                </p>
-                            </div>
-                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
-                                {bookingType === 'accommodation' ? (
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="label"><span class="label-text font-medium">Check-in</span></label>
-                                            <input
-                                                type="date"
-                                                name="check_in_date"
-                                                value={formValues.check_in_date || ''}
-                                                min={todayStr}
-                                                onInput$={(e) => formValues.check_in_date = (e.target as HTMLInputElement).value}
-                                                class="input input-bordered w-full"
-                                                required
+                            {/* Package Selection (if multiple packages) */}
+                            {needsPackageSelection && (
+                                <div class="space-y-4">
+                                    <h3 class="font-semibold text-base-content flex items-center gap-2">
+                                        <svg class="size-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                        </svg>
+                                        {t('booking.select.package@@Package')}
+                                    </h3>
+                                    <div class="space-y-3">
+                                        {packages.map((pkg) => (
+                                            <PackageCard
+                                                key={pkg.id}
+                                                pkg={pkg}
+                                                lang={lang}
+                                                isSelected={selectedPackageId.value === pkg.id}
+                                                onSelect$={$(() => { selectedPackageId.value = pkg.id; })}
                                             />
-                                        </div>
-                                        <div>
-                                            <label class="label"><span class="label-text font-medium">Check-out</span></label>
-                                            <input
-                                                type="date"
-                                                name="check_out_date"
-                                                value={formValues.check_out_date || ''}
-                                                min={formValues.check_in_date || todayStr}
-                                                onInput$={(e) => formValues.check_out_date = (e.target as HTMLInputElement).value}
-                                                class="input input-bordered w-full"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <QuickDatePicker
-                                        value={formValues.booking_date || ''}
-                                        onSelectToday$={$(() => formValues.booking_date = todayStr)}
-                                        onSelectTomorrow$={$(() => formValues.booking_date = tomorrowStr)}
-                                        onSelectWeekend$={$(() => formValues.booking_date = weekendStr)}
-                                        onInputChange$={$((val: string) => formValues.booking_date = val)}
-                                        name="booking_date"
-                                        todayStr={todayStr}
-                                        tomorrowStr={tomorrowStr}
-                                        weekendStr={weekendStr}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step: Guests */}
-                    {currentStepKey === 'guests' && (
-                        <div class="space-y-4">
-                            <div class="text-center mb-6">
-                                <h2 class="text-2xl font-bold text-base-content">How many guests?</h2>
-                                <p class="text-base-content/60 mt-1">
-                                    ${unitPrice.value.toFixed(2)} per person
-                                </p>
-                            </div>
-                            <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
-                                <GuestCounter
-                                    value={formValues.number_of_people}
-                                    onIncrement$={$(() => {
-                                        if (formValues.number_of_people < (activity.max_participants || 20)) {
-                                            formValues.number_of_people++;
-                                        }
-                                    })}
-                                    onDecrement$={$(() => {
-                                        if (formValues.number_of_people > 1) {
-                                            formValues.number_of_people--;
-                                        }
-                                    })}
-                                    min={1}
-                                    max={activity.max_participants || 20}
-                                    label={bookingType === 'accommodation' ? 'Guests' : 'People'}
-                                />
-                                {/* Price breakdown */}
-                                <div class="mt-6 pt-4 border-t border-base-200">
-                                    <div class="flex justify-between items-center text-base-content/70">
-                                        <span>${unitPrice.value.toFixed(2)} x {formValues.number_of_people} {formValues.number_of_people === 1 ? 'person' : 'people'}</span>
-                                        <span class="font-semibold text-base-content">${totalPrice.value.toFixed(2)}</span>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Date Selection */}
+                            {needsDateSelection && (
+                                <div class="space-y-4">
+                                    <h3 class="font-semibold text-base-content flex items-center gap-2">
+                                        <svg class="size-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        {bookingType === 'accommodation'
+                                            ? t('booking.select.dates@@Dates')
+                                            : t('booking.select.date@@Date')}
+                                    </h3>
+                                    <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                        {bookingType === 'accommodation' ? (
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="label"><span class="label-text font-medium">{t('booking.select.checkIn@@Check-in')}</span></label>
+                                                    <input
+                                                        type="date"
+                                                        name="check_in_date"
+                                                        value={formValues.check_in_date || ''}
+                                                        min={todayStr}
+                                                        onInput$={(e) => formValues.check_in_date = (e.target as HTMLInputElement).value}
+                                                        class="input input-bordered w-full"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label class="label"><span class="label-text font-medium">{t('booking.select.checkOut@@Check-out')}</span></label>
+                                                    <input
+                                                        type="date"
+                                                        name="check_out_date"
+                                                        value={formValues.check_out_date || ''}
+                                                        min={formValues.check_in_date || todayStr}
+                                                        onInput$={(e) => formValues.check_out_date = (e.target as HTMLInputElement).value}
+                                                        class="input input-bordered w-full"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <QuickDatePicker
+                                                value={formValues.booking_date || ''}
+                                                onSelectToday$={$(() => formValues.booking_date = todayStr)}
+                                                onSelectTomorrow$={$(() => formValues.booking_date = tomorrowStr)}
+                                                onSelectWeekend$={$(() => formValues.booking_date = weekendStr)}
+                                                onInputChange$={$((val: string) => formValues.booking_date = val)}
+                                                name="booking_date"
+                                                todayStr={todayStr}
+                                                tomorrowStr={tomorrowStr}
+                                                weekendStr={weekendStr}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Guests Selection */}
+                            {needsGuestSelection && (
+                                <div class="space-y-4">
+                                    <h3 class="font-semibold text-base-content flex items-center gap-2">
+                                        <svg class="size-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                        {t('booking.select.guests@@Guests')}
+                                    </h3>
+                                    <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
+                                        <GuestCounter
+                                            value={formValues.number_of_people}
+                                            onIncrement$={$(() => {
+                                                if (formValues.number_of_people < (activity.max_participants || 20)) {
+                                                    formValues.number_of_people++;
+                                                }
+                                            })}
+                                            onDecrement$={$(() => {
+                                                if (formValues.number_of_people > 1) {
+                                                    formValues.number_of_people--;
+                                                }
+                                            })}
+                                            min={1}
+                                            max={activity.max_participants || 20}
+                                            label={bookingType === 'accommodation' ? t('booking.select.guestsLabel@@Guests') : t('booking.select.peopleLabel@@People')}
+                                        />
+                                        {/* Price breakdown */}
+                                        <div class="mt-6 pt-4 border-t border-base-200">
+                                            <div class="flex justify-between items-center text-base-content/70">
+                                                <span>{formatPrice(unitPrice.value, selectedCurrency.value, currencies.value)} x {formValues.number_of_people} {formValues.number_of_people === 1 ? t('booking.select.person@@person') : t('booking.select.people@@people')}</span>
+                                                <span class="font-semibold text-base-content">{formatPrice(totalPrice.value, selectedCurrency.value, currencies.value)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -783,8 +799,8 @@ export default component$(() => {
                     {currentStepKey === 'details' && (
                         <div class="space-y-6">
                             <div class="text-center mb-6">
-                                <h2 class="text-2xl font-bold text-base-content">Your Details</h2>
-                                <p class="text-base-content/60 mt-1">We'll use this to confirm your booking</p>
+                                <h2 class="text-2xl font-bold text-base-content">{t('booking.details.title@@Your Details')}</h2>
+                                <p class="text-base-content/60 mt-1">{t('booking.details.subtitle@@We\'ll use this to confirm your booking')}</p>
                             </div>
 
                             {/* Contact Information */}
@@ -875,13 +891,13 @@ export default component$(() => {
                     {currentStepKey === 'confirm' && (
                         <div class="space-y-6">
                             <div class="text-center mb-6">
-                                <h2 class="text-2xl font-bold text-base-content">Review & Confirm</h2>
-                                <p class="text-base-content/60 mt-1">Make sure everything looks right</p>
+                                <h2 class="text-2xl font-bold text-base-content">{t('booking.confirm.title@@Review & Confirm')}</h2>
+                                <p class="text-base-content/60 mt-1">{t('booking.confirm.subtitle@@Make sure everything looks right')}</p>
                             </div>
 
                             {/* Booking Summary Card */}
                             <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
-                                <h3 class="font-semibold text-base-content mb-4">Booking Summary</h3>
+                                <h3 class="font-semibold text-base-content mb-4">{t('booking.confirm.summary@@Booking Summary')}</h3>
 
                                 {/* Activity & Package */}
                                 <div class="flex gap-4 pb-4 border-b border-base-200">
@@ -917,12 +933,12 @@ export default component$(() => {
                                 {/* Price Breakdown */}
                                 <div class="py-4 space-y-2">
                                     <div class="flex justify-between text-sm text-base-content/70">
-                                        <span>${unitPrice.value.toFixed(2)} x {formValues.number_of_people}</span>
-                                        <span>${totalPrice.value.toFixed(2)}</span>
+                                        <span>{formatPrice(unitPrice.value, selectedCurrency.value, currencies.value)} x {formValues.number_of_people}</span>
+                                        <span>{formatPrice(totalPrice.value, selectedCurrency.value, currencies.value)}</span>
                                     </div>
                                     <div class="flex justify-between text-lg font-bold text-base-content pt-2 border-t border-base-200">
                                         <span>Total</span>
-                                        <span class="text-primary">${totalPrice.value.toFixed(2)} USD</span>
+                                        <span class="text-primary">{formatPrice(totalPrice.value, selectedCurrency.value, currencies.value)} {selectedCurrency.value}</span>
                                     </div>
                                 </div>
                             </div>
@@ -947,7 +963,7 @@ export default component$(() => {
                                         <svg class="size-4 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                         </svg>
-                                        <span>{formValues.full_name}</span>
+                                        <span>{formValues.name}</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <svg class="size-4 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -968,39 +984,22 @@ export default component$(() => {
 
                             {/* Payment Method */}
                             <div class="bg-base-100 rounded-2xl p-6 shadow-sm">
-                                <h3 class="font-semibold text-base-content mb-4">Payment Method</h3>
+                                <h3 class="font-semibold text-base-content mb-4">{t('booking.paymentMethod.title@@Payment Method')}</h3>
                                 <div class="space-y-3">
-                                    <label class="flex items-start gap-4 p-4 rounded-xl border-2 border-base-200 cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
+                                    <label class="flex items-start gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5 transition-all">
                                         <input
                                             type="radio"
                                             name="payment_method_select"
-                                            value="pay_on_arrival"
+                                            value="card"
                                             class="radio radio-primary mt-0.5"
-                                            checked={formValues.payment_method === 'pay_on_arrival'}
-                                            onChange$={() => formValues.payment_method = 'pay_on_arrival'}
+                                            checked={true}
+                                            onChange$={() => formValues.payment_method = 'card'}
                                         />
                                         <div class="flex-1">
-                                            <span class="font-semibold text-base-content">Pay on Arrival</span>
-                                            <p class="text-sm text-base-content/60 mt-0.5">Pay when you arrive at the location</p>
+                                            <span class="font-semibold text-base-content">{t('booking.paymentMethod.card@@Card')}</span>
+                                            <p class="text-sm text-base-content/60 mt-0.5">{t('booking.paymentMethod.cardDescription@@Pay securely with your credit or debit card')}</p>
                                         </div>
-                                        <svg class="size-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                        </svg>
-                                    </label>
-                                    <label class="flex items-start gap-4 p-4 rounded-xl border-2 border-base-200 cursor-pointer hover:border-primary/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-all">
-                                        <input
-                                            type="radio"
-                                            name="payment_method_select"
-                                            value="bank_transfer"
-                                            class="radio radio-primary mt-0.5"
-                                            checked={formValues.payment_method === 'bank_transfer'}
-                                            onChange$={() => formValues.payment_method = 'bank_transfer'}
-                                        />
-                                        <div class="flex-1">
-                                            <span class="font-semibold text-base-content">Bank Transfer</span>
-                                            <p class="text-sm text-base-content/60 mt-0.5">We'll email you the bank details</p>
-                                        </div>
-                                        <svg class="size-6 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                         </svg>
                                     </label>
@@ -1033,75 +1032,71 @@ export default component$(() => {
                             )}
                         </div>
                     )}
-                </Form>
-            </div>
 
-            {/* Fixed Bottom Navigation */}
-            <div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 p-4 shadow-lg">
-                <div class="container mx-auto max-w-4xl">
-                    <div class="flex items-center gap-4">
-                        {/* Back button */}
-                        {currentStep.value > 0 && (
-                            <button
-                                type="button"
-                                onClick$={goBack}
-                                class="btn btn-ghost"
-                            >
-                                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                </svg>
-                                Back
-                            </button>
-                        )}
-
-                        <div class="flex-1"/>
-
-                        {/* Price summary on mobile */}
-                        <div class="text-right mr-2 lg:hidden">
-                            <div class="text-xs text-base-content/60">Total</div>
-                            <div class="font-bold text-primary">${totalPrice.value.toFixed(2)}</div>
-                        </div>
-
-                        {/* Next/Submit button */}
-                        {currentStepKey !== 'confirm' ? (
-                            <button
-                                type="button"
-                                onClick$={goNext}
-                                disabled={!canProceed.value}
-                                class="btn btn-primary min-w-[120px]"
-                            >
-                                Continue
-                                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                </svg>
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick$={() => {
-                                    const form = document.querySelector('form');
-                                    if (form) form.requestSubmit();
-                                }}
-                                disabled={createBookingAction.isRunning}
-                                class="btn btn-primary min-w-[160px]"
-                            >
-                                {createBookingAction.isRunning ? (
-                                    <>
-                                        <span class="loading loading-spinner loading-sm"></span>
-                                        Processing...
-                                    </>
-                                ) : (
-                                    <>
+                    {/* Fixed Bottom Navigation - inside Form for proper submission */}
+                    <div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 p-4 shadow-lg z-50">
+                        <div class="container mx-auto max-w-4xl">
+                            <div class="flex items-center gap-4">
+                                {/* Back button */}
+                                {currentStep.value > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick$={goBack}
+                                        class="btn btn-ghost"
+                                    >
                                         <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                         </svg>
-                                        Confirm Booking
-                                    </>
+                                        Back
+                                    </button>
                                 )}
-                            </button>
-                        )}
+
+                                <div class="flex-1"/>
+
+                                {/* Price summary on mobile */}
+                                <div class="text-right mr-2 lg:hidden">
+                                    <div class="text-xs text-base-content/60">Total</div>
+                                    <div class="font-bold text-primary">{formatPrice(totalPrice.value, selectedCurrency.value, currencies.value)}</div>
+                                </div>
+
+                                {/* Next/Submit button */}
+                                {currentStepKey !== 'confirm' ? (
+                                    <button
+                                        type="button"
+                                        onClick$={goNext}
+                                        disabled={!canProceed.value}
+                                        class="btn btn-primary min-w-[120px]"
+                                    >
+                                        Continue
+                                        <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="submit"
+                                        disabled={createBookingAction.isRunning}
+                                        class="btn btn-primary min-w-[160px]"
+                                    >
+                                        {createBookingAction.isRunning ? (
+                                            <>
+                                                <span class="loading loading-spinner loading-sm"></span>
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                Confirm Booking
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </Form>
             </div>
         </div>
     );

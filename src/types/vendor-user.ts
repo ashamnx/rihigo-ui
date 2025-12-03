@@ -1,47 +1,54 @@
 /**
- * Vendor User type definitions
- * For managing users assigned to vendors with roles and permissions
+ * Vendor Staff type definitions
+ * For managing staff assigned to vendors with roles
+ * Based on API: GET/POST /api/admin/vendors/{id}/staff
  */
 
-export interface VendorUser {
+export interface VendorStaff {
   id: string;
   vendor_id: string;
   user_id: string;
-  role: 'owner' | 'manager' | 'staff' | 'viewer';
-  permissions: string[];
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-  };
+  user_email: string;
+  role: 'owner' | 'manager' | 'staff';
+  status: 'active' | 'inactive';
   created_at: string;
-  updated_at: string;
-  created_by?: string;
 }
 
+export interface VendorStaffCreateInput {
+  user_email: string;
+  role: 'owner' | 'manager' | 'staff';
+}
+
+/**
+ * Vendor Activity Log type definitions
+ * Based on API: GET /api/admin/vendors/{id}/logs
+ */
+export interface VendorLog {
+  id: string;
+  vendor_id: string;
+  action: string;
+  details: Record<string, unknown>;
+  performed_by: string;
+  created_at: string;
+}
+
+// Legacy alias for backward compatibility
+export type VendorUser = VendorStaff;
+
 export interface VendorUserCreateInput {
-  user_id: string;
-  role: 'owner' | 'manager' | 'staff' | 'viewer';
-  permissions: string[];
+  user_email: string;
+  role: 'owner' | 'manager' | 'staff';
 }
 
 export interface VendorUserUpdateInput {
-  role?: 'owner' | 'manager' | 'staff' | 'viewer';
-  permissions?: string[];
+  role?: 'owner' | 'manager' | 'staff';
 }
 
-// Available permissions for vendor users
-export const VENDOR_PERMISSIONS = {
-  MANAGE_BOOKINGS: 'manage_bookings',
-  VIEW_REPORTS: 'view_reports',
-  MANAGE_ACTIVITIES: 'manage_activities',
-  MANAGE_RESOURCES: 'manage_resources',
-  MANAGE_GUESTS: 'manage_guests',
-  MANAGE_INVOICES: 'manage_invoices',
-  MANAGE_PAYMENTS: 'manage_payments',
-  MANAGE_STAFF: 'manage_staff',
-  MANAGE_SETTINGS: 'manage_settings',
-} as const;
+// Available roles for vendor staff
+export const VENDOR_STAFF_ROLES = [
+  { id: 'owner', label: 'Owner', description: 'Full access to all features' },
+  { id: 'manager', label: 'Manager', description: 'Manage day-to-day operations' },
+  { id: 'staff', label: 'Staff', description: 'Limited access based on role' },
+] as const;
 
-export type VendorPermission = typeof VENDOR_PERMISSIONS[keyof typeof VENDOR_PERMISSIONS];
+export type VendorStaffRole = 'owner' | 'manager' | 'staff';

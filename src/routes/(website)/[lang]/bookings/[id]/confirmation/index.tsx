@@ -3,20 +3,6 @@ import {routeLoader$, useLocation, Link, type DocumentHead} from '@builder.io/qw
 import {inlineTranslate} from 'qwik-speak';
 import {authenticatedRequest, apiClient} from '~/utils/api-client';
 
-export const head: DocumentHead = {
-  title: 'Booking Confirmation | Rihigo',
-  meta: [
-    {
-      name: 'description',
-      content: 'View your booking confirmation details',
-    },
-    {
-      name: 'robots',
-      content: 'noindex, nofollow',
-    },
-  ],
-};
-
 export const useBookingData = routeLoader$(async (requestEvent) => {
   const bookingId = requestEvent.params.id;
 
@@ -351,7 +337,7 @@ export default component$(() => {
             {/* Actions */}
             <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
               <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                {booking.payment_status === 'pending' && (
+                {booking.status === 'confirmed' && booking.payment_status === 'pending' && (
                   <Link href={`/${lang}/bookings/${booking.id}/pay`} class="btn btn-success gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -373,3 +359,17 @@ export default component$(() => {
     </div>
   );
 });
+
+export const head: DocumentHead = {
+  title: 'Booking Confirmation | Rihigo',
+  meta: [
+    {
+      name: 'description',
+      content: 'View your booking confirmation details',
+    },
+    {
+      name: 'robots',
+      content: 'noindex, nofollow',
+    },
+  ],
+};

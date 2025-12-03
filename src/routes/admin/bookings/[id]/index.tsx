@@ -90,7 +90,7 @@ export default component$(() => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <div class="text-sm opacity-70">Name</div>
-                                    <div>{booking.customer_info.full_name}</div>
+                                    <div>{booking.customer_info.name}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm opacity-70">Email</div>

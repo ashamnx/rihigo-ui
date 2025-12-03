@@ -4,6 +4,7 @@ import { Link, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { apiClient } from "~/utils/api-client";
 import { inlineTranslate } from "qwik-speak";
 import { ErrorState } from "~/components/error-state/error-state";
+import { useCurrency, formatPrice } from "~/context/currency-context";
 
 // Enable static generation for homepage (pre-render for each language)
 export const onStaticGenerate: StaticGenerateHandler = () => {
@@ -454,6 +455,9 @@ export default component$(() => {
 
 const ActivityCard = component$<{ activity: any; locale: string }>(
   ({ activity, locale }) => {
+    // Use currency context for price formatting
+    const { selectedCurrency, currencies } = useCurrency();
+
     // Get the first image or use placeholder
     const image =
       activity.images && activity.images.length > 0
@@ -497,7 +501,7 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
       return null;
     };
 
-    const price = getPrice();
+    const priceUsd = getPrice();
 
     return (
       <Link href={activityUrl}>
@@ -614,10 +618,10 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
             {/* Price and CTA */}
             <div class="flex items-center justify-between">
               <div class="text-left">
-                {price ? (
+                {priceUsd ? (
                   <p class="text-2xl font-bold text-gray-900">
-                    ${typeof price === 'number' ? price.toFixed(2) : price}
-                    <span class="text-sm font-normal text-gray-500 ml-1">USD</span>
+                    {formatPrice(priceUsd, selectedCurrency.value, currencies.value)}
+                    <span class="text-sm font-normal text-gray-500 ml-1">{selectedCurrency.value}</span>
                   </p>
                 ) : (
                   <p class="text-lg font-medium text-primary">View Details</p>
