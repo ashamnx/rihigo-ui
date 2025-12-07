@@ -98,51 +98,51 @@ export const ToastContainer = component$(() => {
 
   return (
     <div class="toast toast-end toast-top z-[100] pointer-events-none">
-      {toasts.value.map((toast) => (
-        <div
-          key={toast.id}
-          class={`alert ${toastStyles[toast.type]} shadow-lg pointer-events-auto max-w-sm animate-fade-in`}
-        >
-          <ToastIcon type={toast.type} />
-          <div class="flex-1">
-            {toast.title && <h3 class="font-bold text-sm">{toast.title}</h3>}
-            <div class="text-sm">{toast.message}</div>
-          </div>
-          <div class="flex gap-2">
-            {toast.action && (
-              <button
-                type="button"
-                class="btn btn-sm btn-ghost"
-                onClick$={toast.action.onClick}
-              >
-                {toast.action.label}
-              </button>
-            )}
-            {toast.dismissible && (
-              <button
-                type="button"
-                class="btn btn-sm btn-ghost btn-square"
-                onClick$={() => removeToast(toast.id)}
-                aria-label="Dismiss notification"
-              >
-                <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+      {toasts.value.map((toast) => {
+        // Extract primitive values to avoid serialization issues with functions
+        const toastId = toast.id;
+        const toastType = toast.type;
+        const toastTitle = toast.title;
+        const toastMessage = toast.message;
+        const toastDismissible = toast.dismissible;
+
+        return (
+          <div
+            key={toastId}
+            class={`alert ${toastStyles[toastType]} shadow-lg pointer-events-auto max-w-sm animate-fade-in`}
+          >
+            <ToastIcon type={toastType} />
+            <div class="flex-1">
+              {toastTitle && <h3 class="font-bold text-sm">{toastTitle}</h3>}
+              <div class="text-sm">{toastMessage}</div>
+            </div>
+            <div class="flex gap-2">
+              {toastDismissible && (
+                <button
+                  type="button"
+                  class="btn btn-sm btn-ghost btn-square"
+                  onClick$={() => removeToast(toastId)}
+                  aria-label="Dismiss notification"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
+                  <svg
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 });

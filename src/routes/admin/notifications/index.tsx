@@ -1,13 +1,11 @@
-import { component$, useSignal, $ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$, routeAction$, Form } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import type {
-  NotificationStats,
   NotificationType,
   NotificationPriority,
 } from "~/types/notification";
-import { useToast } from "~/context/toast-context";
 
 export const useNotificationStats = routeLoader$(async (requestEvent) => {
   const result = await authenticatedRequest(requestEvent, async (token) => {
@@ -74,37 +72,6 @@ export default component$(() => {
   const sendAction = useSendNotification();
   const activeTab = useSignal<"send" | "stats">("send");
   const isBroadcast = useSignal(false);
-
-  let toastContext: ReturnType<typeof useToast> | null = null;
-  try {
-    toastContext = useToast();
-  } catch {
-    // Toast context not available
-  }
-
-  // Show toast on action result
-  const handleActionResult = $(() => {
-    if (!toastContext) return;
-
-    if (sendAction.value?.success) {
-      toastContext.addToast({
-        type: "success",
-        message: sendAction.value.data?.count
-          ? `Notification sent to ${sendAction.value.data.count} users!`
-          : "Notification sent successfully!",
-      });
-    } else if (sendAction.value?.error) {
-      toastContext.addToast({
-        type: "error",
-        message: sendAction.value.error,
-      });
-    }
-  });
-
-  // Watch for action result changes
-  if (sendAction.value !== undefined) {
-    handleActionResult();
-  }
 
   const notificationTypes: { value: NotificationType; label: string }[] = [
     { value: "system_announcement", label: "System Announcement" },
