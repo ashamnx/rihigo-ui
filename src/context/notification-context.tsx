@@ -12,7 +12,7 @@ import {
   noSerialize,
   type NoSerialize,
 } from "@builder.io/qwik";
-import type { Notification, WebSocketMessage } from "~/types/notification";
+import type { Notification, WebSocketMessage, Toast } from "~/types/notification";
 import { useToast } from "~/context/toast-context";
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
@@ -54,14 +54,18 @@ export const NotificationProvider = component$<NotificationProviderProps>(
     const currentPage = useSignal(1);
     const wsRef = useSignal<NoSerialize<WebSocket> | null>(null);
     const reconnectTimeoutRef = useSignal<NoSerialize<ReturnType<typeof setTimeout>> | null>(null);
+    // Store addToast function reference with noSerialize to avoid Qwik serialization issues
+    const addToastRef = useSignal<NoSerialize<(toast: Omit<Toast, "id">) => void> | null>(null);
 
-    // Get toast context - needs to be inside the component
-    let toastContext: ReturnType<typeof useToast> | null = null;
-    try {
-      toastContext = useToast();
-    } catch {
-      // Toast context not available (not wrapped in ToastProvider)
-      console.warn("NotificationProvider: ToastProvider not found, toasts will be disabled");
+    // Get toast context - useToast must be called at component top level
+    const toastContext = useToast();
+
+    // Store the addToast function reference for use in useVisibleTask$
+    // eslint-disable-next-line qwik/valid-lexical-scope
+    if (!addToastRef.value) {
+      addToastRef.value = noSerialize((toast: Omit<Toast, "id">) => {
+        void toastContext.addToast(toast);
+      });
     }
 
     const fetchNotifications = $(async (page = 1, reset = false) => {
@@ -205,7 +209,9 @@ export const NotificationProvider = component$<NotificationProviderProps>(
         // Determine WebSocket protocol based on current location
         const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const apiHost = API_BASE_URL.replace(/^https?:\/\//, "");
-        const wsUrl = `${wsProtocol}//${apiHost}/api/ws/notifications?token=${token}`;
+        // Pass token via query parameter - standard approach for browser WebSocket auth
+        // Note: Browser WebSocket API doesn't support Authorization headers
+        const wsUrl = `${wsProtocol}//${apiHost}/api/ws/notifications?token=${encodeURIComponent(token)}`;
 
         try {
           const ws = new WebSocket(wsUrl);
@@ -226,8 +232,8 @@ export const NotificationProvider = component$<NotificationProviderProps>(
                 notifications.value = [notification, ...notifications.value];
                 unreadCount.value += 1;
 
-                // Show toast for new notification if toast context is available
-                if (toastContext) {
+                // Show toast for new notification if addToast function is available
+                if (addToastRef.value) {
                   const toastType =
                     notification.priority === "urgent"
                       ? "error"
@@ -235,7 +241,7 @@ export const NotificationProvider = component$<NotificationProviderProps>(
                         ? "warning"
                         : "info";
 
-                  toastContext.addToast({
+                  addToastRef.value({
                     type: toastType,
                     title: notification.title,
                     message: notification.body,

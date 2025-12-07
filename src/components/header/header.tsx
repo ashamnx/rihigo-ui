@@ -74,7 +74,11 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                         />
                     </Link>
                 </div>
-                <div class="flex lg:hidden">
+                <div class="flex items-center gap-2 lg:hidden">
+                    {/* Mobile Notification Bell - only show when authenticated */}
+                    {session.value?.user && (
+                        <NotificationBell isScrolled={showSolidHeader} lang={locale.lang || "en-US"} />
+                    )}
                     <button type="button"
                             class={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 transition-colors ${showSolidHeader ? 'text-gray-700' : 'text-white'}`}
                             onClick$={() => isMobileMenuOpen.value = true}>

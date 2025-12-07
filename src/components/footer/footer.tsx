@@ -14,26 +14,20 @@ export const Footer = component$<FooterProps>(() => {
           class="-mb-6 flex flex-wrap justify-center gap-x-12 gap-y-3 text-sm/6"
           aria-label="Footer"
         >
-          <a href="#" class="text-gray-600 hover:text-gray-900">
+          <a href={`/${locale.lang}/about`} class="text-gray-600 hover:text-gray-900">
             {t("app.footer.about")}
           </a>
-          <a href="#" class="text-gray-600 hover:text-gray-900">
-            {t("app.footer.blog")}
-          </a>
-          <a href="#" class="text-gray-600 hover:text-gray-900">
-            {t("app.footer.jobs")}
-          </a>
-          <a href="#" class="text-gray-600 hover:text-gray-900">
-            {t("app.footer.press")}
-          </a>
-          <a href="#" class="text-gray-600 hover:text-gray-900">
-            {t("app.footer.accessibility")}
-          </a>
-          <a href="#" class="text-gray-600 hover:text-gray-900">
-            {t("app.footer.partners")}
+          <a href={`/${locale.lang}/support`} class="text-gray-600 hover:text-gray-900">
+            {t("app.nav.help")}
           </a>
           <a href={`/${locale.lang}/faq`} class="text-gray-600 hover:text-gray-900">
             {t("app.footer.faq@@FAQ")}
+          </a>
+          <a href={`/${locale.lang}/terms`} class="text-gray-600 hover:text-gray-900">
+            {t("app.footer.terms@@Terms")}
+          </a>
+          <a href={`/${locale.lang}/privacy`} class="text-gray-600 hover:text-gray-900">
+            {t("app.footer.privacy@@Privacy")}
           </a>
         </nav>
         <div class="mt-16 flex justify-center gap-x-10">
