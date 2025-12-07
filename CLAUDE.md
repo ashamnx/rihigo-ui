@@ -68,7 +68,7 @@ npm run qwik-speak-extract  # Extract translation strings to i18n/
 src/
 ├── routes/                    # File-based routing (QwikCity)
 │   ├── (website)/            # Public website routes
-│   │   └── [...lang]/        # Language-prefixed routes (en-US, it-IT)
+│   │   └── [lang]/        # Language-prefixed routes (en-US, it-IT)
 │   │       ├── activities/   # Activity listing & detail pages
 │   │       ├── booking/      # Booking flow (requires auth)
 │   │       └── bookings/     # Booking management & confirmation
@@ -156,7 +156,7 @@ Each activity has:
 - `booking_type`: Determines which preset form to use
 - `booking_field_config`: Custom fields and validation rules
 
-See `src/routes/(website)/[...lang]/booking/[slug]/IMPLEMENTATION_GUIDE.md` for detailed documentation.
+See `src/routes/(website)/[lang]/booking/[slug]/IMPLEMENTATION_GUIDE.md` for detailed documentation.
 
 ### Page Builder System
 
@@ -253,7 +253,7 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 
 1. **SSR Context**: Remember that code runs both server and client. Use `isServer` checks when needed.
 2. **Auth Token**: Always extract token from session in `routeAction$`, not from client state
-3. **Dynamic Routes**: Language param `[...lang]` is a catch-all, handle it correctly in loaders
+3. **Dynamic Routes**: Language param `[lang]` is a catch-all, handle it correctly in loaders
 4. **API Errors**: Backend returns `{ success: boolean, error_message?: string }` format
 5. **Qwik Optimizer**: Don't destructure props in component functions - breaks reactivity
 
@@ -272,7 +272,7 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 ## Related Documentation
 
 - **Authentication**: See `BOOKING_AUTHENTICATION.md`
-- **Booking System**: See `src/routes/(website)/[...lang]/booking/[slug]/IMPLEMENTATION_GUIDE.md`
+- **Booking System**: See `src/routes/(website)/[lang]/booking/[slug]/IMPLEMENTATION_GUIDE.md`
 - **Qwik Docs**: https://qwik.dev/
 - **QwikCity Routing**: https://qwik.dev/qwikcity/routing/overview/
 - Always use Modular Forms for forms

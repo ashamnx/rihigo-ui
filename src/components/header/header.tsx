@@ -53,6 +53,10 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
             label: t('app.nav.aboutUs'),
             link: '/about-us/'
         },
+        {
+            label: t('app.nav.help'),
+            link: '/support/'
+        },
     ];
 
     return (

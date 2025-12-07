@@ -174,6 +174,12 @@ export default component$(() => {
             ]
         },
         {
+            title: 'Support',
+            items: [
+                { label: 'Tickets', href: '/vendor/tickets', icon: TicketIcon },
+            ]
+        },
+        {
             title: 'Finance',
             collapsible: true,
             items: [

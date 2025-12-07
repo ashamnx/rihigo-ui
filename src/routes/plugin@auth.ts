@@ -107,7 +107,48 @@ export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
     (event) => ({
         secret: event.env.get('AUTH_SECRET'),
         trustHost: true,
-        debug: true,
+        debug: event.env.get('NODE_ENV') !== 'production',
+        // Custom cookie configuration for Cloudflare proxy
+        // Don't use __Secure- prefix (Cloudflare strips it) but still use secure: true
+        useSecureCookies: false,
+        cookies: {
+            sessionToken: {
+                name: 'authjs.session-token',
+                options: {
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    path: '/',
+                    secure: true, // Must be true for HTTPS sites
+                },
+            },
+            callbackUrl: {
+                name: 'authjs.callback-url',
+                options: {
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    path: '/',
+                    secure: true,
+                },
+            },
+            csrfToken: {
+                name: 'authjs.csrf-token',
+                options: {
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    path: '/',
+                    secure: true,
+                },
+            },
+            pkceCodeVerifier: {
+                name: 'authjs.pkce.code_verifier',
+                options: {
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    path: '/',
+                    secure: true,
+                },
+            },
+        },
         providers: [
             Google({
                 clientId: event.env.get('AUTH_GOOGLE_ID'),

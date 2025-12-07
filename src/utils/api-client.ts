@@ -1,6 +1,19 @@
 import type {RequestEventAction, RequestEventLoader} from '@builder.io/qwik-city';
 import type {ApiResponse, PaginatedResponse} from '~/types/api';
 import type { Activity, Currency } from "~/types/activity";
+import type {
+    Ticket,
+    TicketMessage,
+    TicketSummary,
+    TicketFilters,
+    CreateTicketInput,
+    GuestCreateTicketInput,
+    UpdateTicketInput,
+    UpdateTicketStatusInput,
+    AssignTicketInput,
+    AddTicketMessageInput,
+    GuestAddMessageInput,
+} from '~/types/ticket';
 
 /**
  * API client utility for making requests to the Go API
@@ -331,6 +344,86 @@ export const apiClient = {
     },
 
     /**
+     * Support - Public/Guest Routes (No Auth Required)
+     */
+    support: {
+        /**
+         * Guest creates a ticket
+         */
+        async createTicket(data: GuestCreateTicketInput): Promise<ApiResponse<Ticket>> {
+            return apiRequest('/api/support/tickets', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+
+        /**
+         * Guest views ticket by ticket number (requires email query param)
+         */
+        async getTicket(ticketNumber: string, email: string): Promise<ApiResponse<Ticket>> {
+            return apiRequest(`/api/support/tickets/${ticketNumber}?email=${encodeURIComponent(email)}`);
+        },
+
+        /**
+         * Guest adds message to ticket
+         */
+        async addMessage(ticketNumber: string, data: GuestAddMessageInput): Promise<ApiResponse<TicketMessage>> {
+            return apiRequest(`/api/support/tickets/${ticketNumber}/messages`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+    },
+
+    /**
+     * Tickets - User Routes (Auth Required)
+     */
+    tickets: {
+        /**
+         * User creates a ticket
+         */
+        async create(data: CreateTicketInput, token: string): Promise<ApiResponse<Ticket>> {
+            return apiRequest('/api/tickets', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * User lists their tickets
+         */
+        async list(token: string, filters?: {
+            page?: number;
+            page_size?: number;
+            status?: string;
+        }): Promise<ApiResponse<Ticket[]>> {
+            const params = new URLSearchParams();
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+            if (filters?.status) params.append('status', filters.status);
+            const queryString = params.toString();
+            return apiRequest(`/api/tickets${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        /**
+         * User views their ticket
+         */
+        async getById(id: string, token: string): Promise<ApiResponse<Ticket>> {
+            return apiRequest(`/api/tickets/${id}`, {}, token);
+        },
+
+        /**
+         * User adds message to their ticket
+         */
+        async addMessage(id: string, data: AddTicketMessageInput, token: string): Promise<ApiResponse<TicketMessage>> {
+            return apiRequest(`/api/tickets/${id}/messages`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+    },
+
+    /**
      * Islands
      */
     islands: {
@@ -457,6 +550,80 @@ export const apiClient = {
             },
             async updateStatus(id: string, data: { status: string; payment_status?: string }, token: string): Promise<ApiResponse> {
                 return apiRequest(`/api/admin/bookings/${id}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+        },
+        tickets: {
+            /**
+             * List all tickets with filters
+             */
+            async list(token: string, filters?: TicketFilters): Promise<ApiResponse<Ticket[]>> {
+                const params = new URLSearchParams();
+                if (filters?.page) params.append('page', filters.page.toString());
+                if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+                if (filters?.status) params.append('status', filters.status);
+                if (filters?.priority) params.append('priority', filters.priority);
+                if (filters?.category) params.append('category', filters.category);
+                if (filters?.assigned_to) params.append('assigned_to', filters.assigned_to);
+                if (filters?.assigned_vendor_id) params.append('assigned_vendor_id', filters.assigned_vendor_id);
+                if (filters?.search) params.append('search', filters.search);
+                if (filters?.date_from) params.append('date_from', filters.date_from);
+                if (filters?.date_to) params.append('date_to', filters.date_to);
+                const queryString = params.toString();
+                return apiRequest(`/api/admin/tickets${queryString ? '?' + queryString : ''}`, {}, token);
+            },
+
+            /**
+             * Get ticket statistics
+             */
+            async getSummary(token: string): Promise<ApiResponse<TicketSummary>> {
+                return apiRequest('/api/admin/tickets/summary', {}, token);
+            },
+
+            /**
+             * View any ticket
+             */
+            async getById(id: string, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest(`/api/admin/tickets/${id}`, {}, token);
+            },
+
+            /**
+             * Update ticket (priority, category)
+             */
+            async update(id: string, data: UpdateTicketInput, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest(`/api/admin/tickets/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Assign ticket to admin or vendor
+             */
+            async assign(id: string, data: AssignTicketInput, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest(`/api/admin/tickets/${id}/assign`, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Add message (can be internal)
+             */
+            async addMessage(id: string, data: AddTicketMessageInput, token: string): Promise<ApiResponse<TicketMessage>> {
+                return apiRequest(`/api/admin/tickets/${id}/messages`, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Update ticket status
+             */
+            async updateStatus(id: string, data: UpdateTicketStatusInput, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest(`/api/admin/tickets/${id}/status`, {
                     method: 'PUT',
                     body: JSON.stringify(data),
                 }, token);
@@ -1111,6 +1278,64 @@ export const apiClient = {
                 if (filters.to_date) params.append('to_date', filters.to_date);
                 const queryString = params.toString();
                 return apiRequest(`/api/vendor/reports/tax${queryString ? '?' + queryString : ''}`, {}, token);
+            },
+        },
+
+        // Vendor Tickets
+        tickets: {
+            /**
+             * List tickets related to vendor (assigned + created by vendor)
+             */
+            async list(token: string, filters?: {
+                search?: string;
+                status?: string;
+                page?: number;
+                limit?: number;
+            }): Promise<ApiResponse<Ticket[]>> {
+                const params = new URLSearchParams();
+                if (filters?.search) params.append('search', filters.search);
+                if (filters?.status) params.append('status', filters.status);
+                if (filters?.page) params.append('page', filters.page.toString());
+                if (filters?.limit) params.append('limit', filters.limit.toString());
+                const queryString = params.toString();
+                return apiRequest(`/api/vendor/tickets${queryString ? '?' + queryString : ''}`, {}, token);
+            },
+
+            /**
+             * Create ticket for platform issues
+             */
+            async create(data: CreateTicketInput, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest('/api/vendor/tickets', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * View assigned ticket
+             */
+            async getById(id: string, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest(`/api/vendor/tickets/${id}`, {}, token);
+            },
+
+            /**
+             * Add message to ticket
+             */
+            async addMessage(id: string, data: AddTicketMessageInput, token: string): Promise<ApiResponse<TicketMessage>> {
+                return apiRequest(`/api/vendor/tickets/${id}/messages`, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Update status (in_progress/resolved only)
+             */
+            async updateStatus(id: string, data: UpdateTicketStatusInput, token: string): Promise<ApiResponse<Ticket>> {
+                return apiRequest(`/api/vendor/tickets/${id}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }, token);
             },
         },
     }
