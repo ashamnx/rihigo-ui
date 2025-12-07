@@ -1,13 +1,11 @@
-import { component$, useSignal } from '@builder.io/qwik';
+import { component$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, Link, useLocation } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
 import type { TicketCategory } from '~/types/ticket';
 import { TICKET_CATEGORY_LABELS } from '~/types/ticket';
 
-export const useCreateGuestTicket = routeAction$(async (data, requestEvent) => {
-  const lang = requestEvent.params.lang || 'en-US';
-
+export const useCreateGuestTicket = routeAction$(async (data) => {
   const ticketData = {
     guest_name: data.guest_name as string,
     guest_email: data.guest_email as string,

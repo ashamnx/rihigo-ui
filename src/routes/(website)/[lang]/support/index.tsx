@@ -1,4 +1,4 @@
-import { component$, useSignal } from '@builder.io/qwik';
+import { component$, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, Link, useLocation } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
@@ -46,12 +46,12 @@ export default component$(() => {
     return matchesSearch && matchesCategory;
   });
 
-  const toggleFAQ = (id: string) => {
+  const toggleFAQ = $((id: string) => {
     expandedFAQs.value = {
       ...expandedFAQs.value,
       [id]: !expandedFAQs.value[id],
     };
-  };
+  });
 
   const isLoggedIn = !!session.value?.user;
 

@@ -3,7 +3,6 @@ import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, Link } from '@builder.io/qwik-city';
 import { apiClient, authenticatedRequest } from '~/utils/api-client';
 import type { TicketCategory, TicketPriority } from '~/types/ticket';
-import { TICKET_CATEGORY_LABELS } from '~/types/ticket';
 
 export const useCreateTicket = routeAction$(async (data, requestEvent) => {
   return authenticatedRequest(requestEvent, async (token) => {
