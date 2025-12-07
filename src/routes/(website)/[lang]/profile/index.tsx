@@ -12,6 +12,7 @@ import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import { getUserBookings } from "~/services/booking-api";
 import type { Booking } from "~/types/booking";
 import type { UserProfile } from "~/types/api";
+import { NotificationSettings } from "~/components/notifications/NotificationSettings";
 
 // Load user profile data
 export const useUserProfile = routeLoader$<UserProfile | null>(async (requestEvent) => {
@@ -52,6 +53,12 @@ export const useRecentBookings = routeLoader$(async (requestEvent) => {
     console.error("Failed to load recent bookings:", error);
     return { success: false, data: [], pagination: null };
   }
+});
+
+// Get session token for notification settings
+export const useSessionToken = routeLoader$(async (requestEvent) => {
+  const session = requestEvent.sharedMap.get("session") as { accessToken?: string } | null;
+  return session?.accessToken || "";
 });
 
 // Update profile action
@@ -148,6 +155,7 @@ export const useUpdatePreferences = routeAction$(
 export default component$(() => {
   const profile = useUserProfile();
   const recentBookings = useRecentBookings();
+  const sessionToken = useSessionToken();
   const updateProfileAction = useUpdateProfile();
   const updatePreferencesAction = useUpdatePreferences();
   const location = useLocation();
@@ -880,6 +888,30 @@ export default component$(() => {
         {/* Settings Tab */}
         {activeTab.value === "settings" && (
           <div class="space-y-6">
+            {/* Notification Settings */}
+            <div class="card bg-white shadow-lg">
+              <div class="card-body">
+                <h2 class="card-title">
+                  <svg
+                    class="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  {t("profile.settings.notifications@@Notification Settings")}
+                </h2>
+                <NotificationSettings token={sessionToken.value} />
+              </div>
+            </div>
+
+            {/* Security */}
             <div class="card bg-white shadow-lg">
               <div class="card-body">
                 <h2 class="card-title">

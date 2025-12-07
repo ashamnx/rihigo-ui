@@ -2,6 +2,9 @@ import { component$, Slot } from "@builder.io/qwik";
 import { Nav } from "~/components/nav/nav";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { CurrencyProvider, DEFAULT_CURRENCIES, type CurrencyData } from "~/context/currency-context";
+import { ToastProvider } from "~/context/toast-context";
+import { ToastContainer } from "~/components/toast/ToastContainer";
+import { NotificationProvider } from "~/context/notification-context";
 
 // Fetch currencies with exchange rates
 export const useCurrencyData = routeLoader$(async (requestEvent) => {
@@ -46,14 +49,29 @@ export const useCurrencyData = routeLoader$(async (requestEvent) => {
   };
 });
 
+// Get session token for notification context
+export const useSessionData = routeLoader$(async (requestEvent) => {
+  const session = requestEvent.sharedMap.get('session') as { accessToken?: string; user?: any } | null;
+  return {
+    token: session?.accessToken || null,
+    isAuthenticated: !!session?.user,
+  };
+});
+
 export default component$(() => {
   const currencyData = useCurrencyData();
+  const sessionData = useSessionData();
 
   return (
     <CurrencyProvider currencies={currencyData.value.data}>
-      <Nav>
-        <Slot />
-      </Nav>
+      <ToastProvider>
+        <NotificationProvider token={sessionData.value.token || undefined}>
+          <Nav>
+            <Slot />
+          </Nav>
+          <ToastContainer />
+        </NotificationProvider>
+      </ToastProvider>
     </CurrencyProvider>
   );
 });

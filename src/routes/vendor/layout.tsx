@@ -1,8 +1,12 @@
 import { component$, Slot, useSignal, useComputed$, $ } from "@builder.io/qwik";
 import type { RequestHandler } from "@builder.io/qwik-city";
-import { Link, useLocation } from "@builder.io/qwik-city";
+import { Link, useLocation, routeLoader$ } from "@builder.io/qwik-city";
 import { useSession } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
+import { ToastProvider } from "~/context/toast-context";
+import { ToastContainer } from "~/components/toast/ToastContainer";
+import { NotificationProvider } from "~/context/notification-context";
+import { NotificationBell } from "~/components/notifications/NotificationBell";
 
 export const onRequest: RequestHandler = (event) => {
     const session: Session | null = event.sharedMap.get('session');
@@ -18,6 +22,15 @@ export const onRequest: RequestHandler = (event) => {
         maxAge: 5,
     });
 };
+
+// Get session token for notification context
+export const useSessionData = routeLoader$(async (requestEvent) => {
+    const session = requestEvent.sharedMap.get('session') as { accessToken?: string; user?: any } | null;
+    return {
+        token: session?.accessToken || null,
+        isAuthenticated: !!session?.user,
+    };
+});
 
 // Icon components
 const DashboardIcon = () => (
@@ -134,6 +147,7 @@ interface NavGroup {
 
 export default component$(() => {
     const session = useSession();
+    const sessionData = useSessionData();
     const location = useLocation();
     const isSidebarOpen = useSignal(true);
     const expandedGroups = useSignal<Record<string, boolean>>({
@@ -213,7 +227,9 @@ export default component$(() => {
     });
 
     return (
-        <div class="drawer lg:drawer-open" data-theme="light">
+        <ToastProvider>
+            <NotificationProvider token={sessionData.value.token || undefined}>
+                <div class="drawer lg:drawer-open" data-theme="light">
             <input
                 id="vendor-drawer"
                 type="checkbox"
@@ -249,6 +265,9 @@ export default component$(() => {
                             </svg>
                             View Site
                         </Link>
+
+                        {/* Notification Bell */}
+                        <NotificationBell isScrolled={false} lang="en-US" />
 
                         {/* Profile dropdown */}
                         <div class="dropdown dropdown-end">
@@ -376,5 +395,8 @@ export default component$(() => {
                 </div>
             </div>
         </div>
-    );
+        <ToastContainer />
+      </NotificationProvider>
+    </ToastProvider>
+  );
 });

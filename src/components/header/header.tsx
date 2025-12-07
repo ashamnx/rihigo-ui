@@ -4,6 +4,7 @@ import { LocaleSelector } from '~/components/locale-selector/locale-selector';
 import {inlineTranslate, localizePath, useSpeakLocale} from 'qwik-speak';
 import { useSession } from "~/routes/plugin@auth";
 import { NavLink } from "~/components/nav/nav-link";
+import { NotificationBell } from "~/components/notifications/NotificationBell";
 
 export interface HeaderProps {
     hasHero?: boolean;
@@ -106,7 +107,10 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                                     Admin
                                 </Link>
                             )}
-                            
+
+                            {/* Notification Bell */}
+                            <NotificationBell isScrolled={showSolidHeader} lang={locale.lang || "en-US"} />
+
                             {/* Profile Dropdown */}
                             <div class="dropdown dropdown-end">
                                 <div tabIndex={0} role="button" class="btn btn-ghost btn-sm avatar">

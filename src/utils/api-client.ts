@@ -14,6 +14,18 @@ import type {
     AddTicketMessageInput,
     GuestAddMessageInput,
 } from '~/types/ticket';
+import type {
+    Notification,
+    NotificationFilters,
+    NotificationPreferences,
+    NotificationStats,
+    PushDevice,
+    RegisterDeviceRequest,
+    CreateNotificationRequest,
+    BroadcastNotificationRequest,
+    BroadcastResponse,
+    UnreadCountResponse,
+} from '~/types/notification';
 
 /**
  * API client utility for making requests to the Go API
@@ -437,6 +449,120 @@ export const apiClient = {
     },
 
     /**
+     * Notifications - User Routes (Auth Required)
+     */
+    notifications: {
+        /**
+         * List user's notifications with pagination and filtering
+         */
+        async list(token: string, filters?: NotificationFilters): Promise<ApiResponse<Notification[]>> {
+            const params = new URLSearchParams();
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+            if (filters?.type) params.append('type', filters.type);
+            if (filters?.is_read !== undefined) params.append('is_read', String(filters.is_read));
+            const queryString = params.toString();
+            return apiRequest(`/api/notifications${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        /**
+         * Get count of unread notifications (for badge display)
+         */
+        async getUnreadCount(token: string): Promise<ApiResponse<UnreadCountResponse>> {
+            return apiRequest('/api/notifications/unread-count', {}, token);
+        },
+
+        /**
+         * Get a specific notification
+         */
+        async getById(id: string, token: string): Promise<ApiResponse<Notification>> {
+            return apiRequest(`/api/notifications/${id}`, {}, token);
+        },
+
+        /**
+         * Mark a notification as read
+         */
+        async markAsRead(id: string, token: string): Promise<ApiResponse<{ message: string }>> {
+            return apiRequest(`/api/notifications/${id}/read`, { method: 'PUT' }, token);
+        },
+
+        /**
+         * Mark all notifications as read
+         */
+        async markAllAsRead(token: string): Promise<ApiResponse<{ message: string }>> {
+            return apiRequest('/api/notifications/read-all', { method: 'PUT' }, token);
+        },
+
+        /**
+         * Delete a notification
+         */
+        async delete(id: string, token: string): Promise<ApiResponse<{ message: string }>> {
+            return apiRequest(`/api/notifications/${id}`, { method: 'DELETE' }, token);
+        },
+
+        /**
+         * Notification Preferences
+         */
+        preferences: {
+            /**
+             * Get user's notification preferences
+             */
+            async get(token: string): Promise<ApiResponse<NotificationPreferences>> {
+                return apiRequest('/api/notifications/preferences', {}, token);
+            },
+
+            /**
+             * Update user's notification preferences
+             */
+            async update(data: Partial<NotificationPreferences>, token: string): Promise<ApiResponse<NotificationPreferences>> {
+                return apiRequest('/api/notifications/preferences', {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+        },
+
+        /**
+         * Push Device Management
+         */
+        devices: {
+            /**
+             * Register a device for push notifications (FCM)
+             */
+            async register(data: RegisterDeviceRequest, token: string): Promise<ApiResponse<PushDevice>> {
+                return apiRequest('/api/notifications/devices', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Unregister a device from push notifications
+             */
+            async unregister(deviceToken: string, token: string): Promise<ApiResponse<{ message: string }>> {
+                return apiRequest(`/api/notifications/devices/${encodeURIComponent(deviceToken)}`, {
+                    method: 'DELETE',
+                }, token);
+            },
+        },
+
+        /**
+         * Telegram Integration
+         */
+        telegram: {
+            /**
+             * Link Telegram account for notifications
+             */
+            async link(chatId: string, token: string): Promise<ApiResponse<{ message: string }>> {
+                return apiRequest('/api/notifications/telegram/link', {
+                    method: 'POST',
+                    body: JSON.stringify({ chat_id: chatId }),
+                }, token);
+            },
+        },
+    },
+
+    /**
      * Vendors (Admin only)
      */
     vendors: {
@@ -533,6 +659,40 @@ export const apiClient = {
         users: {
             async list(page = 1, pageSize = 20, token: string): Promise<ApiResponse> {
                 return apiRequest(`/api/admin/users?page=${page}&page_size=${pageSize}`, {}, token);
+            },
+        },
+        /**
+         * Admin Notifications Management
+         */
+        notifications: {
+            /**
+             * Create a notification for a specific user
+             */
+            async create(data: CreateNotificationRequest, token: string): Promise<ApiResponse<Notification>> {
+                return apiRequest('/api/admin/notifications', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Broadcast notification to multiple users or all users
+             */
+            async broadcast(data: BroadcastNotificationRequest, token: string): Promise<ApiResponse<BroadcastResponse>> {
+                return apiRequest('/api/admin/notifications/broadcast', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+
+            /**
+             * Get notification delivery statistics
+             */
+            async getStats(token: string, userId?: string): Promise<ApiResponse<NotificationStats>> {
+                const params = new URLSearchParams();
+                if (userId) params.append('user_id', userId);
+                const queryString = params.toString();
+                return apiRequest(`/api/admin/notifications/stats${queryString ? '?' + queryString : ''}`, {}, token);
             },
         },
         bookings: {
