@@ -620,7 +620,7 @@ export default component$(() => {
     return (
         <div class="min-h-screen bg-base-200/50">
             {/* Header */}
-            <div class="bg-base-100 border-b border-base-200 sticky top-0 z-50">
+            <div class="bg-base-100 border-b border-base-200 sticky top-0 z-40">
                 <div class="container mx-auto max-w-4xl px-4 py-3">
                     <div class="flex items-center gap-4">
                         <button
