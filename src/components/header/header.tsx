@@ -32,11 +32,11 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     const nav = [
         {
             label: t('app.nav.services'),
-            link: '/services/',
+            link: '/',
             children: [
                 {
                     label: 'Imuga',
-                    link: '/services/imuga/',
+                    link: '/imuga/',
                     description: `We help you fill out the imuga form`
                 },
                 {
@@ -92,7 +92,7 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                 </div>
                 <div class="hidden lg:flex lg:gap-x-12">
                     {nav.map((item, index) => item.children ?
-                        (<NestedNav item={item} key={index} isScrolled={showSolidHeader} />)
+                        (<NestedNav item={item} key={index} isScrolled={showSolidHeader} locale={locale}/>)
                         : (<NavLink href={`/${locale.lang || "en-US"}${item.link}`}
                                     activeClass="text-primary"
                                  class={`text-sm/6 font-semibold transition-colors duration-300 hover:text-primary ${showSolidHeader ? 'text-gray-900' : 'text-white'}`}
@@ -137,8 +137,9 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                                     <li>
                                         <Form action={signOut}>
                                             <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
-                                            <button type="submit" class="w-full text-left">
-                                                {t('app.nav.signOut') || 'Sign Out'}
+                                            <button type="submit" class="w-full text-left flex items-center gap-2" disabled={signOut.isRunning}>
+                                                {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
+                                                {signOut.isRunning ? 'Signing out...' : (t('app.nav.signOut') || 'Sign Out')}
                                             </button>
                                         </Form>
                                     </li>
@@ -254,9 +255,11 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                                                 <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
                                                 <button
                                                     type="submit"
-                                                    class="-mx-3 block w-full text-left rounded-lg px-3 py-2 text-base/7 font-semibold text-red-600 hover:bg-gray-50"
+                                                    class="-mx-3 w-full text-left rounded-lg px-3 py-2 text-base/7 font-semibold text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                                                    disabled={signOut.isRunning}
                                                 >
-                                                    {t('app.nav.signOut') || 'Sign Out'}
+                                                    {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
+                                                    {signOut.isRunning ? 'Signing out...' : (t('app.nav.signOut') || 'Sign Out')}
                                                 </button>
                                             </Form>
                                         </>
@@ -281,61 +284,81 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     );
 });
 
-const NestedNav = component$(({item, isScrolled}: {item: any, isScrolled: boolean}) => {
+const NestedNav = component$(({item, isScrolled, locale}: {item: any, isScrolled: boolean, locale: any}) => {
     const isExpanded = useSignal(false);
 
     return (
-        <div class="relative z-20">
-            <button type="button" class={`flex items-center gap-x-1 text-sm/6 font-semibold cursor-pointer transition-colors duration-300 hover:text-primary ${isScrolled ? 'text-gray-900' : 'text-white'}`}
-                    aria-expanded={isExpanded.value}
-                    aria-haspopup="true"
-                    onClick$={() => isExpanded.value = !isExpanded.value}
-            >
-                {item.label}
-                <svg class={`size-5 flex-none transition-colors ${isScrolled ? 'text-gray-400' : 'text-white/70'}`} viewBox="0 0 20 20" fill="currentColor"
-                     aria-hidden="true" data-slot="icon">
-                    <path fill-rule="evenodd"
-                          d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
-                          clip-rule="evenodd"/>
-                </svg>
-            </button>
-            {
-                isExpanded.value && (
-                    <div
-                        class="absolute top-full -left-8 z-10 mt-3 w-screen max-w-md overflow-hidden rounded-3xl bg-white ring-1 shadow-lg ring-gray-900/5">
-                        <div class="p-4">
-                            {
-                                item.children.map((child: any, index: number) => (
-                                    <div class="group relative flex gap-x-6 rounded-lg p-4 text-sm/6 hover:bg-gray-50"
-                                         key={index}
-                                         onClick$={() => isExpanded.value = false}>
-                                        <div
-                                            class="mt-1 flex size-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
-                                            <svg class="size-6 text-gray-600 group-hover:text-primary" fill="none"
-                                                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                 aria-hidden="true" data-slot="icon">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                      d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                      d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"/>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-auto">
-                                            <NavLink href="#" class="block font-semibold text-gray-900">
-                                                {child.label}
-                                                <span class="absolute inset-0"></span>
-                                            </NavLink>
-                                            <p class="mt-1 text-gray-600">{child.description}</p>
-                                        </div>
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    </div>
-                )
-            }
-        </div>
-    )
+      <div class="relative z-20">
+        <button
+          type="button"
+          class={`hover:text-primary flex cursor-pointer items-center gap-x-1 text-sm/6 font-semibold transition-colors duration-300 ${isScrolled ? "text-gray-900" : "text-white"}`}
+          aria-expanded={isExpanded.value}
+          aria-haspopup="true"
+          onClick$={() => (isExpanded.value = !isExpanded.value)}
+        >
+          {item.label}
+          <svg
+            class={`size-5 flex-none transition-colors ${isScrolled ? "text-gray-400" : "text-white/70"}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+            data-slot="icon"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+        {isExpanded.value && (
+          <div class="absolute top-full -left-8 z-10 mt-3 w-screen max-w-md overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5">
+            <div class="p-4">
+              {item.children.map((child: any, index: number) => (
+                <div
+                  class="group relative flex gap-x-6 rounded-lg p-4 text-sm/6 hover:bg-gray-50"
+                  key={index}
+                  onClick$={() => (isExpanded.value = false)}
+                >
+                  <div class="mt-1 flex size-11 flex-none items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
+                    <svg
+                      class="group-hover:text-primary size-6 text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                      data-slot="icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="flex-auto">
+                    <NavLink
+                      href={`/${locale.lang || "en-US"}${child.link}`}
+                      class="block font-semibold text-gray-900"
+                    >
+                      {child.label}
+                      <span class="absolute inset-0"></span>
+                    </NavLink>
+                    <p class="mt-1 text-gray-600">{child.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
 })
 
 interface MobileNestedNavProps {

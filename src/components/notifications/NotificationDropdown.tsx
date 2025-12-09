@@ -14,7 +14,7 @@ interface NotificationDropdownProps {
  */
 export const NotificationDropdown = component$<NotificationDropdownProps>(
   ({ onClose$, lang = "en-US" }) => {
-    const { notifications, unreadCount, markAllAsRead, isLoading } = useNotifications();
+    const { notifications, unreadCount, markAllAsRead } = useNotifications();
 
     // Show only the 5 most recent notifications
     const recentNotifications = notifications.value.slice(0, 5);
@@ -42,11 +42,7 @@ export const NotificationDropdown = component$<NotificationDropdownProps>(
 
         {/* Notification List */}
         <div class="max-h-96 overflow-y-auto">
-          {isLoading.value && notifications.value.length === 0 ? (
-            <div class="flex items-center justify-center py-8">
-              <span class="loading loading-spinner loading-md" />
-            </div>
-          ) : recentNotifications.length === 0 ? (
+          {recentNotifications.length === 0 ? (
             <div class="py-8 text-center">
               <svg
                 class="mx-auto h-12 w-12 text-base-content/40"

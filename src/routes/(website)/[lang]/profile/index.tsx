@@ -55,14 +55,74 @@ export const useRecentBookings = routeLoader$(async (requestEvent) => {
   }
 });
 
-// Get session data for notification settings
-export const useSessionToken = routeLoader$(async (requestEvent) => {
+// Load notification preferences
+export const useNotificationPreferences = routeLoader$(async (requestEvent) => {
   const session = requestEvent.sharedMap.get("session") as { accessToken?: string } | null;
-  return {
-    token: session?.accessToken || "",
-    apiUrl: process.env.API_URL || "http://localhost:8080",
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY || "",
-  };
+  if (!session?.accessToken) {
+    return null;
+  }
+
+  try {
+    const apiUrl = process.env.API_URL || "http://localhost:8080";
+    const response = await fetch(`${apiUrl}/api/notifications/preferences`, {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    });
+    const data = await response.json() as {
+      success: boolean;
+      data?: {
+        email_enabled: boolean;
+        sms_enabled: boolean;
+        quiet_hours_start?: string;
+        quiet_hours_end?: string;
+      };
+    };
+    if (data.success && data.data) {
+      return data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch notification preferences:", error);
+  }
+  return null;
+});
+
+// Save notification preferences action
+export const useSaveNotificationPreferences = routeAction$(async (formData, requestEvent) => {
+  const session = requestEvent.sharedMap.get("session") as { accessToken?: string } | null;
+  if (!session?.accessToken) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const apiUrl = process.env.API_URL || "http://localhost:8080";
+    const preferences = {
+      email_enabled: formData.email_enabled === "true",
+      sms_enabled: formData.sms_enabled === "true",
+      quiet_hours_start: formData.quiet_hours_start || undefined,
+      quiet_hours_end: formData.quiet_hours_end || undefined,
+    };
+
+    const response = await fetch(`${apiUrl}/api/notifications/preferences`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+      body: JSON.stringify(preferences),
+    });
+    const data = await response.json() as {
+      success: boolean;
+      error_message?: string;
+    };
+
+    if (data.success) {
+      return { success: true, message: "Preferences saved successfully!" };
+    } else {
+      return { success: false, error: data.error_message || "Failed to save preferences" };
+    }
+  } catch (error) {
+    console.error("Failed to save preferences:", error);
+    return { success: false, error: "Failed to save preferences. Please try again." };
+  }
 });
 
 // Update profile action
@@ -159,7 +219,8 @@ export const useUpdatePreferences = routeAction$(
 export default component$(() => {
   const profile = useUserProfile();
   const recentBookings = useRecentBookings();
-  const sessionToken = useSessionToken();
+  const notificationPreferences = useNotificationPreferences();
+  const saveNotificationPreferencesAction = useSaveNotificationPreferences();
   const updateProfileAction = useUpdateProfile();
   const updatePreferencesAction = useUpdatePreferences();
   const location = useLocation();
@@ -912,9 +973,8 @@ export default component$(() => {
                   {t("profile.settings.notifications@@Notification Settings")}
                 </h2>
                 <NotificationSettings
-                  token={sessionToken.value.token}
-                  apiUrl={sessionToken.value.apiUrl}
-                  vapidPublicKey={sessionToken.value.vapidPublicKey}
+                  initialPreferences={notificationPreferences.value}
+                  saveAction={saveNotificationPreferencesAction}
                 />
               </div>
             </div>

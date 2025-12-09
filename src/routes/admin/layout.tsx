@@ -224,7 +224,10 @@ export default component$(() => {
                                 <li>
                                     <Form action={signOut}>
                                         <input type="hidden" name="redirectTo" value="/" />
-                                        <button type="submit" class="text-error">Sign Out</button>
+                                        <button type="submit" class="text-error flex items-center gap-2" disabled={signOut.isRunning}>
+                                            {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
+                                            {signOut.isRunning ? 'Signing out...' : 'Sign Out'}
+                                        </button>
                                     </Form>
                                 </li>
                             </ul>

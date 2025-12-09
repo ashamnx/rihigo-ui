@@ -1,12 +1,13 @@
 import { component$, Slot, useSignal, useComputed$, $ } from "@builder.io/qwik";
 import type { RequestHandler } from "@builder.io/qwik-city";
-import { Link, useLocation, routeLoader$, Form } from "@builder.io/qwik-city";
+import { Link, useLocation, routeLoader$, routeAction$, Form } from "@builder.io/qwik-city";
 import { useSession, useSignOut } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
 import { ToastProvider } from "~/context/toast-context";
 import { ToastContainer } from "~/components/toast/ToastContainer";
 import { NotificationProvider } from "~/context/notification-context";
 import { NotificationBell } from "~/components/notifications/NotificationBell";
+import type { Notification } from "~/types/notification";
 
 export const onRequest: RequestHandler = (event) => {
     const session: Session | null = event.sharedMap.get('session');
@@ -29,6 +30,108 @@ export const useSessionData = routeLoader$(async (requestEvent) => {
         isAuthenticated: !!session?.user,
         apiUrl: process.env.API_URL || 'http://localhost:8080',
     };
+});
+
+// Load initial notifications
+export const useInitialNotifications = routeLoader$(async (requestEvent) => {
+    const session = requestEvent.sharedMap.get('session') as { accessToken?: string } | null;
+    if (!session?.accessToken) {
+        return { notifications: [], unreadCount: 0 };
+    }
+
+    const apiUrl = process.env.API_URL || 'http://localhost:8080';
+    const token = session.accessToken;
+
+    try {
+        const [notificationsRes, countRes] = await Promise.all([
+            fetch(`${apiUrl}/api/notifications?page=1&page_size=20`, {
+                headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`${apiUrl}/api/notifications/unread-count`, {
+                headers: { Authorization: `Bearer ${token}` },
+            }),
+        ]);
+
+        const notificationsData = await notificationsRes.json() as {
+            success: boolean;
+            data?: Notification[];
+        };
+        const countData = await countRes.json() as {
+            success: boolean;
+            data?: { count: number };
+        };
+
+        return {
+            notifications: notificationsData.success ? notificationsData.data || [] : [],
+            unreadCount: countData.success && countData.data ? countData.data.count : 0,
+        };
+    } catch (error) {
+        console.error('Failed to fetch initial notifications:', error);
+        return { notifications: [], unreadCount: 0 };
+    }
+});
+
+// Mark notification as read action
+export const useMarkNotificationRead = routeAction$(async (data, requestEvent) => {
+    const session = requestEvent.sharedMap.get('session') as { accessToken?: string } | null;
+    if (!session?.accessToken) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    const apiUrl = process.env.API_URL || 'http://localhost:8080';
+    try {
+        const response = await fetch(`${apiUrl}/api/notifications/${data.id}/read`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+        });
+        const result = await response.json() as { success: boolean };
+        return { success: result.success };
+    } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+        return { success: false, error: 'Failed to mark as read' };
+    }
+});
+
+// Mark all notifications as read action
+export const useMarkAllNotificationsRead = routeAction$(async (_, requestEvent) => {
+    const session = requestEvent.sharedMap.get('session') as { accessToken?: string } | null;
+    if (!session?.accessToken) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    const apiUrl = process.env.API_URL || 'http://localhost:8080';
+    try {
+        const response = await fetch(`${apiUrl}/api/notifications/read-all`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+        });
+        const result = await response.json() as { success: boolean };
+        return { success: result.success };
+    } catch (error) {
+        console.error('Failed to mark all notifications as read:', error);
+        return { success: false, error: 'Failed to mark all as read' };
+    }
+});
+
+// Delete notification action
+export const useDeleteNotification = routeAction$(async (data, requestEvent) => {
+    const session = requestEvent.sharedMap.get('session') as { accessToken?: string } | null;
+    if (!session?.accessToken) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    const apiUrl = process.env.API_URL || 'http://localhost:8080';
+    try {
+        const response = await fetch(`${apiUrl}/api/notifications/${data.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+        });
+        const result = await response.json() as { success: boolean };
+        return { success: result.success };
+    } catch (error) {
+        console.error('Failed to delete notification:', error);
+        return { success: false, error: 'Failed to delete notification' };
+    }
 });
 
 // Icon components
@@ -148,6 +251,10 @@ export default component$(() => {
     const session = useSession();
     const signOut = useSignOut();
     const sessionData = useSessionData();
+    const initialNotifications = useInitialNotifications();
+    const markReadAction = useMarkNotificationRead();
+    const markAllReadAction = useMarkAllNotificationsRead();
+    const deleteAction = useDeleteNotification();
     const location = useLocation();
     const isSidebarOpen = useSignal(true);
     const expandedGroups = useSignal<Record<string, boolean>>({
@@ -228,7 +335,15 @@ export default component$(() => {
 
     return (
         <ToastProvider>
-            <NotificationProvider token={sessionData.value.token || undefined} apiUrl={sessionData.value.apiUrl}>
+            <NotificationProvider
+                token={sessionData.value.token || undefined}
+                apiUrl={sessionData.value.apiUrl}
+                initialNotifications={initialNotifications.value.notifications}
+                initialUnreadCount={initialNotifications.value.unreadCount}
+                markReadAction={markReadAction}
+                markAllReadAction={markAllReadAction}
+                deleteAction={deleteAction}
+            >
                 <div class="drawer lg:drawer-open" data-theme="light">
             <input
                 id="vendor-drawer"
@@ -289,8 +404,9 @@ export default component$(() => {
                                 <li>
                                     <Form action={signOut}>
                                         <input type="hidden" name="redirectTo" value="/" />
-                                        <button type="submit" class="w-full text-left">
-                                            Sign Out
+                                        <button type="submit" class="w-full text-left flex items-center gap-2" disabled={signOut.isRunning}>
+                                            {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
+                                            {signOut.isRunning ? 'Signing out...' : 'Sign Out'}
                                         </button>
                                     </Form>
                                 </li>

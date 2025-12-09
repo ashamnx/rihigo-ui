@@ -11,24 +11,26 @@ import {
   type QRL,
   noSerialize,
   type NoSerialize,
+  useTask$,
 } from "@builder.io/qwik";
+import type { ActionStore } from "@builder.io/qwik-city";
 import type { Notification, WebSocketMessage, Toast } from "~/types/notification";
 import { useToast } from "~/context/toast-context";
 
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
 const WS_RECONNECT_DELAY = 5000; // 5 seconds
+
+interface ActionResult {
+  success: boolean;
+  error?: string;
+}
 
 export interface NotificationContextType {
   notifications: Signal<Notification[]>;
   unreadCount: Signal<number>;
   isConnected: Signal<boolean>;
-  isLoading: Signal<boolean>;
-  hasMore: Signal<boolean>;
-  fetchNotifications: QRL<(page?: number, reset?: boolean) => Promise<void>>;
-  fetchUnreadCount: QRL<() => Promise<void>>;
-  markAsRead: QRL<(id: string) => Promise<void>>;
-  markAllAsRead: QRL<() => Promise<void>>;
-  deleteNotification: QRL<(id: string) => Promise<void>>;
+  markAsRead: QRL<(id: string) => void>;
+  markAllAsRead: QRL<() => void>;
+  deleteNotification: QRL<(id: string) => void>;
 }
 
 export const NotificationContext =
@@ -36,8 +38,12 @@ export const NotificationContext =
 
 interface NotificationProviderProps {
   token?: string;
+  apiUrl: string;
   initialNotifications?: Notification[];
   initialUnreadCount?: number;
+  markReadAction: ActionStore<ActionResult, Record<string, unknown>, true>;
+  markAllReadAction: ActionStore<ActionResult, Record<string, unknown>, true>;
+  deleteAction: ActionStore<ActionResult, Record<string, unknown>, true>;
 }
 
 /**
@@ -45,13 +51,18 @@ interface NotificationProviderProps {
  * Manages notification state and WebSocket connection for real-time updates
  */
 export const NotificationProvider = component$<NotificationProviderProps>(
-  ({ token, initialNotifications = [], initialUnreadCount = 0 }) => {
+  ({
+    token,
+    apiUrl,
+    initialNotifications = [],
+    initialUnreadCount = 0,
+    markReadAction,
+    markAllReadAction,
+    deleteAction,
+  }) => {
     const notifications = useSignal<Notification[]>(initialNotifications);
     const unreadCount = useSignal(initialUnreadCount);
     const isConnected = useSignal(false);
-    const isLoading = useSignal(false);
-    const hasMore = useSignal(true);
-    const currentPage = useSignal(1);
     const wsRef = useSignal<NoSerialize<WebSocket> | null>(null);
     const reconnectTimeoutRef = useSignal<NoSerialize<ReturnType<typeof setTimeout>> | null>(null);
     // Store addToast function reference with noSerialize to avoid Qwik serialization issues
@@ -68,139 +79,59 @@ export const NotificationProvider = component$<NotificationProviderProps>(
       });
     }
 
-    const fetchNotifications = $(async (page = 1, reset = false) => {
-      if (!token) return;
+    // Track action results to update local state
+    useTask$(({ track }) => {
+      track(() => markReadAction.value);
+      // Action completed - local state already updated optimistically
+    });
 
-      isLoading.value = true;
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/notifications?page=${page}&page_size=20`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+    useTask$(({ track }) => {
+      track(() => markAllReadAction.value);
+      // Action completed - local state already updated optimistically
+    });
+
+    useTask$(({ track }) => {
+      track(() => deleteAction.value);
+      // Action completed - local state already updated optimistically
+    });
+
+    const markAsRead = $((id: string) => {
+      // Optimistic update
+      const notification = notifications.value.find((n) => n.id === id);
+      if (notification && !notification.is_read) {
+        notifications.value = notifications.value.map((n) =>
+          n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         );
-        const data = await response.json() as {
-          success: boolean;
-          data?: Notification[];
-          pagination_data?: { page: number; total_pages: number };
-        };
-
-        if (data.success) {
-          const newNotifications = data.data || [];
-          if (reset || page === 1) {
-            notifications.value = newNotifications;
-          } else {
-            notifications.value = [...notifications.value, ...newNotifications];
-          }
-          currentPage.value = page;
-
-          // Check if there are more pages
-          const pagination = data.pagination_data;
-          if (pagination) {
-            hasMore.value = pagination.page < pagination.total_pages;
-          } else {
-            hasMore.value = newNotifications.length === 20;
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
-      } finally {
-        isLoading.value = false;
+        unreadCount.value = Math.max(0, unreadCount.value - 1);
       }
+      // Submit action
+      markReadAction.submit({ id });
     });
 
-    const fetchUnreadCount = $(async () => {
-      if (!token) return;
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/notifications/unread-count`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json() as {
-          success: boolean;
-          data?: { count: number };
-        };
-
-        if (data.success && data.data) {
-          unreadCount.value = data.data.count;
-        }
-      } catch (error) {
-        console.error("Failed to fetch unread count:", error);
-      }
+    const markAllAsRead = $(() => {
+      // Optimistic update
+      notifications.value = notifications.value.map((n) => ({
+        ...n,
+        is_read: true,
+        read_at: n.read_at || new Date().toISOString(),
+      }));
+      unreadCount.value = 0;
+      // Submit action
+      markAllReadAction.submit({});
     });
 
-    const markAsRead = $(async (id: string) => {
-      if (!token) return;
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json() as { success: boolean };
-
-        if (data.success) {
-          // Update local state
-          const notification = notifications.value.find((n) => n.id === id);
-          if (notification && !notification.is_read) {
-            notifications.value = notifications.value.map((n) =>
-              n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
-            );
-            unreadCount.value = Math.max(0, unreadCount.value - 1);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to mark notification as read:", error);
+    const deleteNotification = $((id: string) => {
+      // Optimistic update
+      const notification = notifications.value.find((n) => n.id === id);
+      notifications.value = notifications.value.filter((n) => n.id !== id);
+      if (notification && !notification.is_read) {
+        unreadCount.value = Math.max(0, unreadCount.value - 1);
       }
+      // Submit action
+      deleteAction.submit({ id });
     });
 
-    const markAllAsRead = $(async () => {
-      if (!token) return;
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json() as { success: boolean };
-
-        if (data.success) {
-          // Update local state
-          notifications.value = notifications.value.map((n) => ({
-            ...n,
-            is_read: true,
-            read_at: n.read_at || new Date().toISOString(),
-          }));
-          unreadCount.value = 0;
-        }
-      } catch (error) {
-        console.error("Failed to mark all notifications as read:", error);
-      }
-    });
-
-    const deleteNotification = $(async (id: string) => {
-      if (!token) return;
-
-      try {
-        const notification = notifications.value.find((n) => n.id === id);
-        const response = await fetch(`${API_BASE_URL}/api/notifications/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json() as { success: boolean };
-
-        if (data.success) {
-          notifications.value = notifications.value.filter((n) => n.id !== id);
-          if (notification && !notification.is_read) {
-            unreadCount.value = Math.max(0, unreadCount.value - 1);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to delete notification:", error);
-      }
-    });
-
-    // WebSocket connection and event handling
+    // WebSocket connection for real-time updates
     // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(({ cleanup }) => {
       if (!token) return;
@@ -208,7 +139,7 @@ export const NotificationProvider = component$<NotificationProviderProps>(
       const connectWebSocket = () => {
         // Determine WebSocket protocol based on current location
         const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const apiHost = API_BASE_URL.replace(/^https?:\/\//, "");
+        const apiHost = apiUrl.replace(/^https?:\/\//, "");
         // Pass token via query parameter - standard approach for browser WebSocket auth
         // Note: Browser WebSocket API doesn't support Authorization headers
         const wsUrl = `${wsProtocol}//${apiHost}/api/ws/notifications?token=${encodeURIComponent(token)}`;
@@ -287,10 +218,6 @@ export const NotificationProvider = component$<NotificationProviderProps>(
         }
       };
 
-      // Initial data fetch
-      fetchNotifications(1, true);
-      fetchUnreadCount();
-
       // Connect WebSocket
       connectWebSocket();
 
@@ -309,10 +236,6 @@ export const NotificationProvider = component$<NotificationProviderProps>(
       notifications,
       unreadCount,
       isConnected,
-      isLoading,
-      hasMore,
-      fetchNotifications,
-      fetchUnreadCount,
       markAsRead,
       markAllAsRead,
       deleteNotification,
