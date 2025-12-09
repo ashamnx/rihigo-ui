@@ -15,6 +15,21 @@ import type {
     GuestAddMessageInput,
 } from '~/types/ticket';
 import type {
+    ImugaDeclaration,
+    ImugaTraveler,
+    ImugaRequest,
+    CreateImugaRequestInput,
+    CreateDeclarationInput,
+    UpdateDeclarationInput,
+    AddTravelerInput,
+    ProcessRequestInput,
+    DeclarationFilters,
+    RequestFilters,
+    ImugaDeclarationStatus,
+    ImugaExportData,
+    ValidationResult,
+} from '~/types/imuga';
+import type {
     Notification,
     NotificationFilters,
     NotificationPreferences,
@@ -1498,7 +1513,213 @@ export const apiClient = {
                 }, token);
             },
         },
-    }
+    },
+
+    /**
+     * IMUGA - Public Routes (No Auth Required)
+     */
+    imugaPublic: {
+        /**
+         * Submit IMUGA declaration request (public)
+         */
+        async createRequest(data: CreateImugaRequestInput): Promise<ApiResponse<ImugaRequest>> {
+            return apiRequest('/api/imuga-requests', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+        },
+
+        /**
+         * Check request status by request number (public)
+         */
+        async getRequestStatus(requestNumber: string): Promise<ApiResponse<ImugaRequest>> {
+            return apiRequest(`/api/imuga-requests/${requestNumber}`);
+        },
+    },
+
+    /**
+     * IMUGA Admin - Declarations
+     */
+    imugaDeclarations: {
+        /**
+         * List declarations with filters
+         */
+        async list(token: string, filters?: DeclarationFilters): Promise<ApiResponse<ImugaDeclaration[]>> {
+            const params = new URLSearchParams();
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.search) params.append('search', filters.search);
+            if (filters?.date_from) params.append('date_from', filters.date_from);
+            if (filters?.date_to) params.append('date_to', filters.date_to);
+            const queryString = params.toString();
+            return apiRequest(`/api/admin/imuga/declarations${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        /**
+         * Create new declaration
+         */
+        async create(data: CreateDeclarationInput, token: string): Promise<ApiResponse<ImugaDeclaration>> {
+            return apiRequest('/api/admin/imuga/declarations', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Get declaration by ID (includes travelers)
+         */
+        async getById(id: string, token: string): Promise<ApiResponse<ImugaDeclaration>> {
+            return apiRequest(`/api/admin/imuga/declarations/${id}`, {}, token);
+        },
+
+        /**
+         * Update declaration
+         */
+        async update(id: string, data: UpdateDeclarationInput, token: string): Promise<ApiResponse<ImugaDeclaration>> {
+            return apiRequest(`/api/admin/imuga/declarations/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Delete declaration
+         */
+        async delete(id: string, token: string): Promise<ApiResponse<void>> {
+            return apiRequest(`/api/admin/imuga/declarations/${id}`, {
+                method: 'DELETE',
+            }, token);
+        },
+
+        /**
+         * Update declaration status
+         */
+        async updateStatus(id: string, status: ImugaDeclarationStatus, token: string): Promise<ApiResponse<ImugaDeclaration>> {
+            return apiRequest(`/api/admin/imuga/declarations/${id}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ status }),
+            }, token);
+        },
+
+        /**
+         * Validate declaration (check all required fields before submission)
+         */
+        async validate(id: string, token: string): Promise<ApiResponse<ValidationResult>> {
+            return apiRequest(`/api/admin/imuga/declarations/${id}/validate`, {}, token);
+        },
+
+        /**
+         * Export declaration for Chrome plugin
+         */
+        async export(id: string, token: string): Promise<ApiResponse<ImugaExportData>> {
+            return apiRequest(`/api/admin/imuga/declarations/${id}/export`, {}, token);
+        },
+    },
+
+    /**
+     * IMUGA Admin - Travelers
+     */
+    imugaTravelers: {
+        /**
+         * List travelers for a declaration
+         */
+        async list(declarationId: string, token: string): Promise<ApiResponse<ImugaTraveler[]>> {
+            return apiRequest(`/api/admin/imuga/declarations/${declarationId}/travelers`, {}, token);
+        },
+
+        /**
+         * Add traveler to declaration
+         */
+        async add(declarationId: string, data: AddTravelerInput, token: string): Promise<ApiResponse<ImugaTraveler>> {
+            return apiRequest(`/api/admin/imuga/declarations/${declarationId}/travelers`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Reorder travelers
+         */
+        async reorder(declarationId: string, orderedIds: string[], token: string): Promise<ApiResponse<void>> {
+            return apiRequest(`/api/admin/imuga/declarations/${declarationId}/travelers/reorder`, {
+                method: 'PUT',
+                body: JSON.stringify({ ordered_ids: orderedIds }),
+            }, token);
+        },
+
+        /**
+         * Get traveler by ID
+         */
+        async getById(travelerId: string, token: string): Promise<ApiResponse<ImugaTraveler>> {
+            return apiRequest(`/api/admin/imuga/travelers/${travelerId}`, {}, token);
+        },
+
+        /**
+         * Update traveler
+         */
+        async update(travelerId: string, data: Partial<AddTravelerInput>, token: string): Promise<ApiResponse<ImugaTraveler>> {
+            return apiRequest(`/api/admin/imuga/travelers/${travelerId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Delete traveler
+         */
+        async delete(travelerId: string, token: string): Promise<ApiResponse<void>> {
+            return apiRequest(`/api/admin/imuga/travelers/${travelerId}`, {
+                method: 'DELETE',
+            }, token);
+        },
+    },
+
+    /**
+     * IMUGA Admin - Requests (Public Submissions)
+     */
+    imugaRequests: {
+        /**
+         * List requests with filters
+         */
+        async list(token: string, filters?: RequestFilters): Promise<ApiResponse<ImugaRequest[]>> {
+            const params = new URLSearchParams();
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.search) params.append('search', filters.search);
+            if (filters?.date_from) params.append('date_from', filters.date_from);
+            if (filters?.date_to) params.append('date_to', filters.date_to);
+            const queryString = params.toString();
+            return apiRequest(`/api/admin/imuga/requests${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        /**
+         * Get request by ID (includes travelers data)
+         */
+        async getById(id: string, token: string): Promise<ApiResponse<ImugaRequest>> {
+            return apiRequest(`/api/admin/imuga/requests/${id}`, {}, token);
+        },
+
+        /**
+         * Process request (approve/reject)
+         */
+        async process(id: string, data: ProcessRequestInput, token: string): Promise<ApiResponse<ImugaRequest>> {
+            return apiRequest(`/api/admin/imuga/requests/${id}/process`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Convert request to declaration
+         */
+        async convert(id: string, token: string): Promise<ApiResponse<ImugaDeclaration>> {
+            return apiRequest(`/api/admin/imuga/requests/${id}/convert`, {
+                method: 'POST',
+            }, token);
+        },
+    },
 };
 
 /**

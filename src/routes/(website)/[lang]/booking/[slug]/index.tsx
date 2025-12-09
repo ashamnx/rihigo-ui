@@ -15,20 +15,6 @@ import {authenticatedRequest, apiClient} from '~/utils/api-client';
 import type {ActivityPackage} from '~/types/activity';
 import {useCurrency, formatPrice} from '~/context/currency-context';
 
-export const head: DocumentHead = {
-  title: 'Book Now | Rihigo',
-  meta: [
-    {
-      name: 'description',
-      content: 'Complete your booking',
-    },
-    {
-      name: 'robots',
-      content: 'noindex, nofollow',
-    },
-  ],
-};
-
 // Helper functions moved outside components
 function getNextWeekend(d: Date): Date {
     const day = d.getDay();
@@ -1101,3 +1087,17 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+  title: "Book Now | Rihigo",
+  meta: [
+    {
+      name: "description",
+      content: "Complete your booking",
+    },
+    {
+      name: "robots",
+      content: "noindex, nofollow",
+    },
+  ],
+};
