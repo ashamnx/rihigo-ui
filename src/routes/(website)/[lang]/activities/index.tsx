@@ -4,12 +4,7 @@ import type { Activity, ActivityFilters } from '~/types/activity';
 import { getActivities } from '~/services/activity-api';
 
 export const useActivitiesData = routeLoader$(async (requestEvent) => {
-  requestEvent.cacheControl({
-    maxAge: 60,
-    sMaxAge: 3600,
-    staleWhileRevalidate: 60 * 60 * 24, // 1 day
-  });
-
+  // Cache headers are set by layout's onRequest based on auth status
   const url = requestEvent.url;
   const page = parseInt(url.searchParams.get('page') || '1');
   const category_id = url.searchParams.get('category_id');

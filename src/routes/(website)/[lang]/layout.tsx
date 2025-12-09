@@ -10,6 +10,10 @@ import { NotificationProvider } from "~/context/notification-context";
 // Authenticated pages must not be cached to prevent user data leakage
 export const onRequest: RequestHandler = (event) => {
   const session = event.sharedMap.get('session');
+
+  // Tell CDN to vary cache by Cookie so authenticated users get different response
+  event.headers.set('Vary', 'Cookie');
+
   if (session?.user) {
     // Authenticated: prevent caching to avoid showing wrong user's profile
     event.headers.set('Cache-Control', 'private, no-store');
@@ -62,12 +66,13 @@ export const useCurrencyData = routeLoader$(async () => {
   };
 });
 
-// Get session token for notification context
+// Get session token and API URL for notification context
 export const useSessionData = routeLoader$(async (requestEvent) => {
   const session = requestEvent.sharedMap.get('session') as { accessToken?: string; user?: any } | null;
   return {
     token: session?.accessToken || null,
     isAuthenticated: !!session?.user,
+    apiUrl: process.env.API_URL || 'http://localhost:8080',
   };
 });
 
@@ -78,7 +83,7 @@ export default component$(() => {
   return (
     <CurrencyProvider currencies={currencyData.value.data}>
       <ToastProvider>
-        <NotificationProvider token={sessionData.value.token || undefined}>
+        <NotificationProvider token={sessionData.value.token || undefined} apiUrl={sessionData.value.apiUrl}>
           <Nav>
             <Slot />
           </Nav>

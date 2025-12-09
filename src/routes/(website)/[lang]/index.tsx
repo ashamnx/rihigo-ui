@@ -13,25 +13,13 @@ export const onStaticGenerate: StaticGenerateHandler = () => {
   };
 };
 
-export const useHomeData = routeLoader$(async (requestEvent) => {
-  // Cache homepage for 1 minute on browser, 1 min CDN cache
-  requestEvent.cacheControl({
-    maxAge: 60,       // 1 minute browser cache
-    sMaxAge: 60,     // 1 min CDN cache
-    staleWhileRevalidate: 60 * 60, // 1 hour stale-while-revalidate
-  });
-
+export const useHomeData = routeLoader$(async () => {
+  // Cache headers are set by layout's onRequest based on auth status
   return await apiClient.activities.getTop();
 });
 
-export const useFAQsData = routeLoader$(async (requestEvent) => {
-  // Also cache FAQs loader
-  requestEvent.cacheControl({
-    maxAge: 60,
-    sMaxAge: 60,
-    staleWhileRevalidate: 60 * 60,
-  });
-
+export const useFAQsData = routeLoader$(async () => {
+  // Cache headers are set by layout's onRequest based on auth status
   const response = await apiClient.faqs.list(1, 6);
   if (!response.success) {
     return { success: false, data: [] };

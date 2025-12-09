@@ -1,11 +1,12 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { Link } from "@builder.io/qwik-city";
-import { useSession } from "~/routes/plugin@auth";
+import { Link, Form } from "@builder.io/qwik-city";
+import { useSession, useSignOut } from "~/routes/plugin@auth";
 import { inlineTranslate } from 'qwik-speak';
 
 export default component$(() => {
   const session = useSession();
+  const signOut = useSignOut();
   const t = inlineTranslate();
 
   return (
@@ -81,14 +82,15 @@ export default component$(() => {
               >
                 {t('auth.unauthorized.goHome') || 'Go to Homepage'}
               </Link>
-              <form action="/auth/signout" method="post" class="w-full">
+              <Form action={signOut} class="w-full">
+                <input type="hidden" name="redirectTo" value="/" />
                 <button
                   type="submit"
                   class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {t('auth.unauthorized.signOut') || 'Sign Out'}
                 </button>
-              </form>
+              </Form>
             </>
           ) : (
             <>

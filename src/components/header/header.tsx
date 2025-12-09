@@ -1,8 +1,8 @@
 import {component$, useSignal, useOnWindow, $, type QRL} from '@builder.io/qwik';
-import {Link} from "@builder.io/qwik-city";
+import {Link, Form} from "@builder.io/qwik-city";
 import { LocaleSelector } from '~/components/locale-selector/locale-selector';
 import {inlineTranslate, localizePath, useSpeakLocale} from 'qwik-speak';
-import { useSession } from "~/routes/plugin@auth";
+import { useSession, useSignOut } from "~/routes/plugin@auth";
 import { NavLink } from "~/components/nav/nav-link";
 import { NotificationBell } from "~/components/notifications/NotificationBell";
 
@@ -14,6 +14,7 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     const t = inlineTranslate();
     const locale = useSpeakLocale();
     const session = useSession();
+    const signOut = useSignOut();
     // Check admin role from session (fetched from backend during auth)
     const isUserAdmin = session.value?.user?.role === 'admin';
     const isMobileMenuOpen = useSignal(false);
@@ -134,11 +135,12 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                                     )}
                                     <div class="divider my-1"></div>
                                     <li>
-                                        <form action="/auth/signout" method="post">
+                                        <Form action={signOut}>
+                                            <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
                                             <button type="submit" class="w-full text-left">
                                                 {t('app.nav.signOut') || 'Sign Out'}
                                             </button>
-                                        </form>
+                                        </Form>
                                     </li>
                                 </ul>
                             </div>
@@ -248,14 +250,15 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                                                     {t('app.nav.admin') || 'Admin Panel'}
                                                 </Link>
                                             )}
-                                            <form action="/auth/signout" method="post" class="mt-2">
+                                            <Form action={signOut} class="mt-2">
+                                                <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
                                                 <button
                                                     type="submit"
                                                     class="-mx-3 block w-full text-left rounded-lg px-3 py-2 text-base/7 font-semibold text-red-600 hover:bg-gray-50"
                                                 >
                                                     {t('app.nav.signOut') || 'Sign Out'}
                                                 </button>
-                                            </form>
+                                            </Form>
                                         </>
                                     ) : (
                                         <div class="space-y-2">

@@ -1,17 +1,9 @@
 import { component$ } from '@builder.io/qwik';
 import type { DocumentHead, StaticGenerateHandler } from "@builder.io/qwik-city";
-import { Link, routeLoader$ } from "@builder.io/qwik-city";
+import { Link } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
 
-// Cache static terms page for 1 day on CDN
-export const useTermsCache = routeLoader$(async (requestEvent) => {
-    requestEvent.cacheControl({
-        maxAge: 3600,
-        sMaxAge: 86400, // 1 day
-        staleWhileRevalidate: 60 * 60 * 24 * 7, // 1 week
-    });
-    return null;
-});
+// Cache headers are set by layout's onRequest based on auth status
 
 // Enable static generation
 export const onStaticGenerate: StaticGenerateHandler = () => {
@@ -21,7 +13,6 @@ export const onStaticGenerate: StaticGenerateHandler = () => {
 };
 
 export default component$(() => {
-    useTermsCache();
     const t = inlineTranslate();
 
     return (

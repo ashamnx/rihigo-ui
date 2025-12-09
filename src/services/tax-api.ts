@@ -8,7 +8,7 @@ import type {
     UpdateVendorTaxRateInput,
 } from '~/types/tax';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = process.env.API_URL || 'http://localhost:8080';
 
 interface ApiResponseData<T> {
     success?: boolean;

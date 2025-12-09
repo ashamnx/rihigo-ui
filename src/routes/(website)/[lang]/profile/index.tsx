@@ -55,10 +55,14 @@ export const useRecentBookings = routeLoader$(async (requestEvent) => {
   }
 });
 
-// Get session token for notification settings
+// Get session data for notification settings
 export const useSessionToken = routeLoader$(async (requestEvent) => {
   const session = requestEvent.sharedMap.get("session") as { accessToken?: string } | null;
-  return session?.accessToken || "";
+  return {
+    token: session?.accessToken || "",
+    apiUrl: process.env.API_URL || "http://localhost:8080",
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY || "",
+  };
 });
 
 // Update profile action
@@ -907,7 +911,11 @@ export default component$(() => {
                   </svg>
                   {t("profile.settings.notifications@@Notification Settings")}
                 </h2>
-                <NotificationSettings token={sessionToken.value} />
+                <NotificationSettings
+                  token={sessionToken.value.token}
+                  apiUrl={sessionToken.value.apiUrl}
+                  vapidPublicKey={sessionToken.value.vapidPublicKey}
+                />
               </div>
             </div>
 

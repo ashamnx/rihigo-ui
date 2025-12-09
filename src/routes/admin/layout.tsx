@@ -1,7 +1,7 @@
 import { component$, Slot } from "@builder.io/qwik";
 import type { RequestHandler } from "@builder.io/qwik-city";
-import { Link, useLocation } from "@builder.io/qwik-city";
-import { useSession } from "~/routes/plugin@auth";
+import { Link, useLocation, Form } from "@builder.io/qwik-city";
+import { useSession, useSignOut } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
 
 export const onRequest: RequestHandler = (event) => {
@@ -156,6 +156,7 @@ const NavIcon = ({ name }: { name: string }) => {
 
 export default component$(() => {
     const session = useSession();
+    const signOut = useSignOut();
     const location = useLocation();
 
     if (!session.value?.user) {
@@ -221,9 +222,10 @@ export default component$(() => {
                                 <li><Link href="/admin/settings">Settings</Link></li>
                                 <div class="divider my-1"></div>
                                 <li>
-                                    <form action="/auth/signout" method="post">
+                                    <Form action={signOut}>
+                                        <input type="hidden" name="redirectTo" value="/" />
                                         <button type="submit" class="text-error">Sign Out</button>
-                                    </form>
+                                    </Form>
                                 </li>
                             </ul>
                         </div>

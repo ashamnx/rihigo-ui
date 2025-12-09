@@ -278,3 +278,4 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 - Always use Modular Forms for forms
 - always call http://localhost:8080/api/docs using curl to get the api docs and fields and validations
 - Always add head to new pages
+- dont use import.meta.env to access env variables. instead use qwik recommended way.

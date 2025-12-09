@@ -7,7 +7,7 @@ import type {
   Invoice,
 } from '~/types/booking';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.API_URL || 'http://localhost:8080';
 
 // ====================================
 // Helper Functions

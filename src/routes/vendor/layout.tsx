@@ -1,7 +1,7 @@
 import { component$, Slot, useSignal, useComputed$, $ } from "@builder.io/qwik";
 import type { RequestHandler } from "@builder.io/qwik-city";
-import { Link, useLocation, routeLoader$ } from "@builder.io/qwik-city";
-import { useSession } from "~/routes/plugin@auth";
+import { Link, useLocation, routeLoader$, Form } from "@builder.io/qwik-city";
+import { useSession, useSignOut } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
 import { ToastProvider } from "~/context/toast-context";
 import { ToastContainer } from "~/components/toast/ToastContainer";
@@ -21,12 +21,13 @@ export const onRequest: RequestHandler = (event) => {
     event.headers.set('Cache-Control', 'private, no-store');
 };
 
-// Get session token for notification context
+// Get session token and API URL for notification context
 export const useSessionData = routeLoader$(async (requestEvent) => {
     const session = requestEvent.sharedMap.get('session') as { accessToken?: string; user?: any } | null;
     return {
         token: session?.accessToken || null,
         isAuthenticated: !!session?.user,
+        apiUrl: process.env.API_URL || 'http://localhost:8080',
     };
 });
 
@@ -145,6 +146,7 @@ interface NavGroup {
 
 export default component$(() => {
     const session = useSession();
+    const signOut = useSignOut();
     const sessionData = useSessionData();
     const location = useLocation();
     const isSidebarOpen = useSignal(true);
@@ -226,7 +228,7 @@ export default component$(() => {
 
     return (
         <ToastProvider>
-            <NotificationProvider token={sessionData.value.token || undefined}>
+            <NotificationProvider token={sessionData.value.token || undefined} apiUrl={sessionData.value.apiUrl}>
                 <div class="drawer lg:drawer-open" data-theme="light">
             <input
                 id="vendor-drawer"
@@ -285,11 +287,12 @@ export default component$(() => {
                                 <li><Link href="/profile">My Profile</Link></li>
                                 <div class="divider my-1"></div>
                                 <li>
-                                    <form action="/auth/signout" method="post">
+                                    <Form action={signOut}>
+                                        <input type="hidden" name="redirectTo" value="/" />
                                         <button type="submit" class="w-full text-left">
                                             Sign Out
                                         </button>
-                                    </form>
+                                    </Form>
                                 </li>
                             </ul>
                         </div>
