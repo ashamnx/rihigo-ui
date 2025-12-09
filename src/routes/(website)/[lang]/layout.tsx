@@ -24,7 +24,7 @@ export const onRequest: RequestHandler = (event) => {
 };
 
 // Fetch currencies with exchange rates
-export const useCurrencyData = routeLoader$(async (requestEvent) => {
+export const useCurrencyData = routeLoader$(async () => {
   // Note: Page-level caching is handled by onRequest based on auth status
 
   // Try to fetch from API, fallback to defaults

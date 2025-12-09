@@ -1,4 +1,4 @@
-import { component$, useSignal, useStore, $ } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$, routeAction$, Form, Link } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
@@ -236,6 +236,15 @@ export default component$(() => {
 
   const removePricingTier = $((index: number) => {
     formData.options_config.pricingTiers!.splice(index, 1);
+  });
+
+  // Close modal on successful save
+  useTask$(({ track }) => {
+    track(() => savePackage.value);
+    if (savePackage.value?.success) {
+      showForm.value = false;
+      editingPackage.value = null;
+    }
   });
 
   if (!data.value.success || !data.value.data) {
