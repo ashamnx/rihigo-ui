@@ -1,65 +1,61 @@
-import { component$, useSignal, useStore, $, type QRL } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$, routeAction$, Form, Link } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 
-// Updated interface to match the specified structure
+// Updated interface to match the new API schema
 interface PricingTier {
-  tierName: string;
-  description: string;
+  name: string; // e.g., 'Adult', 'Child', 'Senior'
   price: number; // Always in USD (base currency)
-  currency: string; // Always 'USD' - kept for backwards compatibility
-  originalPrice?: number; // Always in USD
 }
 
-interface BookingOptions {
-  requiresTimeSlot: boolean;
-  advanceBookingDays: number;
-  maxBookingsPerDay?: number;
-  allowSameDayBooking: boolean;
-  timeSlots?: string[];
+// Options config matches the new API schema
+interface OptionsConfig {
+  // Tour/Activity options
+  duration?: number; // Duration in minutes
+  min_pax?: number; // Minimum participants
+  max_pax?: number; // Maximum participants
+  meeting_point?: string; // Meeting point location
+  pickup_included?: boolean; // Whether pickup is included
+  start_time?: string; // Default start time (e.g., '09:00')
+
+  // eSIM specific
+  data_limit?: string; // For eSIM: data limit (e.g., '5GB')
+  validity_days?: number; // For eSIM: number of valid days
+
+  // Pricing
+  pricingTiers?: PricingTier[];
+
+  // Custom fields
+  custom?: Record<string, unknown>;
 }
+
+type BookingType = 'fixed_date' | 'open_date' | 'instant_confirmation';
 
 interface ActivityPackage {
   id?: string;
-  packageId: string;
   activity_id: string;
-  title: string;
-  description: string;
-  inclusions: string[];
-  exclusions: string[];
-  cancellationPolicy: string;
-  status: 'AVAILABLE' | 'SOLD_OUT' | 'UNAVAILABLE';
-  pricingTiers: PricingTier[];
-  bookingOptions: BookingOptions;
-  createdAt?: string;
-  updatedAt?: string;
+  name_internal: string; // Internal package name for admin identification
+  booking_type: BookingType;
+  options_config: OptionsConfig;
+  sort_order: number;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Helper function to transform backend package format to frontend format
 const transformPackageFromBackend = (backendPkg: any): ActivityPackage => {
-  const optionsConfig = backendPkg.options_config || {};
-
   return {
     id: backendPkg.id,
-    packageId: backendPkg.name_internal || backendPkg.id,
     activity_id: backendPkg.activity_id,
-    title: optionsConfig.title || '',
-    description: optionsConfig.description || '',
-    inclusions: optionsConfig.inclusions || [],
-    exclusions: optionsConfig.exclusions || [],
-    cancellationPolicy: optionsConfig.cancellationPolicy || '',
-    status: optionsConfig.status || 'AVAILABLE',
-    pricingTiers: optionsConfig.pricingTiers || [],
-    bookingOptions: optionsConfig.bookingOptions || {
-      requiresTimeSlot: false,
-      advanceBookingDays: 1,
-      maxBookingsPerDay: undefined,
-      allowSameDayBooking: true,
-      timeSlots: []
-    },
-    createdAt: backendPkg.created_at,
-    updatedAt: backendPkg.updated_at
+    name_internal: backendPkg.name_internal || '',
+    booking_type: backendPkg.booking_type || 'open_date',
+    options_config: backendPkg.options_config || {},
+    sort_order: backendPkg.sort_order || 0,
+    is_active: backendPkg.is_active,
+    created_at: backendPkg.created_at,
+    updated_at: backendPkg.updated_at
   };
 };
 
@@ -99,30 +95,39 @@ export const useSavePackage = routeAction$(async (data, requestEvent) => {
       const activityId = requestEvent.params.id;
       const packageId = data.package_id as string | undefined;
 
-      // Prepare the options config with all the package details
-      const optionsConfig = {
-        title: data.title as string,
-        description: data.description as string,
-        inclusions: data.inclusions ? JSON.parse(data.inclusions as string) : [],
-        exclusions: data.exclusions ? JSON.parse(data.exclusions as string) : [],
-        cancellationPolicy: data.cancellationPolicy as string,
-        status: (data.status as any) || 'AVAILABLE',
-        pricingTiers: data.pricingTiers ? JSON.parse(data.pricingTiers as string) : [],
-        bookingOptions: {
-          requiresTimeSlot: data.requiresTimeSlot === "true",
-          advanceBookingDays: parseInt(data.advanceBookingDays as string) || 1,
-          maxBookingsPerDay: data.maxBookingsPerDay ? parseInt(data.maxBookingsPerDay as string) : undefined,
-          allowSameDayBooking: data.allowSameDayBooking === "true",
-          timeSlots: data.timeSlots ? JSON.parse(data.timeSlots as string) : []
-        }
+      // Parse pricing tiers from JSON string
+      const pricingTiers = data.pricingTiers ? JSON.parse(data.pricingTiers as string) : [];
+
+      // Build options_config matching the new API schema
+      const optionsConfig: OptionsConfig = {
+        // Tour/Activity options
+        duration: data.duration ? parseInt(data.duration as string) : undefined,
+        min_pax: data.min_pax ? parseInt(data.min_pax as string) : undefined,
+        max_pax: data.max_pax ? parseInt(data.max_pax as string) : undefined,
+        meeting_point: (data.meeting_point as string) || undefined,
+        pickup_included: data.pickup_included === "true",
+        start_time: (data.start_time as string) || undefined,
+
+        // eSIM specific
+        data_limit: (data.data_limit as string) || undefined,
+        validity_days: data.validity_days ? parseInt(data.validity_days as string) : undefined,
+
+        // Pricing
+        pricingTiers: pricingTiers,
       };
 
+      // Remove undefined values
+      Object.keys(optionsConfig).forEach(key => {
+        if (optionsConfig[key as keyof OptionsConfig] === undefined) {
+          delete optionsConfig[key as keyof OptionsConfig];
+        }
+      });
+
       const packageData = {
-        activity_id: activityId,
-        name_internal: data.packageId as string || crypto.randomUUID(),
-        booking_type: data.bookingType as string || "open_date",
+        name_internal: data.name_internal as string,
+        booking_type: (data.booking_type as string) || "open_date",
         options_config: optionsConfig,
-        sort_order: 0
+        sort_order: data.sort_order ? parseInt(data.sort_order as string) : 0
       };
 
       let response;
@@ -175,85 +180,67 @@ export default component$(() => {
   const showDeleteModal = useSignal(false);
   const packageToDelete = useSignal<string | null>(null);
 
-  // Form state
-  const formData = useStore<Partial<ActivityPackage> & { bookingType?: string }>({
-    packageId: '',
-    title: '',
-    description: '',
-    inclusions: [],
-    exclusions: [],
-    cancellationPolicy: '',
-    status: 'AVAILABLE',
-    bookingType: 'open_date',
-    pricingTiers: [],
-    bookingOptions: {
-      requiresTimeSlot: false,
-      advanceBookingDays: 1,
-      maxBookingsPerDay: undefined,
-      allowSameDayBooking: true,
-      timeSlots: []
+  // Form state matching new API schema
+  const formData = useStore<{
+    name_internal: string;
+    booking_type: BookingType;
+    sort_order: number;
+    options_config: OptionsConfig;
+  }>({
+    name_internal: '',
+    booking_type: 'open_date',
+    sort_order: 0,
+    options_config: {
+      duration: undefined,
+      min_pax: undefined,
+      max_pax: undefined,
+      meeting_point: '',
+      pickup_included: false,
+      start_time: '',
+      data_limit: '',
+      validity_days: undefined,
+      pricingTiers: []
     }
   });
 
   const resetForm = $(() => {
-    formData.packageId = '';
-    formData.title = '';
-    formData.description = '';
-    formData.inclusions = [];
-    formData.exclusions = [];
-    formData.cancellationPolicy = '';
-    formData.status = 'AVAILABLE';
-    formData.bookingType = 'open_date';
-    formData.pricingTiers = [];
-    formData.bookingOptions = {
-      requiresTimeSlot: false,
-      advanceBookingDays: 1,
-      maxBookingsPerDay: undefined,
-      allowSameDayBooking: true,
-      timeSlots: []
+    formData.name_internal = '';
+    formData.booking_type = 'open_date';
+    formData.sort_order = 0;
+    formData.options_config = {
+      duration: undefined,
+      min_pax: undefined,
+      max_pax: undefined,
+      meeting_point: '',
+      pickup_included: false,
+      start_time: '',
+      data_limit: '',
+      validity_days: undefined,
+      pricingTiers: []
     };
   });
 
   const editPackage = $((pkg: ActivityPackage) => {
-    Object.assign(formData, pkg);
+    formData.name_internal = pkg.name_internal;
+    formData.booking_type = pkg.booking_type;
+    formData.sort_order = pkg.sort_order;
+    formData.options_config = {
+      ...pkg.options_config,
+      pricingTiers: pkg.options_config.pricingTiers || []
+    };
     editingPackage.value = pkg;
     showForm.value = true;
   });
 
-  const addListItem = $((field: 'inclusions' | 'exclusions', value: string) => {
-    if (value.trim()) {
-      const list = formData[field] as string[];
-      list.push(value.trim());
-    }
-  });
-
-  const removeListItem = $((field: 'inclusions' | 'exclusions', index: number) => {
-    const list = formData[field] as string[];
-    list.splice(index, 1);
-  });
-
   const addPricingTier = $(() => {
-    formData.pricingTiers!.push({
-      tierName: '',
-      description: '',
-      price: 0,
-      currency: 'USD',
-      originalPrice: undefined
+    formData.options_config.pricingTiers!.push({
+      name: '',
+      price: 0
     });
   });
 
   const removePricingTier = $((index: number) => {
-    formData.pricingTiers!.splice(index, 1);
-  });
-
-  const addTimeSlot = $((value: string) => {
-    if (value.trim() && !formData.bookingOptions!.timeSlots!.includes(value.trim())) {
-      formData.bookingOptions!.timeSlots!.push(value.trim());
-    }
-  });
-
-  const removeTimeSlot = $((index: number) => {
-    formData.bookingOptions!.timeSlots!.splice(index, 1);
+    formData.options_config.pricingTiers!.splice(index, 1);
   });
 
   if (!data.value.success || !data.value.data) {
@@ -308,14 +295,14 @@ export default component$(() => {
           <div key={pkg.id} class="card bg-base-100 shadow-md">
             <div class="card-body">
               <div class="flex justify-between items-start mb-2">
-                <h3 class="card-title text-lg">{pkg.title}</h3>
+                <h3 class="card-title text-lg">{pkg.name_internal}</h3>
                 <div class="dropdown dropdown-end">
                   <div tabIndex={0} role="button" class="btn btn-ghost btn-sm">⋮</div>
                   <ul tabIndex={0} class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
                     <li><button type="button" onClick$={() => editPackage(pkg)}>Edit</button></li>
                     <li>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         class="text-error"
                         onClick$={() => {
                           packageToDelete.value = pkg.id!;
@@ -329,56 +316,73 @@ export default component$(() => {
                 </div>
               </div>
 
-              <p class="text-sm text-base-content/70 mb-3">{pkg.description}</p>
-
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  {pkg.pricingTiers && pkg.pricingTiers.length > 0 && (
+                  {pkg.options_config.pricingTiers && pkg.options_config.pricingTiers.length > 0 && (
                     <div class="text-2xl font-bold text-primary">
-                      ${pkg.pricingTiers[0].price.toFixed(2)}
+                      ${pkg.options_config.pricingTiers[0].price.toFixed(2)}
                       <span class="text-sm font-normal text-base-content/70"> USD</span>
-                      {pkg.pricingTiers.length > 1 && <span class="text-sm text-base-content/70"> +{pkg.pricingTiers.length - 1} more</span>}
+                      {pkg.options_config.pricingTiers.length > 1 && <span class="text-sm text-base-content/70"> +{pkg.options_config.pricingTiers.length - 1} more</span>}
                     </div>
                   )}
-                  <div class="text-xs text-base-content/60">Package ID: {pkg.packageId}</div>
                 </div>
                 <div class="flex gap-2">
-                  <div class={`badge ${
-                    pkg.status === 'AVAILABLE' ? 'badge-success' : 
-                    pkg.status === 'SOLD_OUT' ? 'badge-warning' : 
-                    'badge-error'
-                  }`}>
-                    {pkg.status.replace('_', ' ')}
+                  <div class={`badge ${pkg.is_active !== false ? 'badge-success' : 'badge-error'}`}>
+                    {pkg.is_active !== false ? 'Active' : 'Inactive'}
+                  </div>
+                  <div class="badge badge-outline">
+                    {pkg.booking_type.replace('_', ' ')}
                   </div>
                 </div>
               </div>
 
               <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span>Advance Booking:</span>
-                  <span>{pkg.bookingOptions.advanceBookingDays} days</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>Same Day Booking:</span>
-                  <span>{pkg.bookingOptions.allowSameDayBooking ? 'Yes' : 'No'}</span>
-                </div>
-                {pkg.bookingOptions.requiresTimeSlot && (
+                {pkg.options_config.duration && (
                   <div class="flex justify-between">
-                    <span>Time Slots:</span>
-                    <span>{pkg.bookingOptions.timeSlots?.length || 0} slots</span>
+                    <span>Duration:</span>
+                    <span>{pkg.options_config.duration} min</span>
+                  </div>
+                )}
+                {(pkg.options_config.min_pax || pkg.options_config.max_pax) && (
+                  <div class="flex justify-between">
+                    <span>Participants:</span>
+                    <span>
+                      {pkg.options_config.min_pax || 1} - {pkg.options_config.max_pax || 'unlimited'}
+                    </span>
+                  </div>
+                )}
+                {pkg.options_config.start_time && (
+                  <div class="flex justify-between">
+                    <span>Start Time:</span>
+                    <span>{pkg.options_config.start_time}</span>
+                  </div>
+                )}
+                {pkg.options_config.pickup_included && (
+                  <div class="flex justify-between">
+                    <span>Pickup:</span>
+                    <span>Included</span>
+                  </div>
+                )}
+                {pkg.options_config.meeting_point && (
+                  <div class="flex justify-between">
+                    <span>Meeting Point:</span>
+                    <span class="truncate max-w-[150px]">{pkg.options_config.meeting_point}</span>
                   </div>
                 )}
               </div>
 
-              {pkg.inclusions && pkg.inclusions.length > 0 && (
+              {pkg.options_config.pricingTiers && pkg.options_config.pricingTiers.length > 0 && (
                 <div class="mt-3">
-                  <div class="text-sm font-medium mb-1">Included:</div>
-                  <ul class="text-xs text-base-content/70 list-disc list-inside">
-                    {pkg.inclusions.slice(0, 3).map((item, idx) => (
-                      <li key={idx}>{item}</li>
+                  <div class="text-sm font-medium mb-1">Pricing Tiers:</div>
+                  <ul class="text-xs text-base-content/70">
+                    {pkg.options_config.pricingTiers.slice(0, 3).map((tier, idx) => (
+                      <li key={idx} class="flex justify-between">
+                        <span>{tier.name}</span>
+                        <span>${tier.price.toFixed(2)}</span>
+                      </li>
                     ))}
-                    {pkg.inclusions.length > 3 && (
-                      <li>+{pkg.inclusions.length - 3} more...</li>
+                    {pkg.options_config.pricingTiers.length > 3 && (
+                      <li>+{pkg.options_config.pricingTiers.length - 3} more...</li>
                     )}
                   </ul>
                 </div>
@@ -426,64 +430,180 @@ export default component$(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div class="form-control">
                     <label class="label">
-                      <span class="label-text">Package ID *</span>
+                      <span class="label-text">Package Name *</span>
                     </label>
                     <input
                       type="text"
-                      name="packageId"
+                      name="name_internal"
                       class="input input-bordered"
-                      value={formData.packageId}
-                      onInput$={(e) => formData.packageId = (e.target as HTMLInputElement).value}
-                      placeholder="e.g., PKG-001, BASIC, PREMIUM"
+                      value={formData.name_internal}
+                      onInput$={(e) => formData.name_internal = (e.target as HTMLInputElement).value}
+                      placeholder="e.g., Premium Snorkeling Package"
                       required
+                    />
+                    <label class="label">
+                      <span class="label-text-alt text-base-content/50">Internal name for admin identification</span>
+                    </label>
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Booking Type *</span>
+                    </label>
+                    <select
+                      name="booking_type"
+                      class="select select-bordered"
+                      value={formData.booking_type}
+                      onChange$={(e) => formData.booking_type = (e.target as HTMLSelectElement).value as BookingType}
+                    >
+                      <option value="open_date">Open Date (Flexible dates)</option>
+                      <option value="fixed_date">Fixed Date (Specific date required)</option>
+                      <option value="instant_confirmation">Instant Confirmation</option>
+                    </select>
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Sort Order</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="sort_order"
+                      class="input input-bordered"
+                      value={formData.sort_order}
+                      onInput$={(e) => formData.sort_order = parseInt((e.target as HTMLInputElement).value) || 0}
+                      min="0"
+                    />
+                    <label class="label">
+                      <span class="label-text-alt text-base-content/50">Lower numbers appear first</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tour/Activity Options */}
+              <div class="space-y-4">
+                <h4 class="font-semibold">Tour/Activity Options</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Duration (minutes)</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="duration"
+                      class="input input-bordered"
+                      value={formData.options_config.duration || ''}
+                      onInput$={(e) => formData.options_config.duration = (e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : undefined}
+                      min="0"
+                      placeholder="e.g., 180"
                     />
                   </div>
 
                   <div class="form-control">
                     <label class="label">
-                      <span class="label-text">Package Title *</span>
+                      <span class="label-text">Min Participants</span>
                     </label>
                     <input
-                      type="text"
-                      name="title"
+                      type="number"
+                      name="min_pax"
                       class="input input-bordered"
-                      value={formData.title}
-                      onInput$={(e) => formData.title = (e.target as HTMLInputElement).value}
-                      required
+                      value={formData.options_config.min_pax || ''}
+                      onInput$={(e) => formData.options_config.min_pax = (e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : undefined}
+                      min="1"
+                      placeholder="e.g., 2"
                     />
                   </div>
 
-                  <div class="form-control md:col-span-2">
+                  <div class="form-control">
                     <label class="label">
-                      <span class="label-text">Description</span>
+                      <span class="label-text">Max Participants</span>
                     </label>
-                    <textarea
-                      name="description"
-                      class="textarea textarea-bordered h-20"
-                      value={formData.description}
-                      onInput$={(e) => formData.description = (e.target as HTMLTextAreaElement).value}
-                    ></textarea>
+                    <input
+                      type="number"
+                      name="max_pax"
+                      class="input input-bordered"
+                      value={formData.options_config.max_pax || ''}
+                      onInput$={(e) => formData.options_config.max_pax = (e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : undefined}
+                      min="1"
+                      placeholder="e.g., 10"
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Start Time</span>
+                    </label>
+                    <input
+                      type="time"
+                      name="start_time"
+                      class="input input-bordered"
+                      value={formData.options_config.start_time || ''}
+                      onInput$={(e) => formData.options_config.start_time = (e.target as HTMLInputElement).value}
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Meeting Point</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="meeting_point"
+                      class="input input-bordered"
+                      value={formData.options_config.meeting_point || ''}
+                      onInput$={(e) => formData.options_config.meeting_point = (e.target as HTMLInputElement).value}
+                      placeholder="e.g., Hotel lobby"
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-2">
+                      <input
+                        type="checkbox"
+                        name="pickup_included"
+                        class="checkbox"
+                        checked={formData.options_config.pickup_included || false}
+                        onChange$={(e) => formData.options_config.pickup_included = (e.target as HTMLInputElement).checked}
+                      />
+                      <span class="label-text">Pickup Included</span>
+                    </label>
                   </div>
                 </div>
               </div>
 
-              {/* Package Status */}
+              {/* eSIM Options (conditional) */}
               <div class="space-y-4">
-                <h4 class="font-semibold">Package Status</h4>
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text">Status</span>
-                  </label>
-                  <select
-                    name="status"
-                    class="select select-bordered"
-                    value={formData.status}
-                    onChange$={(e) => formData.status = (e.target as HTMLSelectElement).value as 'AVAILABLE' | 'SOLD_OUT' | 'UNAVAILABLE'}
-                  >
-                    <option value="AVAILABLE">Available</option>
-                    <option value="SOLD_OUT">Sold Out</option>
-                    <option value="UNAVAILABLE">Unavailable</option>
-                  </select>
+                <h4 class="font-semibold">eSIM Options (if applicable)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Data Limit</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="data_limit"
+                      class="input input-bordered"
+                      value={formData.options_config.data_limit || ''}
+                      onInput$={(e) => formData.options_config.data_limit = (e.target as HTMLInputElement).value}
+                      placeholder="e.g., 5GB"
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Validity (days)</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="validity_days"
+                      class="input input-bordered"
+                      value={formData.options_config.validity_days || ''}
+                      onInput$={(e) => formData.options_config.validity_days = (e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : undefined}
+                      min="1"
+                      placeholder="e.g., 30"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -499,16 +619,16 @@ export default component$(() => {
                     Add Tier
                   </button>
                 </div>
-                
+
                 <div class="space-y-4">
-                  {formData.pricingTiers!.map((tier, index) => (
+                  {formData.options_config.pricingTiers!.map((tier, index) => (
                     <div key={index} class="card bg-base-200">
-                      <div class="card-body">
-                        <div class="flex justify-between items-center mb-4">
+                      <div class="card-body py-4">
+                        <div class="flex justify-between items-center mb-2">
                           <h5 class="font-medium">Tier {index + 1}</h5>
                           <button
                             type="button"
-                            class="btn btn-sm btn-error"
+                            class="btn btn-sm btn-error btn-outline"
                             onClick$={() => removePricingTier(index)}
                           >
                             Remove
@@ -517,73 +637,43 @@ export default component$(() => {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div class="form-control">
                             <label class="label">
-                              <span class="label-text">Tier Name</span>
+                              <span class="label-text">Name *</span>
                             </label>
                             <input
                               type="text"
                               class="input input-bordered input-sm"
-                              value={tier.tierName}
-                              onInput$={(e) => formData.pricingTiers![index].tierName = (e.target as HTMLInputElement).value}
+                              value={tier.name}
+                              onInput$={(e) => formData.options_config.pricingTiers![index].name = (e.target as HTMLInputElement).value}
                               placeholder="e.g., Adult, Child, Senior"
                             />
                           </div>
                           <div class="form-control">
                             <label class="label">
-                              <span class="label-text">Price (USD)</span>
+                              <span class="label-text">Price (USD) *</span>
                             </label>
-                            <div class="input-group">
-                              <span class="bg-base-200 px-3 flex items-center text-sm">$</span>
+                            <div class="join">
+                              <span class="join-item bg-base-300 px-3 flex items-center text-sm">$</span>
                               <input
                                 type="number"
-                                class="input input-bordered input-sm flex-1"
+                                class="input input-bordered input-sm join-item flex-1"
                                 value={tier.price}
-                                onInput$={(e) => formData.pricingTiers![index].price = parseFloat((e.target as HTMLInputElement).value) || 0}
+                                onInput$={(e) => formData.options_config.pricingTiers![index].price = parseFloat((e.target as HTMLInputElement).value) || 0}
                                 min="0"
                                 step="0.01"
                                 placeholder="0.00"
                               />
-                              <span class="bg-base-200 px-3 flex items-center text-sm font-medium">USD</span>
                             </div>
                             <label class="label">
                               <span class="label-text-alt text-base-content/50">All prices stored in USD</span>
                             </label>
-                          </div>
-                          <div class="form-control">
-                            <label class="label">
-                              <span class="label-text">Original Price in USD (optional)</span>
-                            </label>
-                            <div class="input-group">
-                              <span class="bg-base-200 px-3 flex items-center text-sm">$</span>
-                              <input
-                                type="number"
-                                class="input input-bordered input-sm flex-1"
-                                value={tier.originalPrice || ''}
-                                onInput$={(e) => formData.pricingTiers![index].originalPrice = (e.target as HTMLInputElement).value ? parseFloat((e.target as HTMLInputElement).value) : undefined}
-                                min="0"
-                                step="0.01"
-                                placeholder="0.00"
-                              />
-                            </div>
-                          </div>
-                          <div class="form-control">
-                            <label class="label">
-                              <span class="label-text">Description</span>
-                            </label>
-                            <input
-                              type="text"
-                              class="input input-bordered input-sm"
-                              value={tier.description}
-                              onInput$={(e) => formData.pricingTiers![index].description = (e.target as HTMLInputElement).value}
-                              placeholder="Brief description of this tier"
-                            />
                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                
-                {formData.pricingTiers!.length === 0 && (
+
+                {formData.options_config.pricingTiers!.length === 0 && (
                   <div class="text-center py-4 border-2 border-dashed border-base-300 rounded">
                     <p class="text-base-content/70">No pricing tiers added yet.</p>
                     <button
@@ -597,113 +687,8 @@ export default component$(() => {
                 )}
               </div>
 
-              {/* Booking Options */}
-              <div class="space-y-4">
-                <h4 class="font-semibold">Booking Options</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="form-control">
-                    <label class="label">
-                      <span class="label-text">Advance Booking Days</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="advanceBookingDays"
-                      class="input input-bordered"
-                      value={formData.bookingOptions?.advanceBookingDays}
-                      onInput$={(e) => formData.bookingOptions!.advanceBookingDays = parseInt((e.target as HTMLInputElement).value) || 1}
-                      min="0"
-                    />
-                  </div>
-                  
-                  <div class="form-control">
-                    <label class="label">
-                      <span class="label-text">Max Bookings Per Day (optional)</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="maxBookingsPerDay"
-                      class="input input-bordered"
-                      value={formData.bookingOptions?.maxBookingsPerDay || ''}
-                      onInput$={(e) => formData.bookingOptions!.maxBookingsPerDay = (e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : undefined}
-                      min="1"
-                    />
-                  </div>
-                </div>
-
-                <div class="flex gap-4">
-                  <div class="form-control">
-                    <label class="label cursor-pointer justify-start gap-2">
-                      <input
-                        type="checkbox"
-                        name="requiresTimeSlot"
-                        class="checkbox"
-                        checked={formData.bookingOptions?.requiresTimeSlot}
-                        onChange$={(e) => formData.bookingOptions!.requiresTimeSlot = (e.target as HTMLInputElement).checked}
-                      />
-                      <span class="label-text">Requires Time Slot</span>
-                    </label>
-                  </div>
-
-                  <div class="form-control">
-                    <label class="label cursor-pointer justify-start gap-2">
-                      <input
-                        type="checkbox"
-                        name="allowSameDayBooking"
-                        class="checkbox"
-                        checked={formData.bookingOptions?.allowSameDayBooking}
-                        onChange$={(e) => formData.bookingOptions!.allowSameDayBooking = (e.target as HTMLInputElement).checked}
-                      />
-                      <span class="label-text">Allow Same Day Booking</span>
-                    </label>
-                  </div>
-                </div>
-
-                {formData.bookingOptions?.requiresTimeSlot && (
-                  <TimeSlotManager
-                    timeSlots={formData.bookingOptions.timeSlots!}
-                    onAdd={addTimeSlot}
-                    onRemove={removeTimeSlot}
-                  />
-                )}
-              </div>
-
-              {/* Lists: Inclusions, Exclusions */}
-              <PackageListBuilder
-                title="What's Included"
-                items={formData.inclusions!}
-                fieldName="inclusions"
-                onAdd={addListItem}
-                onRemove={removeListItem}
-              />
-
-              <PackageListBuilder
-                title="What's Excluded"
-                items={formData.exclusions!}
-                fieldName="exclusions"
-                onAdd={addListItem}
-                onRemove={removeListItem}
-              />
-
-              {/* Cancellation Policy */}
-              <div class="space-y-4">
-                <h4 class="font-semibold">Cancellation Policy</h4>
-                <div class="form-control">
-                  <textarea
-                    name="cancellationPolicy"
-                    class="textarea textarea-bordered h-24"
-                    value={formData.cancellationPolicy}
-                    onInput$={(e) => formData.cancellationPolicy = (e.target as HTMLTextAreaElement).value}
-                    placeholder="Describe the cancellation policy for this package..."
-                  ></textarea>
-                </div>
-              </div>
-
               {/* Hidden fields for complex data */}
-              <input type="hidden" name="bookingType" value={formData.bookingType || 'open_date'} />
-              <input type="hidden" name="inclusions" value={JSON.stringify(formData.inclusions)} />
-              <input type="hidden" name="exclusions" value={JSON.stringify(formData.exclusions)} />
-              <input type="hidden" name="pricingTiers" value={JSON.stringify(formData.pricingTiers)} />
-              <input type="hidden" name="timeSlots" value={JSON.stringify(formData.bookingOptions?.timeSlots)} />
+              <input type="hidden" name="pricingTiers" value={JSON.stringify(formData.options_config.pricingTiers)} />
 
               <div class="modal-action">
                 <button type="button" class="btn" onClick$={() => showForm.value = false}>
@@ -763,127 +748,6 @@ export default component$(() => {
           </div>
         </div>
       )}
-    </div>
-  );
-});
-
-const PackageListBuilder = component$<{
-  title: string;
-  items: string[];
-  fieldName: 'inclusions' | 'exclusions';
-  onAdd: QRL<(field: 'inclusions' | 'exclusions', value: string) => void>;
-  onRemove: QRL<(field: 'inclusions' | 'exclusions', index: number) => void>;
-}>(({ title, items, fieldName, onAdd, onRemove }) => {
-  const newItem = useSignal('');
-
-  return (
-    <div class="space-y-4">
-      <h4 class="font-semibold">{title}</h4>
-      <div class="space-y-2">
-        {items.map((item, index) => (
-          <div key={index} class="flex items-center gap-2">
-            <input
-              type="text"
-              class="input input-bordered input-sm flex-1"
-              value={item}
-              onInput$={(e) => items[index] = (e.target as HTMLInputElement).value}
-            />
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm text-error"
-              onClick$={() => onRemove(fieldName, index)}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-        <div class="flex items-center gap-2">
-          <input
-            type="text"
-            class="input input-bordered input-sm flex-1"
-            placeholder={`Add ${title.toLowerCase().replace("what's ", "")} item...`}
-            value={newItem.value}
-            onInput$={(e) => newItem.value = (e.target as HTMLInputElement).value}
-            onKeyPress$={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onAdd(fieldName, newItem.value);
-                newItem.value = '';
-              }
-            }}
-          />
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            onClick$={() => {
-              onAdd(fieldName, newItem.value);
-              newItem.value = '';
-            }}
-          >
-            Add
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-const TimeSlotManager = component$<{
-  timeSlots: string[];
-  onAdd: QRL<(value: string) => void>;
-  onRemove: QRL<(index: number) => void>;
-}>(({ timeSlots, onAdd, onRemove }) => {
-  const newTimeSlot = useSignal('');
-
-  return (
-    <div class="space-y-4">
-      <h5 class="font-medium">Available Time Slots</h5>
-      <div class="space-y-2">
-        {timeSlots.map((slot, index) => (
-          <div key={index} class="flex items-center gap-2">
-            <input
-              type="text"
-              class="input input-bordered input-sm flex-1"
-              value={slot}
-              onInput$={(e) => timeSlots[index] = (e.target as HTMLInputElement).value}
-              placeholder="e.g., 09:00, 14:30, 18:00"
-            />
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm text-error"
-              onClick$={() => onRemove(index)}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-        <div class="flex items-center gap-2">
-          <input
-            type="text"
-            class="input input-bordered input-sm flex-1"
-            placeholder="Add time slot (e.g., 09:00, 14:30)"
-            value={newTimeSlot.value}
-            onInput$={(e) => newTimeSlot.value = (e.target as HTMLInputElement).value}
-            onKeyPress$={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onAdd(newTimeSlot.value);
-                newTimeSlot.value = '';
-              }
-            }}
-          />
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            onClick$={() => {
-              onAdd(newTimeSlot.value);
-              newTimeSlot.value = '';
-            }}
-          >
-            Add
-          </button>
-        </div>
-      </div>
     </div>
   );
 });

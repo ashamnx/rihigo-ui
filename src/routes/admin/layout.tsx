@@ -5,15 +5,20 @@ import { useSession } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
 
 export const onRequest: RequestHandler = (event) => {
-    const session: Session | null = event.sharedMap.get('session');
+    const session = event.sharedMap.get('session') as (Session & { user?: { role?: string } }) | null;
+
+    // Check authentication
     if (!session || new Date(session.expires) < new Date()) {
         throw event.redirect(302, `/auth/sign-in?callbackUrl=${event.url.pathname}`);
     }
 
-    event.cacheControl({
-        staleWhileRevalidate: 60 * 60 * 24 * 7,
-        maxAge: 5,
-    });
+    // Check admin role - redirect non-admins to home page
+    if (session.user?.role !== 'admin') {
+        throw event.redirect(302, '/');
+    }
+
+    // Prevent caching of authenticated pages to avoid user data leakage
+    event.headers.set('Cache-Control', 'private, no-store');
 };
 
 // Navigation items organized by section

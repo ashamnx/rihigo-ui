@@ -17,10 +17,8 @@ export const onRequest: RequestHandler = (event) => {
     // TODO: Add vendor role check here when role management is implemented
     // For now, we'll allow any authenticated user to access the vendor portal
 
-    event.cacheControl({
-        staleWhileRevalidate: 60 * 60 * 24 * 7,
-        maxAge: 5,
-    });
+    // Prevent caching of authenticated pages to avoid user data leakage
+    event.headers.set('Cache-Control', 'private, no-store');
 };
 
 // Get session token for notification context

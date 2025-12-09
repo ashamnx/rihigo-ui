@@ -14,9 +14,8 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     const t = inlineTranslate();
     const locale = useSpeakLocale();
     const session = useSession();
-    // TODO: Implement proper admin role check from session
-    const userEmail = session.value?.user?.email;
-    const isUserAdmin = userEmail ? userEmail.endsWith('@rihigo.mv') : false;
+    // Check admin role from session (fetched from backend during auth)
+    const isUserAdmin = session.value?.user?.role === 'admin';
     const isMobileMenuOpen = useSignal(false);
     const isScrolled = useSignal(false);
 

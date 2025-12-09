@@ -1,61 +1,70 @@
 import {QwikAuth$} from "@auth/qwik";
 import Google from '@auth/qwik/providers/google';
 
+interface BackendUser {
+    id: string;
+    role: 'admin' | 'user';
+    email: string;
+    name?: string;
+    image?: string;
+}
+
 /**
- * Get or create user in backend database
- * Checks if user exists, creates if not
+ * Get or create user in backend database using authenticated request
+ * Uses the Google ID token to authenticate with our backend
+ * Returns user data including role for authorization
  */
-async function getOrCreateUser(email: string, name?: string, image?: string) {
-    try {
-        const apiUrl = process.env.API_URL || 'http://localhost:8080';
+async function getOrCreateUser(idToken: string, email: string, name?: string, image?: string): Promise<BackendUser> {
+    const apiUrl = process.env.API_URL || 'http://localhost:8080';
 
-        // Check if user exists
-        const checkResponse = await fetch(`${apiUrl}/api/users/by-email?email=${encodeURIComponent(email)}`);
+    // First, try to get the current user's profile using the authenticated endpoint
+    const meResponse = await fetch(`${apiUrl}/api/users/me`, {
+        headers: {
+            'Authorization': `Bearer ${idToken}`,
+        },
+    });
 
-        if (checkResponse.ok) {
-            const data = await checkResponse.json() as { success: boolean; data?: { id: string } };
-            if (data.success && data.data) {
-                console.log('User already exists:', data.data.id);
-                return data.data;
-            }
+    if (meResponse.ok) {
+        const data = await meResponse.json() as { success: boolean; data?: BackendUser };
+        if (data.success && data.data) {
+            console.log('User profile fetched:', data.data.id, 'role:', data.data.role);
+            return data.data;
         }
-
-        // User doesn't exist, create new user
-        console.log('Creating new user in backend:', email);
-        const createResponse = await fetch(`${apiUrl}/api/users`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email,
-                name: name || undefined,
-                image: image || undefined,
-                role: 'user',
-                preferences: {
-                    language: 'en',
-                    currency: 'USD',
-                },
-            }),
-        });
-
-        if (!createResponse.ok) {
-            const errorData = await createResponse.json() as { error_message?: string };
-            console.error('Failed to create user:', errorData);
-            throw new Error(`Failed to create user: ${errorData.error_message || 'Unknown error'}`);
-        }
-
-        const createData = await createResponse.json() as { success: boolean; data?: { id: string } };
-        if (createData.success && createData.data) {
-            console.log('User created successfully:', createData.data.id);
-            return createData.data;
-        }
-
-        throw new Error('User creation response was not successful');
-    } catch (error) {
-        console.error('Error in getOrCreateUser:', error);
-        throw error;
     }
+
+    // User doesn't exist (401/404), create new user via authenticated endpoint
+    console.log('Creating new user in backend:', email);
+    const createResponse = await fetch(`${apiUrl}/api/users`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+            email,
+            name: name || undefined,
+            image: image || undefined,
+            role: 'user',
+            preferences: {
+                language: 'en',
+                currency: 'USD',
+            },
+        }),
+    });
+
+    if (!createResponse.ok) {
+        const errorData = await createResponse.json() as { error_message?: string };
+        console.error('Failed to create user:', errorData);
+        throw new Error(`Failed to create user: ${errorData.error_message || 'Unknown error'}`);
+    }
+
+    const createData = await createResponse.json() as { success: boolean; data?: BackendUser };
+    if (createData.success && createData.data) {
+        console.log('User created successfully:', createData.data.id, 'role:', createData.data.role);
+        return createData.data;
+    }
+
+    throw new Error('User creation response was not successful');
 }
 
 /**
@@ -170,18 +179,24 @@ export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
                 if (account && user) {
                     console.log('Initial sign in - storing tokens');
 
-                    // Get or create user in backend database
+                    // Get or create user in backend database and fetch role
+                    // Use the ID token to authenticate with our backend API
+                    let userRole: 'admin' | 'user' = 'user';
                     try {
-                        const backendUser = await getOrCreateUser(
-                            user.email as string,
-                            user.name || undefined,
-                            user.image || undefined
-                        );
-                        console.log('Backend user synchronized:', backendUser.id);
+                        if (account.id_token) {
+                            const backendUser = await getOrCreateUser(
+                                account.id_token,
+                                user.email as string,
+                                user.name || undefined,
+                                user.image || undefined
+                            );
+                            console.log('Backend user synchronized:', backendUser.id);
+                            userRole = backendUser.role;
+                        }
                     } catch (error) {
                         console.error('Failed to sync user with backend:', error);
                         // Continue with authentication even if backend sync fails
-                        // This prevents blocking the user from logging in
+                        // Default to 'user' role for safety
                     }
 
                     return {
@@ -189,7 +204,11 @@ export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
                         idToken: account.id_token,
                         refreshToken: account.refresh_token,
                         expiresAt: account.expires_at ? account.expires_at * 1000 : Date.now() + 3600 * 1000,
-                        user,
+                        user: {
+                            ...user,
+                            role: userRole,
+                        },
+                        role: userRole,
                     };
                 }
 
@@ -211,8 +230,13 @@ export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
                     (session as any).accessToken = token.idToken;
                 }
 
-                // Expose user info
+                // Expose user info with role
                 (session as any).user = token.user;
+
+                // Ensure role is available at session level for easy access
+                if (token.role) {
+                    (session as any).user.role = token.role;
+                }
 
                 // Expose error if token refresh failed
                 if (token.error) {
