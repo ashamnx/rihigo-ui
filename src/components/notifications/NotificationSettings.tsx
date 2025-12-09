@@ -1,15 +1,8 @@
 import { component$, useSignal, useVisibleTask$, $ } from "@builder.io/qwik";
 import type { NotificationPreferences } from "~/types/notification";
 import { useToast } from "~/context/toast-context";
-import {
-  isPushSupported,
-  getPermissionStatus,
-  subscribeToPush,
-  unsubscribeFromPush,
-} from "~/utils/push-notifications";
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:8080";
-const VAPID_PUBLIC_KEY = import.meta.env.PUBLIC_VAPID_PUBLIC_KEY || "";
 
 interface NotificationSettingsProps {
   initialPreferences?: NotificationPreferences;
@@ -35,18 +28,8 @@ export const NotificationSettings = component$<NotificationSettingsProps>(
     );
 
     // UI state
-    const pushSupported = useSignal(false);
-    const pushPermission = useSignal<NotificationPermission | "unsupported">("default");
     const isLoading = useSignal(false);
     const isSaving = useSignal(false);
-    const isLinkingTelegram = useSignal(false);
-
-    // Check push support on mount
-    // eslint-disable-next-line qwik/no-use-visible-task
-    useVisibleTask$(() => {
-      pushSupported.value = isPushSupported();
-      pushPermission.value = getPermissionStatus();
-    });
 
     // Fetch preferences on mount
     // eslint-disable-next-line qwik/no-use-visible-task
@@ -108,109 +91,6 @@ export const NotificationSettings = component$<NotificationSettingsProps>(
       }
     });
 
-    // Enable push notifications
-    const enablePush = $(async () => {
-      if (!VAPID_PUBLIC_KEY) {
-        await addToast({
-          type: "warning",
-          message: "Push notifications are not configured yet.",
-        });
-        return;
-      }
-
-      try {
-        const endpoint = await subscribeToPush(VAPID_PUBLIC_KEY);
-
-        if (endpoint) {
-          // Register with backend
-          const response = await fetch(`${API_BASE_URL}/api/notifications/devices`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              token: endpoint,
-              platform: "web",
-              device_name: navigator.userAgent.substring(0, 100),
-            }),
-          });
-
-          if (response.ok) {
-            preferences.value = { ...preferences.value, push_enabled: true };
-            pushPermission.value = "granted";
-            await addToast({
-              type: "success",
-              message: "Push notifications enabled!",
-            });
-          } else {
-            throw new Error("Failed to register device");
-          }
-        }
-      } catch (error) {
-        console.error("Failed to enable push notifications:", error);
-        await addToast({
-          type: "error",
-          message: "Failed to enable push notifications.",
-        });
-      }
-    });
-
-    // Disable push notifications
-    const disablePush = $(async () => {
-      try {
-        const success = await unsubscribeFromPush();
-        if (success) {
-          preferences.value = { ...preferences.value, push_enabled: false };
-          await addToast({
-            type: "info",
-            message: "Push notifications disabled.",
-          });
-        }
-      } catch (error) {
-        console.error("Failed to disable push:", error);
-      }
-    });
-
-    // Link Telegram
-    const linkTelegram = $(async () => {
-      isLinkingTelegram.value = true;
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/notifications/telegram/link`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        });
-        const data = await response.json() as {
-          success: boolean;
-          data?: { link_url: string };
-          error_message?: string;
-        };
-
-        if (data.success && data.data?.link_url) {
-          window.open(data.data.link_url, "_blank");
-          await addToast({
-            type: "info",
-            message: "Complete the linking process in Telegram, then return here.",
-            duration: 10000,
-          });
-        } else {
-          throw new Error(data.error_message || "Failed to generate link");
-        }
-      } catch (error) {
-        console.error("Failed to link Telegram:", error);
-        await addToast({
-          type: "error",
-          message: "Failed to link Telegram. Please try again.",
-        });
-      } finally {
-        isLinkingTelegram.value = false;
-      }
-    });
-
     if (isLoading.value) {
       return (
         <div class="flex items-center justify-center py-8">
@@ -247,38 +127,6 @@ export const NotificationSettings = component$<NotificationSettingsProps>(
             </label>
           </div>
 
-          {/* Push */}
-          <div class="form-control mb-4">
-            <label class="label cursor-pointer justify-start gap-4">
-              <input
-                type="checkbox"
-                checked={preferences.value.push_enabled}
-                class="toggle toggle-primary"
-                disabled={!pushSupported.value || pushPermission.value === "denied"}
-                onChange$={async (e) => {
-                  const checked = (e.target as HTMLInputElement).checked;
-                  if (checked) {
-                    await enablePush();
-                  } else {
-                    await disablePush();
-                  }
-                }}
-              />
-              <div>
-                <span class="label-text font-medium">Push Notifications</span>
-                <p class="text-sm text-base-content/60">
-                  {!pushSupported.value
-                    ? "Not supported in this browser"
-                    : pushPermission.value === "denied"
-                      ? "Permission denied - enable in browser settings"
-                      : !VAPID_PUBLIC_KEY
-                        ? "Not configured (coming soon)"
-                        : "Receive instant notifications in your browser"}
-                </p>
-              </div>
-            </label>
-          </div>
-
           {/* SMS */}
           <div class="form-control mb-4">
             <label class="label cursor-pointer justify-start gap-4">
@@ -302,41 +150,6 @@ export const NotificationSettings = component$<NotificationSettingsProps>(
             </label>
           </div>
 
-          {/* Telegram */}
-          <div class="form-control mb-4">
-            <label class="label cursor-pointer justify-start gap-4">
-              <input
-                type="checkbox"
-                checked={preferences.value.telegram_enabled}
-                class="toggle toggle-primary"
-                disabled={!preferences.value.telegram_enabled}
-                onChange$={(e) => {
-                  preferences.value = {
-                    ...preferences.value,
-                    telegram_enabled: (e.target as HTMLInputElement).checked,
-                  };
-                }}
-              />
-              <div class="flex-1">
-                <span class="label-text font-medium">Telegram Notifications</span>
-                <p class="text-sm text-base-content/60">
-                  {preferences.value.telegram_enabled
-                    ? "Telegram account linked"
-                    : "Link your Telegram account to enable"}
-                </p>
-              </div>
-              {!preferences.value.telegram_enabled && (
-                <button
-                  type="button"
-                  class={`btn btn-sm btn-outline ${isLinkingTelegram.value ? "loading" : ""}`}
-                  onClick$={linkTelegram}
-                  disabled={isLinkingTelegram.value}
-                >
-                  Link Telegram
-                </button>
-              )}
-            </label>
-          </div>
         </div>
 
         <div class="divider" />
