@@ -2,6 +2,14 @@ import type {RequestEventAction, RequestEventLoader} from '@builder.io/qwik-city
 import type {ApiResponse, PaginatedResponse} from '~/types/api';
 import type { Activity, Currency } from "~/types/activity";
 import type {
+    MediaItem,
+    MediaFilters,
+    CreateMediaRequest,
+    SignedUrlResponse,
+    PresignedUploadRequest,
+    PresignedUploadResponse,
+} from '~/types/media';
+import type {
     Ticket,
     TicketMessage,
     TicketSummary,
@@ -1717,6 +1725,92 @@ export const apiClient = {
         async convert(id: string, token: string): Promise<ApiResponse<ImugaDeclaration>> {
             return apiRequest(`/api/admin/imuga/requests/${id}/convert`, {
                 method: 'POST',
+            }, token);
+        },
+    },
+
+    /**
+     * Media Management
+     * Handles file uploads, media library, and signed URLs
+     */
+    media: {
+        /**
+         * Create a media record after uploading to Cloudflare
+         */
+        async create(data: CreateMediaRequest, token: string): Promise<ApiResponse<MediaItem>> {
+            return apiRequest('/api/media', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * List media with filters
+         */
+        async list(token: string, filters?: MediaFilters): Promise<PaginatedResponse<MediaItem>> {
+            const params = new URLSearchParams();
+            if (filters?.page) params.append('page', filters.page.toString());
+            if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+            if (filters?.owner_type) params.append('owner_type', filters.owner_type);
+            if (filters?.owner_id) params.append('owner_id', filters.owner_id);
+            if (filters?.privacy_level) params.append('privacy_level', filters.privacy_level);
+            if (filters?.type) params.append('type', filters.type);
+            if (filters?.tags) filters.tags.forEach(tag => params.append('tags', tag));
+            if (filters?.search) params.append('search', filters.search);
+            const queryString = params.toString();
+            return apiRequest(`/api/media${queryString ? '?' + queryString : ''}`, {}, token);
+        },
+
+        /**
+         * Get a specific media item
+         */
+        async get(id: string, token: string): Promise<ApiResponse<MediaItem>> {
+            return apiRequest(`/api/media/${id}`, {}, token);
+        },
+
+        /**
+         * Delete a media item (from storage and database)
+         */
+        async delete(id: string, token: string): Promise<ApiResponse<void>> {
+            return apiRequest(`/api/media/${id}`, {
+                method: 'DELETE',
+            }, token);
+        },
+
+        /**
+         * Get a signed URL for accessing a private file
+         */
+        async getSignedUrl(id: string, token: string): Promise<ApiResponse<SignedUrlResponse>> {
+            return apiRequest(`/api/media/${id}/signed-url`, {}, token);
+        },
+
+        /**
+         * Get a presigned URL for direct upload of large files
+         */
+        async getPresignedUpload(data: PresignedUploadRequest, token: string): Promise<ApiResponse<PresignedUploadResponse>> {
+            return apiRequest('/api/media/presigned-upload', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Update media metadata
+         */
+        async update(id: string, data: Partial<Pick<MediaItem, 'tags' | 'metadata'>>, token: string): Promise<ApiResponse<MediaItem>> {
+            return apiRequest(`/api/media/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Bulk delete media items
+         */
+        async bulkDelete(ids: string[], token: string): Promise<ApiResponse<{ deleted: number; failed: string[] }>> {
+            return apiRequest('/api/media/bulk-delete', {
+                method: 'POST',
+                body: JSON.stringify({ ids }),
             }, token);
         },
     },

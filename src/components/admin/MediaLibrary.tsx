@@ -1,6 +1,26 @@
 import { component$, useSignal, useStore, $, useTask$, noSerialize, type NoSerialize, type QRL } from "@builder.io/qwik";
-import { getResponsiveImageUrls, isValidMediaFile, type MediaItem } from "~/utils/cloudflare-images";
+import { getResponsiveImageUrls, isValidMediaFile } from "~/utils/cloudflare-images";
+import type { PrivacyLevel } from "~/types/media";
 import type { ActionStore } from "@builder.io/qwik-city";
+
+// Legacy MediaItem interface for backward compatibility with existing cloudflare-images
+interface LegacyMediaItem {
+  id: string;
+  filename: string;
+  uploaded: string;
+  type: 'image' | 'video';
+  variants: string[];
+  accountHash?: string;
+  meta?: {
+    activityId?: string;
+    tags?: string[];
+    description?: string;
+    alt?: string;
+  };
+}
+
+// Union type for both old and new media formats
+type MediaItem = LegacyMediaItem;
 
 export interface MediaLibraryProps {
   onSelectMedia?: QRL<(media: MediaItem[]) => void>;
@@ -11,13 +31,29 @@ export interface MediaLibraryProps {
   uploadAction?: ActionStore<any, Record<string, any>>;
   getMediaAction?: ActionStore<any, Record<string, any>>;
   deleteAction?: ActionStore<any, Record<string, any>>;
+  /** Default privacy level for uploads */
+  defaultPrivacyLevel?: PrivacyLevel;
+  /** Owner type for new uploads */
+  ownerType?: string;
+  /** Owner ID for new uploads */
+  ownerId?: string;
 }
 
 // Note: Upload and delete actions would typically be implemented in the route files
 // For this component, we'll use client-side API calls or parent component handlers
 
 export const MediaLibrary = component$<MediaLibraryProps>((props) => {
-  const { multiSelect = false, selectedMedia = [], activityId, allowUpload = true, uploadAction, getMediaAction } = props;
+  const {
+    multiSelect = false,
+    selectedMedia = [],
+    activityId,
+    allowUpload = true,
+    uploadAction,
+    getMediaAction,
+    defaultPrivacyLevel = 'public',
+    ownerType = 'activity',
+    ownerId = 'general'
+  } = props;
   const isOpen = useSignal(false);
   const isUploading = useSignal(false);
   const currentPage = useSignal(1);
@@ -45,7 +81,8 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     alt: '',
     tags: [] as string[],
     preview: null as string | null,
-    fileName: ''
+    fileName: '',
+    privacyLevel: defaultPrivacyLevel as PrivacyLevel
   });
 
   // Load media from server action
@@ -144,7 +181,10 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
         activityId: activityId || '',
         description: uploadForm.description,
         alt: uploadForm.alt,
-        tags: JSON.stringify(uploadForm.tags)
+        tags: JSON.stringify(uploadForm.tags),
+        privacy_level: uploadForm.privacyLevel,
+        owner_type: ownerType,
+        owner_id: activityId || ownerId
       });
 
       if (uploadAction.value?.success) {
@@ -315,17 +355,27 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                     <p class="text-sm text-gray-600">{uploadForm.fileName}</p>
                   </div>
                   <div class="space-y-3">
+                    <select
+                      class="select select-bordered w-full select-sm"
+                      value={uploadForm.privacyLevel}
+                      onChange$={(e) => uploadForm.privacyLevel = (e.target as HTMLSelectElement).value as PrivacyLevel}
+                    >
+                      <option value="public">Public (accessible to everyone)</option>
+                      <option value="user">User (owner only)</option>
+                      <option value="vendor">Vendor (vendor and admins)</option>
+                      <option value="admin">Admin (admins only)</option>
+                    </select>
                     <input
                       type="text"
                       placeholder="Description"
-                      class="input input-bordered w-full"
+                      class="input input-bordered w-full input-sm"
                       value={uploadForm.description}
                       onInput$={(e) => uploadForm.description = (e.target as HTMLInputElement).value}
                     />
                     <input
                       type="text"
                       placeholder="Alt text"
-                      class="input input-bordered w-full"
+                      class="input input-bordered w-full input-sm"
                       value={uploadForm.alt}
                       onInput$={(e) => uploadForm.alt = (e.target as HTMLInputElement).value}
                     />
@@ -347,6 +397,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                           uploadForm.description = '';
                           uploadForm.alt = '';
                           uploadForm.tags = [];
+                          uploadForm.privacyLevel = defaultPrivacyLevel;
                         }}
                         class="btn btn-ghost btn-sm"
                       >
