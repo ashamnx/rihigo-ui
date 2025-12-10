@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource-variable/nunito-sans";
 
 @plugin "daisyui" {
     /* Explicitly load the themes you want */
@@ -17,7 +18,7 @@
     --base-100: #ffffff;
     --base-content: oklch(20.8% 0.042 265.755);
 
-    font-family: 'Nunito Sans', sans-serif;
+    font-family: 'Nunito Sans Variable', sans-serif;
 }
 
 /* --- 2. DARK THEME (Admin) --- */

@@ -64,5 +64,8 @@
   "nx": {},
   "overrides": {
     "picomatch": "^4.0.3"
+  },
+  "dependencies": {
+    "@fontsource-variable/nunito-sans": "^5.2.7"
   }
 }
