@@ -174,7 +174,12 @@ export default component$(() => {
                 </ul>
               </div>
               <div class="flex items-center gap-3">
-                <h1 class="text-xl font-bold truncate">{title}</h1>
+                <h1
+                  class="text-xl font-bold truncate"
+                  style={{ viewTransitionName: `admin-activity-title-${activity.id}` }}
+                >
+                  {title}
+                </h1>
                 <div class={`badge badge-sm ${activity.status === 'published' ? 'badge-success' : activity.status === 'draft' ? 'badge-warning' : 'badge-error'}`}>
                   {activity.status}
                 </div>

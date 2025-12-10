@@ -41,3 +41,85 @@
     --color-base-100: var(--base-100);
     --color-base-content: var(--base-content);
 }
+
+/* --- 4. VIEW TRANSITIONS API --- */
+/* Enable view transitions for SPA navigation */
+:root {
+    view-transition-name: none;
+}
+
+/* Page-level fade transition */
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slide-down {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+/* Root page transitions */
+::view-transition-old(root) {
+    animation: fade-out 150ms ease-out;
+}
+
+::view-transition-new(root) {
+    animation: fade-in 150ms ease-in;
+}
+
+/* Activity image morphing transition */
+::view-transition-old(activity-image),
+::view-transition-new(activity-image) {
+    animation-duration: 300ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Activity title morphing transition */
+::view-transition-old(activity-title),
+::view-transition-new(activity-title) {
+    animation-duration: 250ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Activity card container transition */
+.view-transition-card {
+    view-transition-class: activity-card;
+}
+
+::view-transition-old(.activity-card):only-child {
+    animation: slide-down 200ms ease-out;
+}
+
+::view-transition-new(.activity-card):only-child {
+    animation: slide-up 200ms ease-in 50ms;
+}
+
+/* Gallery image transitions */
+::view-transition-old(gallery-image),
+::view-transition-new(gallery-image) {
+    animation-duration: 250ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

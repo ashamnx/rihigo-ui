@@ -1,4 +1,4 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useOnDocument, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
@@ -119,6 +119,42 @@ export default component$(() => {
   // Stats
   const publishedCount = activities.filter((a: Activity) => a.status === 'published').length;
   const draftCount = activities.filter((a: Activity) => a.status === 'draft').length;
+
+  // Staggered animation for admin activity cards/rows
+  useOnDocument(
+    'qviewTransition',
+    $(async (event: CustomEvent<{ ready: Promise<void> }>) => {
+      const items = document.querySelectorAll<HTMLElement>('[data-view-transition-item]');
+      const visibleItems = Array.from(items).filter((item) => {
+        const rect = item.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      });
+
+      if (visibleItems.length === 0) return;
+
+      const transition = event.detail;
+      await transition.ready;
+
+      visibleItems.forEach((item, i) => {
+        const name = (item.style as CSSStyleDeclaration & { viewTransitionName?: string }).viewTransitionName;
+        if (name) {
+          document.documentElement.animate(
+            {
+              opacity: [0, 1],
+              transform: ['translateY(10px)', 'translateY(0)'],
+            },
+            {
+              pseudoElement: `::view-transition-new(${name})`,
+              duration: 250,
+              delay: i * 30,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+              fill: 'forwards',
+            }
+          );
+        }
+      });
+    })
+  );
 
   return (
     <div class="space-y-6">
@@ -249,11 +285,21 @@ export default component$(() => {
                   const title = activity.translations?.en?.title || activity.seo_metadata.title || activity.slug;
 
                   return (
-                    <tr key={activity.id} class="hover border-base-300">
+                    <tr
+                      key={activity.id}
+                      class="hover border-base-300"
+                      data-view-transition-item
+                      style={{ viewTransitionName: `admin-activity-${activity.id}` }}
+                    >
                       <td>
                         <div class="flex items-center gap-3">
                           <div>
-                            <div class="font-medium">{title}</div>
+                            <div
+                              class="font-medium"
+                              style={{ viewTransitionName: `admin-activity-title-${activity.id}` }}
+                            >
+                              {title}
+                            </div>
                             <div class="text-xs text-base-content/50">{activity.slug}</div>
                           </div>
                         </div>
@@ -361,7 +407,12 @@ export default component$(() => {
             const description = activity.translations?.en?.description || activity.seo_metadata.description || '';
 
             return (
-              <div key={activity.id} class="bg-base-200 rounded-xl p-4 hover:bg-base-300/50 transition-colors">
+              <div
+                key={activity.id}
+                class="bg-base-200 rounded-xl p-4 hover:bg-base-300/50 transition-colors"
+                data-view-transition-item
+                style={{ viewTransitionName: `admin-activity-${activity.id}` }}
+              >
                 <div class="flex justify-between items-start mb-3">
                   <span class={`badge badge-sm ${
                     activity.status === 'published' ? 'badge-success' :
@@ -401,7 +452,12 @@ export default component$(() => {
                   </div>
                 </div>
 
-                <h3 class="font-medium mb-1 line-clamp-1">{title}</h3>
+                <h3
+                  class="font-medium mb-1 line-clamp-1"
+                  style={{ viewTransitionName: `admin-activity-title-${activity.id}` }}
+                >
+                  {title}
+                </h3>
                 {description && (
                   <p class="text-sm text-base-content/60 line-clamp-2 mb-3">{description}</p>
                 )}

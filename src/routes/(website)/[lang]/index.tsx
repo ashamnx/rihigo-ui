@@ -1,4 +1,4 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useOnDocument, useSignal } from "@builder.io/qwik";
 import type { DocumentHead, StaticGenerateHandler } from "@builder.io/qwik-city";
 import { Link, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { apiClient } from "~/utils/api-client";
@@ -33,6 +33,42 @@ export default component$(() => {
   const faqsData = useFAQsData();
   const t = inlineTranslate();
   const loc = useLocation();
+
+  // Staggered animation for activity cards on homepage
+  useOnDocument(
+    'qviewTransition',
+    $(async (event: CustomEvent<{ ready: Promise<void> }>) => {
+      const cards = document.querySelectorAll<HTMLElement>('[data-activity-card]');
+      const visibleCards = Array.from(cards).filter((card) => {
+        const rect = card.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      });
+
+      if (visibleCards.length === 0) return;
+
+      const transition = event.detail;
+      await transition.ready;
+
+      visibleCards.forEach((card, i) => {
+        const name = (card.style as CSSStyleDeclaration & { viewTransitionName?: string }).viewTransitionName;
+        if (name) {
+          document.documentElement.animate(
+            {
+              opacity: [0, 1],
+              transform: ['translateY(20px) scale(0.98)', 'translateY(0) scale(1)'],
+            },
+            {
+              pseudoElement: `::view-transition-new(${name})`,
+              duration: 350,
+              delay: i * 60,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+              fill: 'forwards',
+            }
+          );
+        }
+      });
+    })
+  );
 
   return (
     <>
@@ -493,7 +529,11 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
 
     return (
       <Link href={activityUrl}>
-        <div class="group relative rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-lg hover:ring-gray-300">
+        <div
+          class="group relative rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-lg hover:ring-gray-300"
+          data-activity-card
+          style={{ viewTransitionName: `activity-card-${activity.id}` }}
+        >
           {/* Activity Image */}
           <div class="relative aspect-[4/3] overflow-hidden rounded-t-2xl bg-gray-100">
             <img
@@ -504,6 +544,7 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
               height="300"
               loading="lazy"
               decoding="async"
+              style={{ viewTransitionName: `activity-image-${activity.id}` }}
             />
             {/* Category Badge */}
             {activity.category && (
@@ -527,7 +568,10 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
 
           {/* Activity Content */}
           <div class="p-6">
-            <h3 class="group-hover:text-primary mb-2 text-xl font-semibold text-gray-900 transition-colors">
+            <h3
+              class="group-hover:text-primary mb-2 text-xl font-semibold text-gray-900 transition-colors"
+              style={{ viewTransitionName: `activity-title-${activity.id}` }}
+            >
               {activity.translations?.[locale]?.title || activity.seo_metadata?.title || activity.name || activity.slug}
             </h3>
 
@@ -607,7 +651,10 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
             <div class="flex items-center justify-between">
               <div class="text-left">
                 {priceUsd ? (
-                  <p class="text-2xl font-bold text-gray-900">
+                  <p
+                    class="text-2xl font-bold text-gray-900"
+                    style={{ viewTransitionName: `activity-price-${activity.id}` }}
+                  >
                     {formatPrice(priceUsd, selectedCurrency.value, currencies.value)}
                     <span class="text-sm font-normal text-gray-500 ml-1">{selectedCurrency.value}</span>
                   </p>

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { component$, useSignal, $ } from '@builder.io/qwik';
+import { component$, useSignal, useOnDocument, $ } from '@builder.io/qwik';
 import {
   routeLoader$,
   Link,
@@ -72,6 +72,42 @@ export default component$(() => {
 
     const bookings = bookingsData.value.data || [];
     const total = bookingsData.value.total || 0;
+
+    // Staggered animation for booking table rows
+    useOnDocument(
+        'qviewTransition',
+        $(async (event: CustomEvent<{ ready: Promise<void> }>) => {
+            const rows = document.querySelectorAll<HTMLElement>('[data-booking-row]');
+            const visibleRows = Array.from(rows).filter((row) => {
+                const rect = row.getBoundingClientRect();
+                return rect.top < window.innerHeight && rect.bottom > 0;
+            });
+
+            if (visibleRows.length === 0) return;
+
+            const transition = event.detail;
+            await transition.ready;
+
+            visibleRows.forEach((row, i) => {
+                const name = row.style.viewTransitionName;
+                if (name) {
+                    document.documentElement.animate(
+                        {
+                            opacity: [0, 1],
+                            transform: ['translateX(-10px)', 'translateX(0)'],
+                        },
+                        {
+                            pseudoElement: `::view-transition-new(${name})`,
+                            duration: 200,
+                            delay: i * 25,
+                            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                            fill: 'forwards',
+                        }
+                    );
+                }
+            });
+        })
+    );
 
     const filterDefinitions: FilterDefinition[] = [
         {
@@ -293,11 +329,16 @@ export default component$(() => {
                         </thead>
                         <tbody>
                             {bookings.map((booking) => (
-                                <tr key={booking.id}>
+                                <tr
+                                    key={booking.id}
+                                    data-booking-row
+                                    style={{ viewTransitionName: `booking-row-${booking.id}` }}
+                                >
                                     <td>
                                         <Link
                                             href={`/vendor/bookings/${booking.id}`}
                                             class="font-medium hover:text-primary"
+                                            style={{ viewTransitionName: `booking-number-${booking.id}` }}
                                         >
                                             #{booking.booking_number}
                                         </Link>

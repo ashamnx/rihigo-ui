@@ -103,6 +103,7 @@ export default component$(() => {
                     class="w-full h-full object-cover"
                     width="1920"
                     height="600"
+                    style={{ viewTransitionName: `activity-image-${activity.id}` }}
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
@@ -142,7 +143,12 @@ export default component$(() => {
                         )}
 
                         {/* Title */}
-                        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3">{title}</h1>
+                        <h1
+                            class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3"
+                            style={{ viewTransitionName: `activity-title-${activity.id}` }}
+                        >
+                            {title}
+                        </h1>
 
                         {/* Meta Info */}
                         <div class="flex flex-wrap items-center gap-4 text-white/90">
@@ -165,7 +171,10 @@ export default component$(() => {
                                 </div>
                             )}
                             {activity.min_price_usd > 0 && (
-                                <div class="flex items-center gap-1.5">
+                                <div
+                                    class="flex items-center gap-1.5"
+                                    style={{ viewTransitionName: `activity-price-${activity.id}` }}
+                                >
                                     <span class="text-white/70">{t('activity.from@@From')}</span>
                                     <span class="font-bold text-lg">${activity.min_price_usd.toFixed(0)}</span>
                                 </div>
@@ -417,6 +426,7 @@ export default component$(() => {
                                                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                                 width={idx === 0 ? 800 : 400}
                                                 height={idx === 0 ? 600 : 225}
+                                                style={{ viewTransitionName: `gallery-image-${activity.id}-${idx}` }}
                                             />
                                         </div>
                                     ))}

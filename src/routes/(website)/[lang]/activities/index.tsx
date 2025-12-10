@@ -1,4 +1,4 @@
-import { component$ } from '@builder.io/qwik';
+import { $, component$, useOnDocument } from '@builder.io/qwik';
 import { routeLoader$, useLocation, type DocumentHead } from '@builder.io/qwik-city';
 import type { Activity, ActivityFilters } from '~/types/activity';
 import { getActivities } from '~/services/activity-api';
@@ -34,6 +34,44 @@ export default component$(() => {
   const location = useLocation();
   const lang = location.params.lang || 'en';
 
+  // Staggered animation for activity cards entering the view
+  useOnDocument(
+    'qviewTransition',
+    $(async (event: CustomEvent<{ ready: Promise<void> }>) => {
+      const cards = document.querySelectorAll<HTMLElement>('.view-transition-card');
+      const visibleCards = Array.from(cards).filter((card) => {
+        // Only animate cards that are visible in the viewport
+        const rect = card.getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      });
+
+      if (visibleCards.length === 0) return;
+
+      const transition = event.detail;
+      await transition.ready;
+
+      // Staggered entrance animation for cards
+      visibleCards.forEach((card, i) => {
+        const name = (card.style as CSSStyleDeclaration & { viewTransitionName?: string }).viewTransitionName;
+        if (name) {
+          document.documentElement.animate(
+            {
+              opacity: [0, 1],
+              transform: ['translateY(20px)', 'translateY(0)'],
+            },
+            {
+              pseudoElement: `::view-transition-new(${name})`,
+              duration: 300,
+              delay: i * 50,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+              fill: 'forwards',
+            }
+          );
+        }
+      });
+    })
+  );
+
   return (
     <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
       <h1 class="text-4xl font-bold mb-8">Explore Activities</h1>
@@ -67,7 +105,8 @@ export default component$(() => {
             <a
               key={activity.id}
               href={`/${lang}/activities/${activity.slug}`}
-              class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow"
+              class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow view-transition-card"
+              style={{ viewTransitionName: `activity-card-${activity.id}` }}
             >
               <figure class="relative h-48">
                 {activity.seo_metadata.og_image ? (
@@ -77,9 +116,13 @@ export default component$(() => {
                     class="w-full h-full object-cover"
                     width={400}
                     height={192}
+                    style={{ viewTransitionName: `activity-image-${activity.id}` }}
                   />
                 ) : (
-                  <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                  <div
+                    class="w-full h-full bg-base-300 flex items-center justify-center"
+                    style={{ viewTransitionName: `activity-image-${activity.id}` }}
+                  >
                     <span class="text-4xl">
                       {activity.category?.icon || '🏝️'}
                     </span>
@@ -92,7 +135,12 @@ export default component$(() => {
                 )}
               </figure>
               <div class="card-body">
-                <h2 class="card-title">{title}</h2>
+                <h2
+                  class="card-title"
+                  style={{ viewTransitionName: `activity-title-${activity.id}` }}
+                >
+                  {title}
+                </h2>
                 <p class="text-sm line-clamp-2">{description}</p>
                 {activity.island && (
                   <div class="text-sm text-base-content/70">
@@ -100,7 +148,10 @@ export default component$(() => {
                   </div>
                 )}
                 <div class="card-actions justify-between items-center mt-4">
-                  <div class="text-lg font-bold">
+                  <div
+                    class="text-lg font-bold"
+                    style={{ viewTransitionName: `activity-price-${activity.id}` }}
+                  >
                     From ${activity.min_price_usd}
                   </div>
                   <button class="btn btn-primary btn-sm">View Details</button>

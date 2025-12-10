@@ -619,11 +619,19 @@ export default component$(() => {
                             </svg>
                         </button>
                         <div class="flex-1 min-w-0">
-                            <h1 class="text-lg font-bold text-base-content truncate">{title}</h1>
+                            <h1
+                                class="text-lg font-bold text-base-content truncate"
+                                style={{ viewTransitionName: `activity-title-${activity.id}` }}
+                            >
+                                {title}
+                            </h1>
                             <p class="text-sm text-base-content/60">{steps[currentStep.value]?.title}</p>
                         </div>
                         {/* Price badge - always visible */}
-                        <div class="text-right">
+                        <div
+                            class="text-right"
+                            style={{ viewTransitionName: `activity-price-${activity.id}` }}
+                        >
                             <div class="text-lg font-bold text-primary">{formatPrice(totalPrice.value, selectedCurrency.value, currencies.value)}</div>
                             <div class="text-xs text-base-content/50">Total ({selectedCurrency.value})</div>
                         </div>
