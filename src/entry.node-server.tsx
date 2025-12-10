@@ -29,7 +29,6 @@ const { router, notFound, staticFile } = createQwikCity({
   qwikCityPlan,
   static: {
     root: join(process.cwd(), "dist"),
-    cacheControl: "public, max-age=31536000, immutable",
   },
 });
 

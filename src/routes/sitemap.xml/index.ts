@@ -78,13 +78,7 @@ function getToday(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-export const onGet: RequestHandler = async ({ cacheControl, send }) => {
-  // Cache sitemap for 1 hour on CDN, 5 minutes on browser
-  cacheControl({
-    maxAge: 300,
-    sMaxAge: 3600,
-    staleWhileRevalidate: 86400,
-  });
+export const onGet: RequestHandler = async ({ send }) => {
 
   const urls: SitemapUrl[] = [];
   const today = getToday();
@@ -177,7 +171,6 @@ export const onGet: RequestHandler = async ({ cacheControl, send }) => {
   send(new Response(xml, {
     headers: {
       'Content-Type': 'application/xml',
-      'Cache-Control': 'public, max-age=300, s-maxage=3600',
     },
   }));
 };

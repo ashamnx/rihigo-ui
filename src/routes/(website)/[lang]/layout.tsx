@@ -1,36 +1,15 @@
 import { component$, Slot } from "@builder.io/qwik";
 import { Nav } from "~/components/nav/nav";
-import { routeLoader$, routeAction$, type RequestHandler } from "@builder.io/qwik-city";
+import { routeLoader$, routeAction$ } from "@builder.io/qwik-city";
 import { CurrencyProvider, DEFAULT_CURRENCIES, type CurrencyData } from "~/context/currency-context";
 import { ToastProvider } from "~/context/toast-context";
 import { ToastContainer } from "~/components/toast/ToastContainer";
 import { NotificationProvider } from "~/context/notification-context";
 import type { Notification } from "~/types/notification";
 
-// Set cache headers based on authentication status
-// Authenticated pages must not be cached to prevent user data leakage
-export const onRequest: RequestHandler = (event) => {
-  const session = event.sharedMap.get('session');
-
-  // Tell CDN to vary cache by Cookie so authenticated users get different response
-  event.headers.set('Vary', 'Cookie');
-
-  if (session?.user) {
-    // Authenticated: prevent caching to avoid showing wrong user's profile
-    event.headers.set('Cache-Control', 'private, no-store');
-  } else {
-    // Public: allow caching for better performance
-    event.cacheControl({
-      maxAge: 60,
-      sMaxAge: 60,
-      staleWhileRevalidate: 60 * 60,
-    });
-  }
-};
 
 // Fetch currencies with exchange rates
 export const useCurrencyData = routeLoader$(async () => {
-  // Note: Page-level caching is handled by onRequest based on auth status
 
   // Try to fetch from API, fallback to defaults
   try {
