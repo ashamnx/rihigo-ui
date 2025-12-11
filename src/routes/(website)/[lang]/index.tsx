@@ -66,12 +66,12 @@ export default component$(() => {
   return (
     <>
       {/* Hero Section */}
-      <div class="relative min-h-[90vh] flex items-center">
+      <div class="relative flex min-h-[90vh] items-center">
         {/* Background Image */}
         <div class="absolute inset-0">
           <img
             class="h-full w-full object-cover"
-            src="/assets/images/cover.jpeg"
+            src="https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/f179a2f9-a5ce-4bea-fe2b-1f016f753700/public"
             alt="Beautiful Maldives beach and ocean view"
             width="1920"
             height="1280"
@@ -86,7 +86,7 @@ export default component$(() => {
           <div class="max-w-2xl">
             {/* Badge */}
             <div class="mb-8 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm">
-              <span class="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span class="bg-primary flex h-2 w-2 animate-pulse rounded-full" />
               <span class="text-sm font-medium text-white">
                 {t("home.hero.badge@@Your Gateway to Paradise")}
               </span>
@@ -98,7 +98,7 @@ export default component$(() => {
             </h1>
 
             {/* Description */}
-            <p class="mt-6 text-lg text-white/80 sm:text-xl max-w-xl">
+            <p class="mt-6 max-w-xl text-lg text-white/80 sm:text-xl">
               {t(
                 "home.hero.description@@Book unforgettable experiences, tours, and activities. Your dream vacation starts here.",
               )}
@@ -108,16 +108,26 @@ export default component$(() => {
             <div class="mt-10 flex flex-wrap items-center gap-4">
               <Link
                 href={`/${loc.params.lang}/activities`}
-                class="btn btn-primary btn-lg gap-2 shadow-lg shadow-primary/25"
+                class="btn btn-primary btn-lg shadow-primary/25 gap-2 shadow-lg"
               >
                 {t("home.hero.cta.primary@@Explore Activities")}
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                <svg
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 8l4 4m0 0l-4 4m4-4H3"
+                  />
                 </svg>
               </Link>
               <a
                 href="#services"
-                class="btn btn-outline btn-lg text-white border-white/30 hover:bg-white/10 hover:border-white/50"
+                class="btn btn-outline btn-lg border-white/30 text-white hover:border-white/50 hover:bg-white/10"
               >
                 {t("home.hero.cta.secondary@@Our Services")}
               </a>
@@ -126,33 +136,78 @@ export default component$(() => {
             {/* Trust indicators */}
             <div class="mt-12 flex flex-wrap items-center gap-8 text-white/60">
               <div class="flex items-center gap-2">
-                <svg class="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                <svg
+                  class="text-primary h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
-                <span class="text-sm">{t("home.hero.trust.verified@@Verified Experiences")}</span>
+                <span class="text-sm">
+                  {t("home.hero.trust.verified@@Verified Experiences")}
+                </span>
               </div>
               <div class="flex items-center gap-2">
-                <svg class="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                <svg
+                  class="text-primary h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
-                <span class="text-sm">{t("home.hero.trust.support@@24/7 Support")}</span>
+                <span class="text-sm">
+                  {t("home.hero.trust.support@@24/7 Support")}
+                </span>
               </div>
               <div class="flex items-center gap-2">
-                <svg class="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                <svg
+                  class="text-primary h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
-                <span class="text-sm">{t("home.hero.trust.booking@@Easy Booking")}</span>
+                <span class="text-sm">
+                  {t("home.hero.trust.booking@@Easy Booking")}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-          <a href="#services" class="flex flex-col items-center gap-2 text-white/60 hover:text-white transition-colors">
-            <span class="text-xs uppercase tracking-widest">{t("home.hero.scroll@@Scroll to explore")}</span>
-            <svg class="h-6 w-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        <div class="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
+          <a
+            href="#services"
+            class="flex flex-col items-center gap-2 text-white/60 transition-colors hover:text-white"
+          >
+            <span class="text-xs tracking-widest uppercase">
+              {t("home.hero.scroll@@Scroll to explore")}
+            </span>
+            <svg
+              class="h-6 w-6 animate-bounce"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
             </svg>
           </a>
         </div>
@@ -412,7 +467,9 @@ export default component$(() => {
                 {t("home.faq.title@@Frequently Asked Questions")}
               </p>
               <p class="mt-6 text-lg text-gray-600">
-                {t("home.faq.description@@Find answers to common questions about traveling to the Maldives")}
+                {t(
+                  "home.faq.description@@Find answers to common questions about traveling to the Maldives",
+                )}
               </p>
             </div>
 

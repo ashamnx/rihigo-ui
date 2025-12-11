@@ -38,7 +38,6 @@ export const NotificationContext =
 
 interface NotificationProviderProps {
   token?: string;
-  apiUrl: string;
   initialNotifications?: Notification[];
   initialUnreadCount?: number;
   markReadAction: ActionStore<ActionResult, Record<string, unknown>, true>;
@@ -53,7 +52,6 @@ interface NotificationProviderProps {
 export const NotificationProvider = component$<NotificationProviderProps>(
   ({
     token,
-    apiUrl,
     initialNotifications = [],
     initialUnreadCount = 0,
     markReadAction,
@@ -139,10 +137,11 @@ export const NotificationProvider = component$<NotificationProviderProps>(
       const connectWebSocket = () => {
         // Determine WebSocket protocol based on current location
         const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const apiHost = apiUrl.replace(/^https?:\/\//, "");
+        // Use current host for WebSocket - nginx proxies /api/ws/ to the backend
+        const wsHost = window.location.host;
         // Pass token via query parameter - standard approach for browser WebSocket auth
         // Note: Browser WebSocket API doesn't support Authorization headers
-        const wsUrl = `${wsProtocol}//${apiHost}/api/ws/notifications?token=${encodeURIComponent(token)}`;
+        const wsUrl = `${wsProtocol}//${wsHost}/api/ws/notifications?token=${encodeURIComponent(token)}`;
 
         try {
           const ws = new WebSocket(wsUrl);

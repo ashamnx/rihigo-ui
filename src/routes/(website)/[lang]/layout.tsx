@@ -171,7 +171,6 @@ export default component$(() => {
       <ToastProvider>
         <NotificationProvider
           token={sessionData.value.token || undefined}
-          apiUrl={sessionData.value.apiUrl}
           initialNotifications={initialNotifications.value.notifications}
           initialUnreadCount={initialNotifications.value.unreadCount}
           markReadAction={markReadAction}

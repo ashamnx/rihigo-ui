@@ -181,86 +181,87 @@ export const head: DocumentHead = ({resolveValue, params}) => {
     const hreflangLinks = generateHreflangLinks('/faq');
 
     return {
-        title: `${title} | Rihigo`,
-        meta: [
-            // Primary Meta Tags
-            {
-                name: 'description',
-                content: description,
-            },
-            {
-                name: 'robots',
-                content: 'index, follow, max-snippet:-1',
-            },
-            {
-                name: 'author',
-                content: 'Rihigo',
-            },
+      title: `${title} | Rihigo`,
+      meta: [
+        // Primary Meta Tags
+        {
+          name: "description",
+          content: description,
+        },
+        {
+          name: "robots",
+          content: "index, follow, max-snippet:-1",
+        },
+        {
+          name: "author",
+          content: "Rihigo",
+        },
 
-            // Open Graph / Facebook
-            {
-                property: 'og:type',
-                content: 'website',
-            },
-            {
-                property: 'og:url',
-                content: canonicalUrl,
-            },
-            {
-                property: 'og:title',
-                content: `${title} | Rihigo`,
-            },
-            {
-                property: 'og:description',
-                content: description,
-            },
-            {
-                property: 'og:image',
-                content: 'https://rihigo.com/assets/images/cover.jpeg',
-            },
-            {
-                property: 'og:locale',
-                content: lang === 'it-IT' ? 'it_IT' : 'en_US',
-            },
-            {
-                property: 'og:site_name',
-                content: 'Rihigo',
-            },
+        // Open Graph / Facebook
+        {
+          property: "og:type",
+          content: "website",
+        },
+        {
+          property: "og:url",
+          content: canonicalUrl,
+        },
+        {
+          property: "og:title",
+          content: `${title} | Rihigo`,
+        },
+        {
+          property: "og:description",
+          content: description,
+        },
+        {
+          property: "og:image",
+          content:
+            "https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/f179a2f9-a5ce-4bea-fe2b-1f016f753700/public",
+        },
+        {
+          property: "og:locale",
+          content: lang === "it-IT" ? "it_IT" : "en_US",
+        },
+        {
+          property: "og:site_name",
+          content: "Rihigo",
+        },
 
-            // Twitter Card
-            {
-                name: 'twitter:card',
-                content: 'summary_large_image',
-            },
-            {
-                name: 'twitter:url',
-                content: canonicalUrl,
-            },
-            {
-                name: 'twitter:title',
-                content: title,
-            },
-            {
-                name: 'twitter:description',
-                content: description,
-            },
-            {
-                name: 'twitter:image',
-                content: 'https://rihigo.com/assets/images/cover.jpeg',
-            },
-        ],
-        links: [
-            {
-                rel: 'canonical',
-                href: canonicalUrl,
-            },
-            ...hreflangLinks,
-        ],
-        scripts: [
-            // Breadcrumb Schema
-            structuredDataScript(breadcrumbSchema),
-            // FAQPage Schema (if FAQs available)
-            ...(faqSchema ? [structuredDataScript(faqSchema)] : []),
-        ],
+        // Twitter Card
+        {
+          name: "twitter:card",
+          content: "summary_large_image",
+        },
+        {
+          name: "twitter:url",
+          content: canonicalUrl,
+        },
+        {
+          name: "twitter:title",
+          content: title,
+        },
+        {
+          name: "twitter:description",
+          content: description,
+        },
+        {
+          name: "twitter:image",
+          content: "https://rihigo.com/assets/images/cover.jpeg",
+        },
+      ],
+      links: [
+        {
+          rel: "canonical",
+          href: canonicalUrl,
+        },
+        ...hreflangLinks,
+      ],
+      scripts: [
+        // Breadcrumb Schema
+        structuredDataScript(breadcrumbSchema),
+        // FAQPage Schema (if FAQs available)
+        ...(faqSchema ? [structuredDataScript(faqSchema)] : []),
+      ],
     };
 };

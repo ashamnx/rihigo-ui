@@ -135,9 +135,9 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
                                     )}
                                     <div class="divider my-1"></div>
                                     <li>
-                                        <Form action={signOut}>
+                                        <Form action={signOut} class="w-full">
                                             <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
-                                            <button type="submit" class="w-full text-left flex items-center gap-2" disabled={signOut.isRunning}>
+                                            <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2" disabled={signOut.isRunning}>
                                                 {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
                                                 {signOut.isRunning ? 'Signing out...' : (t('app.nav.signOut') || 'Sign Out')}
                                             </button>

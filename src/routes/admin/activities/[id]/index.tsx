@@ -1,9 +1,11 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import { getActivityById, getAtolls, getIslands, updateActivity } from "~/services/activity-api";
 import type { UpdateActivityInput, Activity } from '~/types/activity';
+import type { MediaItem } from "~/types/media";
+import { MediaGalleryManager } from "~/components/admin/MediaGalleryManager";
 
 export const useActivity = routeLoader$(async (requestEvent) => {
   const activityId = requestEvent.params.id;
@@ -107,13 +109,157 @@ export const useUpdateActivity = routeAction$(async (data, requestEvent) => {
   });
 });
 
+// Media route actions
+export const useGetMedia = routeAction$(async (data, requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      const activityId = requestEvent.params.id;
+      const response = await apiClient.media.list(token, {
+        owner_type: 'activity',
+        owner_id: activityId,
+        page: parseInt(data.page as string) || 1,
+        page_size: parseInt(data.perPage as string) || 50,
+      });
+
+      if (response.success && response.data) {
+        // Transform API response to match MediaLibrary expected format
+        const mediaItems = response.data.map((item: MediaItem) => ({
+          id: item.id,
+          filename: item.original_filename || item.filename,
+          uploaded: item.created_at,
+          type: item.mime_type.startsWith('video/') ? 'video' : 'image',
+          variants: item.variants?.map(v => v.url) || [],
+          accountHash: item.cdn_url ? extractAccountHash(item.cdn_url) : undefined,
+          meta: {
+            activityId: item.owner_id,
+            tags: item.tags,
+            description: item.metadata?.description,
+            alt: item.metadata?.alt,
+          },
+          // Keep original data for reference
+          _original: item,
+        }));
+
+        return { success: true, data: mediaItems };
+      }
+
+      return { success: false, message: response.error_message || 'Failed to load media' };
+    } catch (error) {
+      console.error('Error loading media:', error);
+      return { success: false, message: 'Failed to load media' };
+    }
+  });
+});
+
+export const useGetPresignedUrl = routeAction$(async (data, requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      const response = await apiClient.media.getPresignedUpload({
+        filename: data.filename as string,
+        content_type: data.content_type as string,
+        file_size: parseInt(data.file_size as string),
+      }, token);
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          data: response.data,
+        };
+      }
+
+      return { success: false, message: response.error_message || 'Failed to get upload URL' };
+    } catch (error) {
+      console.error('Error getting presigned URL:', error);
+      return { success: false, message: 'Failed to get upload URL' };
+    }
+  });
+});
+
+export const useUploadMedia = routeAction$(async (data, requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      const activityId = requestEvent.params.id;
+
+      // Create media record in the database
+      const response = await apiClient.media.create({
+        filename: data.filename as string,
+        original_filename: data.original_filename as string,
+        mime_type: data.mime_type as string,
+        file_size: parseInt(data.file_size as string),
+        storage_provider: data.storage_provider as 'cloudflare_images' | 'cloudflare_r2',
+        storage_key: data.storage_key as string,
+        cdn_url: data.cdn_url as string || undefined,
+        privacy_level: (data.privacy_level as 'public' | 'user' | 'vendor' | 'admin') || 'public',
+        owner_type: 'activity',
+        owner_id: activityId,
+        tags: data.tags ? JSON.parse(data.tags as string) : [],
+        metadata: {
+          alt: data.alt as string || undefined,
+          description: data.description as string || undefined,
+        },
+        variants: data.variants ? JSON.parse(data.variants as string) : undefined,
+      }, token);
+
+      if (response.success && response.data) {
+        return { success: true, data: response.data };
+      }
+
+      return { success: false, message: response.error_message || 'Failed to save media record' };
+    } catch (error) {
+      console.error('Error saving media:', error);
+      return { success: false, message: 'Failed to save media' };
+    }
+  });
+});
+
+export const useDeleteMedia = routeAction$(async (data, requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    try {
+      const response = await apiClient.media.delete(data.mediaId as string, token);
+
+      if (response.success) {
+        return { success: true };
+      }
+
+      return { success: false, message: response.error_message || 'Failed to delete media' };
+    } catch (error) {
+      console.error('Error deleting media:', error);
+      return { success: false, message: 'Failed to delete media' };
+    }
+  });
+});
+
+// Helper function to extract account hash from Cloudflare Images URL
+function extractAccountHash(url: string): string | undefined {
+  // Cloudflare Images URL format: https://imagedelivery.net/{accountHash}/{imageId}/{variant}
+  const match = url.match(/imagedelivery\.net\/([^/]+)/);
+  return match?.[1];
+}
+
 const sections = [
   { id: 'basic', label: 'Basic Info', icon: 'M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z' },
+  { id: 'media', label: 'Media', icon: 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' },
   { id: 'location', label: 'Location', icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z' },
   { id: 'seo', label: 'SEO', icon: 'M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z' },
   { id: 'stats', label: 'Stats', icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
   { id: 'layout', label: 'Layout', icon: 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z' },
 ];
+
+// Define the media item type for the gallery
+interface GalleryMediaItem {
+  id: string;
+  filename: string;
+  uploaded: string;
+  type: 'image' | 'video';
+  variants: string[];
+  accountHash?: string;
+  meta?: {
+    activityId?: string;
+    tags?: string[];
+    description?: string;
+    alt?: string;
+  };
+}
 
 export default component$(() => {
   const activityData = useActivity();
@@ -124,6 +270,19 @@ export default component$(() => {
   const updateActivityAction = useUpdateActivity();
   const selectedAtoll = useSignal<number | undefined>();
   const activeSection = useSignal('basic');
+
+  // Media actions
+  const getMediaAction = useGetMedia();
+  const uploadMediaAction = useUploadMedia();
+  const deleteMediaAction = useDeleteMedia();
+
+  // Media state
+  const selectedMedia = useStore<{ items: GalleryMediaItem[] }>({ items: [] });
+
+  // Handle media change from gallery manager
+  const handleMediaChange = $((media: GalleryMediaItem[]) => {
+    selectedMedia.items = media;
+  });
 
   // Handle not found
   if (!activityData.value.success || !activityData.value.data) {
@@ -360,6 +519,40 @@ export default component$(() => {
                         })}
                       </select>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Media Gallery */}
+            <section id="media" class="scroll-mt-40">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="size-10 rounded-lg bg-info/10 flex items-center justify-center">
+                      <svg class="size-5 text-info" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 class="font-semibold">Media Gallery</h2>
+                      <p class="text-sm text-base-content/60">Images and videos for this activity</p>
+                    </div>
+                  </div>
+
+                  <MediaGalleryManager
+                    activityId={activity.id}
+                    selectedMedia={selectedMedia.items}
+                    onMediaChange={handleMediaChange}
+                    maxItems={20}
+                    allowReorder={true}
+                    uploadAction={uploadMediaAction}
+                    getMediaAction={getMediaAction}
+                    deleteAction={deleteMediaAction}
+                  />
+
+                  <div class="mt-4 text-sm text-base-content/60">
+                    <p>The first image will be used as the featured image for listings and social media sharing.</p>
                   </div>
                 </div>
               </div>

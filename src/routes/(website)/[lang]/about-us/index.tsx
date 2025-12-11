@@ -60,23 +60,31 @@ export default component$(() => {
       {/* Hero Section */}
       <div class="relative isolate overflow-hidden bg-gray-900 py-24 sm:py-32">
         <img
-          src="/assets/images/cover.jpeg"
+          src="https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/f179a2f9-a5ce-4bea-fe2b-1f016f753700/public"
           alt="Maldives ocean view"
           class="absolute inset-0 -z-10 h-full w-full object-cover opacity-40"
         />
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
           <div class="mx-auto max-w-2xl lg:mx-0">
-            <h2 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">About Rihigo</h2>
+            <h2 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+              About Rihigo
+            </h2>
             <p class="mt-6 text-lg leading-8 text-gray-300">
-              Your trusted travel companion in The Maldives. We connect you with the authentic island experience, making your journey unforgettable.
+              Your trusted travel companion in The Maldives. We connect you with
+              the authentic island experience, making your journey
+              unforgettable.
             </p>
           </div>
           <div class="mx-auto mt-10 max-w-2xl lg:mx-0 lg:max-w-none">
             <dl class="mt-16 grid grid-cols-1 gap-8 sm:mt-20 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((stat) => (
                 <div key={stat.label} class="flex flex-col-reverse">
-                  <dt class="text-base leading-7 text-gray-300">{stat.label}</dt>
-                  <dd class="text-2xl font-bold leading-9 tracking-tight text-white">{stat.value}</dd>
+                  <dt class="text-base leading-7 text-gray-300">
+                    {stat.label}
+                  </dt>
+                  <dd class="text-2xl leading-9 font-bold tracking-tight text-white">
+                    {stat.value}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -88,15 +96,25 @@ export default component$(() => {
       <div class="overflow-hidden bg-white py-24 sm:py-32">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
           <div class="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-            <div class="lg:pr-8 lg:pt-4">
+            <div class="lg:pt-4 lg:pr-8">
               <div class="lg:max-w-lg">
-                <h2 class="text-base font-semibold leading-7 text-primary">Our Story</h2>
-                <p class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Born from the Ocean</p>
-                <p class="mt-6 text-lg leading-8 text-gray-600">
-                  Rihigo started with a simple idea: to show the world the real Maldives. Not just the luxury resorts, but the vibrant local culture, the hidden sandbanks, and the untouched reefs.
+                <h2 class="text-primary text-base leading-7 font-semibold">
+                  Our Story
+                </h2>
+                <p class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                  Born from the Ocean
                 </p>
                 <p class="mt-6 text-lg leading-8 text-gray-600">
-                  Our founders, born and raised on these islands, wanted to create a platform that empowers local communities while providing travelers with authentic, sustainable, and unforgettable experiences. Today, we are proud to be the bridge between you and the true spirit of the Maldives.
+                  Rihigo started with a simple idea: to show the world the real
+                  Maldives. Not just the luxury resorts, but the vibrant local
+                  culture, the hidden sandbanks, and the untouched reefs.
+                </p>
+                <p class="mt-6 text-lg leading-8 text-gray-600">
+                  Our founders, born and raised on these islands, wanted to
+                  create a platform that empowers local communities while
+                  providing travelers with authentic, sustainable, and
+                  unforgettable experiences. Today, we are proud to be the
+                  bridge between you and the true spirit of the Maldives.
                 </p>
               </div>
             </div>
@@ -115,27 +133,43 @@ export default component$(() => {
       <div class="bg-gray-50 py-24 sm:py-32">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
           <div class="mx-auto max-w-2xl lg:text-center">
-            <h2 class="text-base font-semibold leading-7 text-primary">Our Values</h2>
+            <h2 class="text-primary text-base leading-7 font-semibold">
+              Our Values
+            </h2>
             <p class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               Driven by Purpose
             </p>
             <p class="mt-6 text-lg leading-8 text-gray-600">
-              We are more than just a travel agency. We are stewards of our environment and champions of our culture.
+              We are more than just a travel agency. We are stewards of our
+              environment and champions of our culture.
             </p>
           </div>
           <div class="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
             <dl class="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
               {values.map((value) => (
                 <div key={value.name} class="relative pl-16">
-                  <dt class="text-base font-semibold leading-7 text-gray-900">
-                    <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                      <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  <dt class="text-base leading-7 font-semibold text-gray-900">
+                    <div class="bg-primary absolute top-0 left-0 flex h-10 w-10 items-center justify-center rounded-lg">
+                      <svg
+                        class="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
                       </svg>
                     </div>
                     {value.name}
                   </dt>
-                  <dd class="mt-2 text-base leading-7 text-gray-600">{value.description}</dd>
+                  <dd class="mt-2 text-base leading-7 text-gray-600">
+                    {value.description}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -147,16 +181,30 @@ export default component$(() => {
       <div class="bg-white py-24 sm:py-32">
         <div class="mx-auto max-w-7xl px-6 lg:px-8">
           <div class="mx-auto max-w-2xl lg:mx-0">
-            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Our Team</h2>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Our Team
+            </h2>
             <p class="mt-6 text-lg leading-8 text-gray-600">
-              Meet the passionate individuals who make your dream vacation a reality.
+              Meet the passionate individuals who make your dream vacation a
+              reality.
             </p>
           </div>
-          <ul role="list" class="mx-auto mt-20 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-4">
+          <ul
+            role="list"
+            class="mx-auto mt-20 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-4"
+          >
             {team.map((person) => (
               <li key={person.name}>
-                <img class="aspect-[1/1] w-full rounded-2xl object-cover" src={person.imageUrl} alt={person.name} width={300} height={300} />
-                <h3 class="mt-6 text-lg font-semibold leading-8 tracking-tight text-gray-900">{person.name}</h3>
+                <img
+                  class="aspect-[1/1] w-full rounded-2xl object-cover"
+                  src={person.imageUrl}
+                  alt={person.name}
+                  width={300}
+                  height={300}
+                />
+                <h3 class="mt-6 text-lg leading-8 font-semibold tracking-tight text-gray-900">
+                  {person.name}
+                </h3>
                 <p class="text-base leading-7 text-gray-600">{person.role}</p>
               </li>
             ))}
