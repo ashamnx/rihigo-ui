@@ -1,16 +1,7 @@
 import { component$ } from '@builder.io/qwik';
-import type { DocumentHead, StaticGenerateHandler } from "@builder.io/qwik-city";
+import type { DocumentHead } from "@builder.io/qwik-city";
 import { Link } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
-
-// Cache headers are set by layout's onRequest based on auth status
-
-// Enable static generation
-export const onStaticGenerate: StaticGenerateHandler = () => {
-    return {
-        params: [{ lang: 'en-US' }, { lang: 'it-IT' }],
-    };
-};
 
 export default component$(() => {
     const t = inlineTranslate();

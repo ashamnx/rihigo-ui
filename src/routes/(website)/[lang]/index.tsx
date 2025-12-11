@@ -1,17 +1,10 @@
 import { $, component$, useOnDocument, useSignal } from "@builder.io/qwik";
-import type { DocumentHead, StaticGenerateHandler } from "@builder.io/qwik-city";
+import type { DocumentHead } from "@builder.io/qwik-city";
 import { Link, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { apiClient } from "~/utils/api-client";
 import { inlineTranslate } from "qwik-speak";
 import { ErrorState } from "~/components/error-state/error-state";
 import { useCurrency, formatPrice } from "~/context/currency-context";
-
-// Enable static generation for homepage (pre-render for each language)
-export const onStaticGenerate: StaticGenerateHandler = () => {
-  return {
-    params: [{ lang: 'en-US' }, { lang: 'it-IT' }],
-  };
-};
 
 export const useHomeData = routeLoader$(async () => {
   // Cache headers are set by layout's onRequest based on auth status
