@@ -536,7 +536,7 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
     const image =
       activity.images && activity.images.length > 0
         ? activity.images[0]
-        : "/assets/images/cover.jpeg";
+        : "https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/f179a2f9-a5ce-4bea-fe2b-1f016f753700/public";
 
     // Truncate description
     const truncatedDescription =
