@@ -28,21 +28,43 @@ const port = Number(Bun.env.PORT ?? 3000);
 // eslint-disable-next-line no-console
 console.log(`Server started: http://localhost:${port}/`);
 
+/**
+ * Rewrite request URL to use the correct protocol from X-Forwarded-Proto header.
+ * This is necessary when behind a reverse proxy (like Nginx) that terminates SSL.
+ */
+function getProxiedRequest(request: Request): Request {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  if (!forwardedProto) {
+    return request;
+  }
+
+  const url = new URL(request.url);
+  if (url.protocol !== `${forwardedProto}:`) {
+    url.protocol = `${forwardedProto}:`;
+    return new Request(url.toString(), request);
+  }
+
+  return request;
+}
+
 Bun.serve({
   async fetch(request: Request) {
-    const staticResponse = await staticFile(request);
+    // Rewrite URL protocol based on X-Forwarded-Proto for correct OAuth redirects
+    const proxiedRequest = getProxiedRequest(request);
+
+    const staticResponse = await staticFile(proxiedRequest);
     if (staticResponse) {
       return staticResponse;
     }
 
     // Server-side render this request with Qwik City
-    const qwikCityResponse = await router(request);
+    const qwikCityResponse = await router(proxiedRequest);
     if (qwikCityResponse) {
       return qwikCityResponse;
     }
 
     // Path not found
-    return notFound(request);
+    return notFound(proxiedRequest);
   },
   port,
 });
