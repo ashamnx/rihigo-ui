@@ -60,7 +60,8 @@
     "vite": "7.2.4",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^4.0.10",
-    "wrangler": "^4.51.0"
+    "wrangler": "^4.51.0",
+    "@unpic/qwik": "^1.0.0"
   },
   "nx": {},
   "overrides": {

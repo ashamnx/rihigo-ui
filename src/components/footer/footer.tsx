@@ -14,19 +14,34 @@ export const Footer = component$<FooterProps>(() => {
           class="-mb-6 flex flex-wrap justify-center gap-x-12 gap-y-3 text-sm/6"
           aria-label="Footer"
         >
-          <a href={`/${locale.lang}/about`} class="text-gray-600 hover:text-gray-900">
+          <a
+            href={`/${locale.lang}/about`}
+            class="text-gray-600 hover:text-gray-900"
+          >
             {t("app.footer.about")}
           </a>
-          <a href={`/${locale.lang}/support`} class="text-gray-600 hover:text-gray-900">
+          <a
+            href={`/${locale.lang}/support`}
+            class="text-gray-600 hover:text-gray-900"
+          >
             {t("app.nav.help")}
           </a>
-          <a href={`/${locale.lang}/faq`} class="text-gray-600 hover:text-gray-900">
+          <a
+            href={`/${locale.lang}/faq`}
+            class="text-gray-600 hover:text-gray-900"
+          >
             {t("app.footer.faq@@FAQ")}
           </a>
-          <a href={`/${locale.lang}/terms`} class="text-gray-600 hover:text-gray-900">
+          <a
+            href={`/${locale.lang}/terms`}
+            class="text-gray-600 hover:text-gray-900"
+          >
             {t("app.footer.terms@@Terms")}
           </a>
-          <a href={`/${locale.lang}/privacy`} class="text-gray-600 hover:text-gray-900">
+          <a
+            href={`/${locale.lang}/privacy`}
+            class="text-gray-600 hover:text-gray-900"
+          >
             {t("app.footer.privacy@@Privacy")}
           </a>
         </nav>
@@ -94,11 +109,12 @@ export const Footer = component$<FooterProps>(() => {
         </div>
         <div class="mt-10 flex justify-center">
           <img
-            src="/bml_banner.png"
+            src="https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/a9f9bd5a-7472-4a9b-1bc6-08773f7ca400/public"
             alt="BML"
             width={200}
             height={50}
-            class="h-auto"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <p class="mt-6 text-center text-sm/6 text-gray-600">
