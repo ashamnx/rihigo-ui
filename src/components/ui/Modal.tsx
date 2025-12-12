@@ -1,14 +1,15 @@
 /**
- * Modal Component using native HTML <dialog> element
+ * Modal Component using native HTML <dialog> element with DaisyUI styling
  *
  * This follows the Qwik-recommended approach for modals:
  * - Uses native browser dialog API with showModal()
  * - Automatic top-layer rendering (no z-index issues)
  * - Built-in focus trapping and scroll locking
- * - Native backdrop support with ::backdrop pseudo-element
- * - Less JavaScript, better performance
+ * - Native backdrop support
+ * - DaisyUI modal styling
  *
  * @see https://qwik.dev/docs/cookbook/portals/
+ * @see https://daisyui.com/components/modal/
  */
 
 import {
@@ -47,17 +48,17 @@ export const Modal = component$<ModalProps>(
     // Sync the signal state with the native dialog
     // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(({ track }) => {
-      track(() => show.value);
-
+      const isOpen = track(() => show.value);
       const dialog = dialogRef.value;
+
       if (!dialog) return;
 
-      if (show.value && !dialog.open) {
+      if (isOpen && !dialog.open) {
         dialog.showModal();
-      } else if (!show.value && dialog.open) {
+      } else if (!isOpen && dialog.open) {
         dialog.close();
       }
-    });
+    }, { strategy: 'document-ready' });
 
     // Handle native dialog close event (Escape key, form submission)
     const handleClose = $(() => {
@@ -65,27 +66,8 @@ export const Modal = component$<ModalProps>(
       onClose$?.();
     });
 
-    // Handle backdrop click
-    const handleBackdropClick = $((event: MouseEvent) => {
-      const dialog = dialogRef.value;
-      if (!dialog || !closeOnBackdropClick) return;
-
-      // Check if click was on the backdrop (dialog element itself, not its content)
-      const rect = dialog.getBoundingClientRect();
-      const isInDialog =
-        rect.top <= event.clientY &&
-        event.clientY <= rect.top + rect.height &&
-        rect.left <= event.clientX &&
-        event.clientX <= rect.left + rect.width;
-
-      // If click is outside the visible dialog content area, close
-      if (event.target === dialog && !isInDialog) {
-        handleClose();
-      }
-    });
-
     // Size classes mapping
-    const sizeClasses = {
+    const sizeClasses: Record<string, string> = {
       sm: "max-w-sm",
       md: "max-w-md",
       lg: "max-w-4xl",
@@ -96,25 +78,27 @@ export const Modal = component$<ModalProps>(
     return (
       <dialog
         ref={dialogRef}
-        class={[
-          // Base styles
-          "modal-panel bg-base-100 rounded-lg shadow-xl p-0 m-auto",
-          "backdrop:bg-black/50 backdrop:backdrop-blur-sm",
-          // Size
-          sizeClasses[size],
-          "w-full",
-          // Animation
-          "opacity-0 scale-95 open:opacity-100 open:scale-100",
-          "transition-all duration-200 ease-out",
-          // Custom classes
-          className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        class="modal"
         onClose$={handleClose}
-        onClick$={handleBackdropClick}
       >
-        <Slot />
+        <div
+          class={[
+            "modal-box",
+            sizeClasses[size],
+            "w-full p-0 flex flex-col max-h-[90vh]",
+            className,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <Slot />
+        </div>
+        {/* Backdrop form for click-outside-to-close */}
+        {closeOnBackdropClick && (
+          <form method="dialog" class="modal-backdrop">
+            <button type="submit">close</button>
+          </form>
+        )}
       </dialog>
     );
   }
@@ -135,7 +119,7 @@ export const ModalHeader = component$<ModalHeaderProps>(
     return (
       <div
         class={[
-          "flex items-center justify-between p-4 border-b border-base-200",
+          "flex items-center justify-between p-4 border-b border-base-200 flex-shrink-0",
           className,
         ]
           .filter(Boolean)
@@ -143,26 +127,27 @@ export const ModalHeader = component$<ModalHeaderProps>(
       >
         <Slot />
         {onClose$ && (
-          <button
-            type="button"
-            onClick$={onClose$}
-            class="btn btn-ghost btn-sm btn-circle"
-            aria-label="Close modal"
-          >
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <form method="dialog">
+            <button
+              type="submit"
+              class="btn btn-ghost btn-sm btn-circle"
+              aria-label="Close modal"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </form>
         )}
       </div>
     );
@@ -174,9 +159,9 @@ export const ModalHeader = component$<ModalHeaderProps>(
  */
 export const ModalTitle = component$(() => {
   return (
-    <h2 class="text-xl font-semibold">
+    <h3 class="text-lg font-bold">
       <Slot />
-    </h2>
+    </h3>
   );
 });
 
@@ -191,7 +176,7 @@ export interface ModalBodyProps {
 export const ModalBody = component$<ModalBodyProps>(({ class: className }) => {
   return (
     <div
-      class={["p-4 overflow-y-auto", className].filter(Boolean).join(" ")}
+      class={["p-4 overflow-y-auto flex-1", className].filter(Boolean).join(" ")}
     >
       <Slot />
     </div>
@@ -211,7 +196,7 @@ export const ModalFooter = component$<ModalFooterProps>(
     return (
       <div
         class={[
-          "flex items-center justify-end gap-2 p-4 border-t border-base-200 bg-base-200/50",
+          "modal-action p-4 border-t border-base-200 flex-shrink-0 mt-0",
           className,
         ]
           .filter(Boolean)

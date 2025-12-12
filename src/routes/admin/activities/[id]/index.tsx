@@ -6,6 +6,7 @@ import { getActivityById, getAtolls, getIslands, updateActivity } from "~/servic
 import type { UpdateActivityInput, Activity } from '~/types/activity';
 import type { MediaItem } from "~/types/media";
 import { MediaGalleryManager } from "~/components/admin/MediaGalleryManager";
+import { MediaLibrary } from "~/components/admin/MediaLibrary";
 
 export const useActivity = routeLoader$(async (requestEvent) => {
   const activityId = requestEvent.params.id;
@@ -279,9 +280,28 @@ export default component$(() => {
   // Media state
   const selectedMedia = useStore<{ items: GalleryMediaItem[] }>({ items: [] });
 
+  // OG Image state for Social sharing
+  const ogImageUrl = useSignal<string>('');
+
   // Handle media change from gallery manager
   const handleMediaChange = $((media: GalleryMediaItem[]) => {
     selectedMedia.items = media;
+  });
+
+  // Handle OG image selection from media library
+  const handleOgImageSelect = $((media: GalleryMediaItem[]) => {
+    if (media.length > 0) {
+      const selected = media[0];
+      // Get the best URL for OG image (prefer large variant or hero)
+      // Cloudflare Images URL format: https://imagedelivery.net/{accountHash}/{imageId}/{variant}
+      if (selected.accountHash) {
+        // Use 'hero' variant for OG images (1920x1080, ideal for social media)
+        ogImageUrl.value = `https://imagedelivery.net/${selected.accountHash}/${selected.id}/hero`;
+      } else if (selected.variants && selected.variants.length > 0) {
+        // Fallback to first variant URL
+        ogImageUrl.value = selected.variants[0];
+      }
+    }
   });
 
   // Handle not found
@@ -683,16 +703,53 @@ export default component$(() => {
 
                     <div class="form-control">
                       <label class="label">
-                        <span class="label-text font-medium">Social Image URL</span>
-                        <span class="label-text-alt text-base-content/50">For Facebook, Twitter cards</span>
+                        <span class="label-text font-medium">Social Image</span>
+                        <span class="label-text-alt text-base-content/50">For Facebook, Twitter cards (1200x630px recommended)</span>
                       </label>
-                      <input
-                        type="url"
-                        name="og_image"
-                        class="input input-bordered bg-base-100"
-                        value={activity.seo_metadata.og_image || ''}
-                        placeholder="https://..."
-                      />
+                      <div class="flex gap-2">
+                        <input
+                          type="url"
+                          name="og_image"
+                          class="input input-bordered bg-base-100 flex-1"
+                          value={ogImageUrl.value || activity.seo_metadata.og_image || ''}
+                          placeholder="https://..."
+                          onInput$={(e) => ogImageUrl.value = (e.target as HTMLInputElement).value}
+                        />
+                        <MediaLibrary
+                          onSelectMedia={handleOgImageSelect}
+                          multiSelect={false}
+                          activityId={activity.id}
+                          getMediaAction={getMediaAction}
+                          uploadAction={uploadMediaAction}
+                          deleteAction={deleteMediaAction}
+                          defaultPrivacyLevel="public"
+                        />
+                      </div>
+                      {/* Image Preview */}
+                      {(ogImageUrl.value || activity.seo_metadata.og_image) && (
+                        <div class="mt-3">
+                          <p class="text-xs text-base-content/50 mb-2">Preview:</p>
+                          <div class="relative aspect-[1200/630] max-w-md bg-base-200 rounded-lg overflow-hidden">
+                            <img
+                              src={ogImageUrl.value || activity.seo_metadata.og_image}
+                              alt="Social media preview"
+                              class="w-full h-full object-cover"
+                              width={1200}
+                              height={630}
+                            />
+                            <button
+                              type="button"
+                              class="absolute top-2 right-2 btn btn-circle btn-sm btn-error"
+                              onClick$={() => ogImageUrl.value = ''}
+                              title="Remove image"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Search Preview */}

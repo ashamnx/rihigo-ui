@@ -120,36 +120,27 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     mediaStore.error = null;
 
     try {
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Request timeout")), 10000);
-      });
-
-      const submitPromise = getMediaAction.submit({
+      // Submit the action and wait for it to complete
+      const result = await getMediaAction.submit({
         page: currentPage.value.toString(),
         perPage: "50",
       });
 
-      console.log("MediaLibrary: Submitting action...");
-      await Promise.race([submitPromise, timeoutPromise]);
+      console.log("MediaLibrary: Action result:", result);
 
-      console.log("MediaLibrary: Action submitted successfully");
-      console.log("MediaLibrary: Action value:", getMediaAction.value);
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      if (getMediaAction.value?.success) {
+      // The result.value contains the action response
+      if (result.value?.success) {
         console.log(
           "MediaLibrary: Media loaded successfully, count:",
-          getMediaAction.value.data?.length
+          result.value.data?.length
         );
-        mediaStore.items = getMediaAction.value.data || [];
+        mediaStore.items = result.value.data || [];
       } else {
         console.error(
           "MediaLibrary: Media load failed:",
-          getMediaAction.value?.message
+          result.value?.message
         );
-        mediaStore.error =
-          getMediaAction.value?.message || "Failed to load media";
+        mediaStore.error = result.value?.message || "Failed to load media";
       }
     } catch (error) {
       console.error("MediaLibrary: Load error:", error);
@@ -682,9 +673,11 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
               </span>
             )}
           </div>
-          <button type="button" onClick$={handleClose} class="btn btn-ghost">
-            Cancel
-          </button>
+          <form method="dialog">
+            <button type="submit" class="btn btn-ghost">
+              Cancel
+            </button>
+          </form>
           <button
             type="button"
             onClick$={applySelection}
