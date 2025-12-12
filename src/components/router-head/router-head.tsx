@@ -15,11 +15,26 @@ export const RouterHead = component$(() => {
         generateWebSiteSchema(false),
     ];
 
+    // Check if page has defined its own canonical URL
+    const hasPageCanonical = head.links.some((l) => l.rel === 'canonical');
+
+    // Generate normalized canonical URL without trailing slash (except for query strings)
+    const normalizedCanonical = (() => {
+        const url = new URL(loc.url.href);
+        // Remove trailing slash from pathname (but keep root "/" as is)
+        if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
+            url.pathname = url.pathname.slice(0, -1);
+        }
+        // Return URL without query string for canonical (unless it's pagination)
+        return `${url.origin}${url.pathname}`;
+    })();
+
     return (
         <>
             <title>{head.title}</title>
 
-            <link rel="canonical" href={loc.url.href}/>
+            {/* Only render fallback canonical if page doesn't define its own */}
+            {!hasPageCanonical && <link rel="canonical" href={normalizedCanonical}/>}
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
             <link rel="icon" type="image/svg+xml" href="/assets/logo_min.svg"/>
             <link rel="apple-touch-icon" href="/assets/logo_min.svg"/>
