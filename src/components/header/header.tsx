@@ -61,226 +61,346 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     ];
 
     return (
-        <header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showSolidHeader ? 'bg-white shadow-md' : 'bg-transparent'}`}>
-            <nav class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
-                <div class="flex lg:flex-1">
-                    <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5">
-                        <span class="sr-only">Rihigo</span>
-                        <img
-                            src="/assets/logo.svg"
-                            alt="Rihigo Logo"
-                            class={`h-8 transition-all duration-300 ${showSolidHeader ? '' : 'brightness-0 invert'}`}
-                            height="32"
-                        />
-                    </Link>
-                </div>
-                <div class="flex items-center gap-2 lg:hidden">
-                    {/* Mobile Notification Bell - only show when authenticated */}
-                    {session.value?.user && (
-                        <NotificationBell isScrolled={showSolidHeader} lang={locale.lang || "en-US"} />
-                    )}
-                    <button type="button"
-                            class={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 transition-colors ${showSolidHeader ? 'text-gray-700' : 'text-white'}`}
-                            onClick$={() => isMobileMenuOpen.value = true}>
-                        <span class="sr-only">Open main menu</span>
-                        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                             aria-hidden="true" data-slot="icon">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="hidden lg:flex lg:gap-x-12">
-                    {nav.map((item, index) => item.children ?
-                        (<NestedNav item={item} key={index} isScrolled={showSolidHeader} locale={locale}/>)
-                        : (<NavLink href={`/${locale.lang || "en-US"}${item.link}`}
-                                    activeClass="text-primary"
-                                 class={`text-sm/6 font-semibold transition-colors duration-300 hover:text-primary ${showSolidHeader ? 'text-gray-900' : 'text-white'}`}
-                                 key={index}>{item.label}</NavLink>)
-                    )}
-                </div>
-                <div class="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4">
-                    <LocaleSelector isScrolled={showSolidHeader} />
-
-                    {session.value?.user ? (
-                        /* Authenticated User */
-                        <div class="flex items-center gap-3">
-                            {/* Admin Badge */}
-                            {isUserAdmin && (
-                                <Link href="/admin" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium hover:bg-blue-200">
-                                    Admin
-                                </Link>
-                            )}
-
-                            {/* Notification Bell */}
-                            <NotificationBell isScrolled={showSolidHeader} lang={locale.lang || "en-US"} />
-
-                            {/* Profile Dropdown */}
-                            <div class="dropdown dropdown-end">
-                                <div tabIndex={0} role="button" class="btn btn-ghost btn-sm avatar">
-                                    <div class="w-8 rounded-full">
-                                        <img src={session.value.user.image || '/default-avatar.png'} alt="Profile" width="32" height="32" />
-                                    </div>
-                                </div>
-                                <ul tabIndex={0} class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                                    <li class="menu-title">
-                                        <span>{session.value.user.name}</span>
-                                        <span class="text-xs opacity-60">{session.value.user.email}</span>
-                                    </li>
-                                    <div class="divider my-1"></div>
-                                    <li onClick$={() => (document.activeElement as HTMLElement).blur()}><Link href={`/${locale.lang}/profile`}>{t('app.nav.profile') || 'My Profile'}</Link></li>
-                                    <li onClick$={() => (document.activeElement as HTMLElement).blur()}><Link href={`/${locale.lang}/bookings`}>{t('app.nav.bookings') || 'My Bookings'}</Link></li>
-                                    {isUserAdmin && (
-                                        <li onClick$={() => (document.activeElement as HTMLElement).blur()}><Link href="/admin">{t('app.nav.admin') || 'Admin Panel'}</Link></li>
-                                    )}
-                                    <div class="divider my-1"></div>
-                                    <li>
-                                        <Form action={signOut} class="w-full">
-                                            <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
-                                            <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2" disabled={signOut.isRunning}>
-                                                {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
-                                                {signOut.isRunning ? 'Signing out...' : (t('app.nav.signOut') || 'Sign Out')}
-                                            </button>
-                                        </Form>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    ) : (
-                        /* Not Authenticated */
-                        <div class="flex items-center gap-2">
-                            <Link
-                                href={getPath('/auth/sign-in', locale.lang || "en-US")}
-                                class={`text-sm/6 font-semibold px-5 py-2 rounded-lg transition-all duration-300 ${
-                                    showSolidHeader
-                                        ? 'bg-primary text-white hover:bg-primary/90'
-                                        : 'bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 border border-white/30'
-                                }`}
-                            >
-                                {t('app.nav.login') || 'Sign In'}
-                            </Link>
-                        </div>
-                    )}
-                </div>
-            </nav>
-            {/* Mobile menu */}
-            {isMobileMenuOpen.value && (
-                <div class="lg:hidden" role="dialog" aria-modal="true">
-                    {/* Backdrop */}
-                    <div
-                        class="fixed inset-0 z-40 bg-black/25"
-                        onClick$={() => isMobileMenuOpen.value = false}
-                    ></div>
-                    {/* Drawer */}
-                    <div class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-                        <div class="flex items-center justify-between">
-                            <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5" onClick$={() => isMobileMenuOpen.value = false}>
-                                <span class="sr-only">Rihigo</span>
-                                <img src="/assets/logo.svg" alt="Rihigo Logo" class="h-8"/>
-                            </Link>
-                            <button
-                                type="button"
-                                class="-m-2.5 rounded-md p-2.5 text-gray-700"
-                                onClick$={() => isMobileMenuOpen.value = false}
-                            >
-                                <span class="sr-only">Close menu</span>
-                                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                     aria-hidden="true" data-slot="icon">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="mt-6 flow-root">
-                            <div class="-my-6 divide-y divide-gray-500/10">
-                                <div class="space-y-2 py-6">
-                                    {nav.map((item, index) => item.children ? (
-                                        <MobileNestedNav
-                                            key={index}
-                                            item={item}
-                                            locale={locale.lang || "en-US"}
-                                            onNavigate$={() => isMobileMenuOpen.value = false}
-                                        />
-                                    ) : (
-                                        <Link
-                                            key={index}
-                                            href={`/${locale.lang || "en-US"}${item.link}`}
-                                            class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                                            onClick$={() => isMobileMenuOpen.value = false}
-                                        >
-                                            {item.label}
-                                        </Link>
-                                    ))}
-                                </div>
-                                <div class="py-6">
-                                    <div class="flex items-center gap-4 px-3 py-2.5">
-                                        <LocaleSelector />
-                                    </div>
-                                    {session.value?.user ? (
-                                        <>
-                                            <div class="px-3 py-2.5 border-b border-gray-200 mb-2">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-10 h-10 rounded-full overflow-hidden">
-                                                        <img src={session.value.user.image || '/default-avatar.png'} alt="Profile" width="40" height="40" />
-                                                    </div>
-                                                    <div>
-                                                        <p class="font-semibold text-gray-900">{session.value.user.name}</p>
-                                                        <p class="text-sm text-gray-500">{session.value.user.email}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Link
-                                                href={`/${locale.lang}/profile`}
-                                                class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                                                onClick$={() => isMobileMenuOpen.value = false}
-                                            >
-                                                {t('app.nav.profile') || 'My Profile'}
-                                            </Link>
-                                            <Link
-                                                href={`/${locale.lang}/bookings`}
-                                                class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                                                onClick$={() => isMobileMenuOpen.value = false}
-                                            >
-                                                {t('app.nav.bookings') || 'My Bookings'}
-                                            </Link>
-                                            {isUserAdmin && (
-                                                <Link
-                                                    href="/admin"
-                                                    class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                                                    onClick$={() => isMobileMenuOpen.value = false}
-                                                >
-                                                    {t('app.nav.admin') || 'Admin Panel'}
-                                                </Link>
-                                            )}
-                                            <Form action={signOut} class="mt-2">
-                                                <input type="hidden" name="redirectTo" value={`/${locale.lang}`} />
-                                                <button
-                                                    type="submit"
-                                                    class="-mx-3 w-full text-left rounded-lg px-3 py-2 text-base/7 font-semibold text-red-600 hover:bg-gray-50 flex items-center gap-2"
-                                                    disabled={signOut.isRunning}
-                                                >
-                                                    {signOut.isRunning && <span class="loading loading-spinner loading-xs"></span>}
-                                                    {signOut.isRunning ? 'Signing out...' : (t('app.nav.signOut') || 'Sign Out')}
-                                                </button>
-                                            </Form>
-                                        </>
-                                    ) : (
-                                        <div class="space-y-2">
-                                            <Link
-                                                href={getPath('/auth/sign-in', locale.lang || "en-US")}
-                                                class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-primary text-center hover:bg-primary/80"
-                                                onClick$={() => isMobileMenuOpen.value = false}
-                                            >
-                                                {t('app.nav.login') || 'Sign In'}
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <header
+        class={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${showSolidHeader ? "bg-white shadow-md" : "bg-transparent"}`}
+      >
+        <nav
+          class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8"
+          aria-label="Global"
+        >
+          <div class="flex lg:flex-1">
+            <Link href={`/${locale.lang || "en-US"}`} class="-m-1.5 p-1.5">
+              <span class="sr-only">Rihigo</span>
+              <img
+                src="/assets/logo.svg"
+                alt="Rihigo Logo"
+                class={`h-8 transition-all duration-300 ${showSolidHeader ? "" : "brightness-0 invert"}`}
+                height="32"
+              />
+            </Link>
+          </div>
+          <div class="flex items-center gap-2 lg:hidden">
+            {/* Mobile Notification Bell - only show when authenticated */}
+            {session.value?.user && (
+              <NotificationBell
+                isScrolled={showSolidHeader}
+                lang={locale.lang || "en-US"}
+              />
             )}
-        </header>
+            <button
+              type="button"
+              class={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 transition-colors ${showSolidHeader ? "text-gray-700" : "text-white"}`}
+              onClick$={() => (isMobileMenuOpen.value = true)}
+            >
+              <span class="sr-only">Open main menu</span>
+              <svg
+                class="size-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="hidden lg:flex lg:gap-x-12">
+            {nav.map((item, index) =>
+              item.children ? (
+                <NestedNav
+                  item={item}
+                  key={index}
+                  isScrolled={showSolidHeader}
+                  locale={locale}
+                />
+              ) : (
+                <NavLink
+                  href={`/${locale.lang || "en-US"}${item.link}`}
+                  activeClass="text-primary"
+                  class={`hover:text-primary text-sm/6 font-semibold transition-colors duration-300 ${showSolidHeader ? "text-gray-900" : "text-white"}`}
+                  key={index}
+                >
+                  {item.label}
+                </NavLink>
+              ),
+            )}
+          </div>
+          <div class="hidden items-center gap-4 lg:flex lg:flex-1 lg:justify-end">
+            <LocaleSelector isScrolled={showSolidHeader} />
+
+            {session.value?.user ? (
+              /* Authenticated User */
+              <div class="flex items-center gap-3">
+                {/* Admin Badge */}
+                {isUserAdmin && (
+                  <Link
+                    href="/admin"
+                    class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-200"
+                  >
+                    Admin
+                  </Link>
+                )}
+
+                {/* Notification Bell */}
+                <NotificationBell
+                  isScrolled={showSolidHeader}
+                  lang={locale.lang || "en-US"}
+                />
+
+                {/* Profile Dropdown */}
+                <div class="dropdown dropdown-end">
+                  <div
+                    tabIndex={0}
+                    role="button"
+                    class="btn btn-ghost btn-sm avatar rounded-full px-0 hover:cursor-pointer"
+                  >
+                    <div class="w-8 rounded-full">
+                      <img
+                        src={session.value.user.image || "/default-avatar.png"}
+                        alt="Profile"
+                        width="32"
+                        height="32"
+                      />
+                    </div>
+                  </div>
+                  <ul
+                    tabIndex={0}
+                    class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+                  >
+                    <li class="menu-title">
+                      <span>{session.value.user.name}</span>
+                      <span class="text-xs opacity-60">
+                        {session.value.user.email}
+                      </span>
+                    </li>
+                    <div class="divider my-1"></div>
+                    <li
+                      onClick$={() =>
+                        (document.activeElement as HTMLElement).blur()
+                      }
+                    >
+                      <Link href={`/${locale.lang}/profile`}>
+                        {t("app.nav.profile") || "My Profile"}
+                      </Link>
+                    </li>
+                    <li
+                      onClick$={() =>
+                        (document.activeElement as HTMLElement).blur()
+                      }
+                    >
+                      <Link href={`/${locale.lang}/bookings`}>
+                        {t("app.nav.bookings") || "My Bookings"}
+                      </Link>
+                    </li>
+                    {isUserAdmin && (
+                      <li
+                        onClick$={() =>
+                          (document.activeElement as HTMLElement).blur()
+                        }
+                      >
+                        <Link href="/admin">
+                          {t("app.nav.admin") || "Admin Panel"}
+                        </Link>
+                      </li>
+                    )}
+                    <div class="divider my-1"></div>
+                    <li>
+                      <button
+                        type="submit"
+                        class="block cursor-pointer rounded text-gray-900 hover:bg-gray-200"
+                        disabled={signOut.isRunning}
+                        onClick$={() =>
+                          signOut.submit({ redirectTo: `/${locale.lang}` })
+                        }
+                      >
+                        {signOut.isRunning && (
+                          <span class="loading loading-spinner loading-xs"></span>
+                        )}
+                        {signOut.isRunning
+                          ? "Signing out..."
+                          : t("app.nav.signOut") || "Sign Out"}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              /* Not Authenticated */
+              <div class="flex items-center gap-2">
+                <Link
+                  href={getPath("/auth/sign-in", locale.lang || "en-US")}
+                  class={`rounded-lg px-5 py-2 text-sm/6 font-semibold transition-all duration-300 ${
+                    showSolidHeader
+                      ? "bg-primary hover:bg-primary/90 text-white"
+                      : "border border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                  }`}
+                >
+                  {t("app.nav.login") || "Sign In"}
+                </Link>
+              </div>
+            )}
+          </div>
+        </nav>
+        {/* Mobile menu */}
+        {isMobileMenuOpen.value && (
+          <div class="lg:hidden" role="dialog" aria-modal="true">
+            {/* Backdrop */}
+            <div
+              class="fixed inset-0 z-40 bg-black/25"
+              onClick$={() => (isMobileMenuOpen.value = false)}
+            ></div>
+            {/* Drawer */}
+            <div class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+              <div class="flex items-center justify-between">
+                <Link
+                  href={`/${locale.lang || "en-US"}`}
+                  class="-m-1.5 p-1.5"
+                  onClick$={() => (isMobileMenuOpen.value = false)}
+                >
+                  <span class="sr-only">Rihigo</span>
+                  <img src="/assets/logo.svg" alt="Rihigo Logo" class="h-8" />
+                </Link>
+                <button
+                  type="button"
+                  class="-m-2.5 rounded-md p-2.5 text-gray-700"
+                  onClick$={() => (isMobileMenuOpen.value = false)}
+                >
+                  <span class="sr-only">Close menu</span>
+                  <svg
+                    class="size-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                    data-slot="icon"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="mt-6 flow-root">
+                <div class="-my-6 divide-y divide-gray-500/10">
+                  <div class="space-y-2 py-6">
+                    {nav.map((item, index) =>
+                      item.children ? (
+                        <MobileNestedNav
+                          key={index}
+                          item={item}
+                          locale={locale.lang || "en-US"}
+                          onNavigate$={() => (isMobileMenuOpen.value = false)}
+                        />
+                      ) : (
+                        <Link
+                          key={index}
+                          href={`/${locale.lang || "en-US"}${item.link}`}
+                          class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                          onClick$={() => (isMobileMenuOpen.value = false)}
+                        >
+                          {item.label}
+                        </Link>
+                      ),
+                    )}
+                  </div>
+                  <div class="py-6">
+                    <div class="flex items-center gap-4 px-3 py-2.5">
+                      <LocaleSelector />
+                    </div>
+                    {session.value?.user ? (
+                      <>
+                        <div class="mb-2 border-b border-gray-200 px-3 py-2.5">
+                          <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 overflow-hidden rounded-full">
+                              <img
+                                src={
+                                  session.value.user.image ||
+                                  "/default-avatar.png"
+                                }
+                                alt="Profile"
+                                width="40"
+                                height="40"
+                              />
+                            </div>
+                            <div>
+                              <p class="font-semibold text-gray-900">
+                                {session.value.user.name}
+                              </p>
+                              <p class="text-sm text-gray-500">
+                                {session.value.user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <Link
+                          href={`/${locale.lang}/profile`}
+                          class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                          onClick$={() => (isMobileMenuOpen.value = false)}
+                        >
+                          {t("app.nav.profile") || "My Profile"}
+                        </Link>
+                        <Link
+                          href={`/${locale.lang}/bookings`}
+                          class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                          onClick$={() => (isMobileMenuOpen.value = false)}
+                        >
+                          {t("app.nav.bookings") || "My Bookings"}
+                        </Link>
+                        {isUserAdmin && (
+                          <Link
+                            href="/admin"
+                            class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                            onClick$={() => (isMobileMenuOpen.value = false)}
+                          >
+                            {t("app.nav.admin") || "Admin Panel"}
+                          </Link>
+                        )}
+                        <button
+                          type="submit"
+                          class="-mx-3 block cursor-pointer rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                          disabled={signOut.isRunning}
+                          onClick$={() =>
+                            signOut.submit({ redirectTo: `/${locale.lang}` })
+                          }
+                        >
+                          {signOut.isRunning && (
+                            <span class="loading loading-spinner loading-xs"></span>
+                          )}
+                          {signOut.isRunning
+                            ? "Signing out..."
+                            : t("app.nav.signOut") || "Sign Out"}
+                        </button>
+                      </>
+                    ) : (
+                      <div class="space-y-2">
+                        <Link
+                          href={getPath(
+                            "/auth/sign-in",
+                            locale.lang || "en-US",
+                          )}
+                          class="bg-primary hover:bg-primary/80 -mx-3 block rounded-lg px-3 py-2.5 text-center text-base/7 font-semibold text-white"
+                          // onClick$={() => (isMobileMenuOpen.value = false)}
+                        >
+                          {t("app.nav.login") || "Sign In"}
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
     );
 });
 
