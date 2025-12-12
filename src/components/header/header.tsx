@@ -1,5 +1,5 @@
 import {component$, useSignal, useOnWindow, $, type QRL} from '@builder.io/qwik';
-import {Link, Form} from "@builder.io/qwik-city";
+import {Link} from "@builder.io/qwik-city";
 import { LocaleSelector } from '~/components/locale-selector/locale-selector';
 import {inlineTranslate, localizePath, useSpeakLocale} from 'qwik-speak';
 import { useSession, useSignOut } from "~/routes/plugin@auth";
