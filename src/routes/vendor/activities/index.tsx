@@ -95,7 +95,7 @@ export default component$(() => {
 
     const filteredActivities = activities.filter((activity: Activity) => {
         const matchesStatus = filterStatus.value === "all" || activity.status === filterStatus.value;
-        const title = activity.translations?.en?.title || activity.seo_metadata.title || activity.slug;
+        const title = activity.translations?.en?.title || activity.seo_metadata?.title || activity.slug;
         const matchesSearch = searchTerm.value === "" ||
             title.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
             activity.slug.toLowerCase().includes(searchTerm.value.toLowerCase());
@@ -210,8 +210,8 @@ export default component$(() => {
                     </div>
                 ) : (
                     filteredActivities.map((activity: Activity) => {
-                        const title = activity.translations?.en?.title || activity.seo_metadata.title || activity.slug;
-                        const description = activity.translations?.en?.description || activity.seo_metadata.description || '';
+                        const title = activity.translations?.en?.title || activity.seo_metadata?.title || activity.slug;
+                        const description = activity.translations?.en?.description || activity.seo_metadata?.description || '';
 
                         return (
                             <div key={activity.id} class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">

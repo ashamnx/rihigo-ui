@@ -26,7 +26,7 @@ async function fetchAPI<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<APIResponse<T>> {
-  console.log(`[fetchAPI] ${endpoint}`, {...options?.headers});
+  console.log(`[fetchAPI] ${options?.method || 'GET'} ${endpoint}`, {...options?.headers}, options?.body);
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -42,7 +42,9 @@ async function fetchAPI<T>(
     throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  return response.json() as Promise<APIResponse<T>>;
+  const data = await response.json() as APIResponse<T>;
+  console.log(`[fetchAPI] response [${options?.method || 'GET'} ${endpoint}]:`, data);
+  return data;
 }
 
 function buildQueryString(params: Record<string, any>): string {
