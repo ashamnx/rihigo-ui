@@ -1,8 +1,11 @@
 import { component$, Slot } from "@builder.io/qwik";
-import type { RequestHandler } from "@builder.io/qwik-city";
+import { RequestHandler, routeAction$, z, zod$ } from "@builder.io/qwik-city";
 import { Link, useLocation, Form } from "@builder.io/qwik-city";
 import { useSession, useSignOut } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
+import { authenticatedRequest } from "~/utils/auth";
+import { apiClient } from "~/utils/api-client";
+import { OwnerType, PrivacyLevel } from "~/types/media";
 
 export const onRequest: RequestHandler = (event) => {
     const session = event.sharedMap.get('session') as (Session & { user?: { role?: string } }) | null;
@@ -159,6 +162,70 @@ const NavIcon = ({ name }: { name: string }) => {
     };
     return icons[name] || null;
 };
+
+// Route action to create media record (Step 2: After client uploads to Cloudflare R2)
+export const useCreateMediaRecord = routeAction$(
+  async (data, requestEvent) => {
+    return authenticatedRequest(requestEvent, async (token) => {
+      // Presigned uploads go to R2, so always use cloudflare_r2
+      const storageProvider = 'cloudflare_r2';
+
+      // Construct CDN URL for public files
+      // R2 public bucket URL format: https://pub-{hash}.r2.dev/{key}
+      // or custom domain if configured
+      let cdnUrl: string | undefined;
+      if (data.privacy_level === 'public' || !data.privacy_level) {
+        const r2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+        if (r2PublicUrl) {
+          cdnUrl = `${r2PublicUrl}/${data.storage_key}`;
+        }
+      }
+
+      // Create media record
+      const result = await apiClient.media.create(
+        {
+          filename: data.storage_key.split('/').pop() || data.original_filename,
+          original_filename: data.original_filename,
+          mime_type: data.content_type,
+          file_size: data.file_size,
+          storage_provider: storageProvider,
+          storage_key: data.storage_key,
+          cdn_url: cdnUrl,
+          privacy_level: (data.privacy_level as PrivacyLevel) || 'public',
+          owner_type: (data.owner_type as OwnerType) || 'activity',
+          owner_id: data.owner_id || 'general',
+          tags: data.tags ? JSON.parse(data.tags) : undefined,
+          metadata: data.metadata ? JSON.parse(data.metadata) : undefined,
+        },
+        token
+      );
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error_message: result.error_message || 'Failed to create media record',
+        };
+      }
+
+      return {
+        success: true,
+        data: result.data,
+        message: 'File uploaded successfully',
+      };
+    });
+  },
+  zod$({
+    original_filename: z.string(),
+    content_type: z.string(),
+    file_size: z.number(),
+    storage_key: z.string(),
+    privacy_level: z.string().optional(),
+    owner_type: z.string().optional(),
+    owner_id: z.string().optional(),
+    tags: z.string().optional(),
+    metadata: z.string().optional(),
+  })
+);
 
 export default component$(() => {
     const session = useSession();

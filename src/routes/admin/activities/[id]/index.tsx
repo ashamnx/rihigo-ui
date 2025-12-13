@@ -4,7 +4,7 @@ import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import { getActivityById, getAtolls, getIslands, updateActivity } from "~/services/activity-api";
 import type { UpdateActivityInput, Activity } from '~/types/activity';
-import type { MediaItem } from "~/types/media";
+import type { MediaItem, OwnerType, PrivacyLevel } from "~/types/media";
 import { MediaGalleryManager } from "~/components/admin/MediaGalleryManager";
 import { MediaLibrary } from "~/components/admin/MediaLibrary";
 
@@ -130,7 +130,9 @@ export const useGetMedia = routeAction$(async (data, requestEvent) => {
           uploaded: item.created_at,
           type: item.mime_type.startsWith('video/') ? 'video' : 'image',
           variants: item.variants?.map(v => v.url) || [],
+          // For Cloudflare Images, extract accountHash; for R2, use cdnUrl directly
           accountHash: item.cdn_url ? extractAccountHash(item.cdn_url) : undefined,
+          cdnUrl: item.cdn_url,
           meta: {
             activityId: item.owner_id,
             tags: item.tags,
@@ -176,43 +178,6 @@ export const useGetPresignedUrl = routeAction$(async (data, requestEvent) => {
   });
 });
 
-export const useUploadMedia = routeAction$(async (data, requestEvent) => {
-  return authenticatedRequest(requestEvent, async (token) => {
-    try {
-      const activityId = requestEvent.params.id;
-
-      // Create media record in the database
-      const response = await apiClient.media.create({
-        filename: data.filename as string,
-        original_filename: data.original_filename as string,
-        mime_type: data.mime_type as string,
-        file_size: parseInt(data.file_size as string),
-        storage_provider: data.storage_provider as 'cloudflare_images' | 'cloudflare_r2',
-        storage_key: data.storage_key as string,
-        cdn_url: data.cdn_url as string || undefined,
-        privacy_level: (data.privacy_level as 'public' | 'user' | 'vendor' | 'admin') || 'public',
-        owner_type: 'activity',
-        owner_id: activityId,
-        tags: data.tags ? JSON.parse(data.tags as string) : [],
-        metadata: {
-          alt: data.alt as string || undefined,
-          description: data.description as string || undefined,
-        },
-        variants: data.variants ? JSON.parse(data.variants as string) : undefined,
-      }, token);
-
-      if (response.success && response.data) {
-        return { success: true, data: response.data };
-      }
-
-      return { success: false, message: response.error_message || 'Failed to save media record' };
-    } catch (error) {
-      console.error('Error saving media:', error);
-      return { success: false, message: 'Failed to save media' };
-    }
-  });
-});
-
 export const useDeleteMedia = routeAction$(async (data, requestEvent) => {
   return authenticatedRequest(requestEvent, async (token) => {
     try {
@@ -227,6 +192,72 @@ export const useDeleteMedia = routeAction$(async (data, requestEvent) => {
       console.error('Error deleting media:', error);
       return { success: false, message: 'Failed to delete media' };
     }
+  });
+});
+
+// Route action to create media record (Step 2: After client uploads to Cloudflare R2)
+export const useCreateMediaRecord = routeAction$(async (data, requestEvent) => {
+  return authenticatedRequest(requestEvent, async (token) => {
+    console.log('useCreateMediaRecord: Creating media record with data:', data);
+
+    // Validate required fields
+    if (!data.storage_key) {
+      console.error('useCreateMediaRecord: storage_key is missing');
+      return {
+        success: false,
+        error_message: 'storage_key is required',
+      };
+    }
+
+    // Presigned uploads go to R2, so always use cloudflare_r2
+    const storageProvider = 'cloudflare_r2';
+    const storageKey = data.storage_key as string;
+
+    // Construct CDN URL for public files
+    let cdnUrl: string | undefined;
+    if (data.privacy_level === 'public' || !data.privacy_level) {
+      const r2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+      if (r2PublicUrl) {
+        cdnUrl = `${r2PublicUrl}/${storageKey}`;
+      }
+    }
+
+    console.log("useCreateMediaRecord: Calling apiClient.media.create with storageKey:", storageKey);
+    // Create media record
+    const result = await apiClient.media.create(
+      {
+        filename: storageKey.split('/').pop() || (data.original_filename as string),
+        original_filename: data.original_filename as string,
+        mime_type: data.content_type as string,
+        file_size: typeof data.file_size === 'number' ? data.file_size : parseInt(data.file_size as string),
+        storage_provider: storageProvider,
+        storage_key: storageKey,
+        cdn_url: cdnUrl,
+        privacy_level: (data.privacy_level as PrivacyLevel) || 'public',
+        owner_type: (data.owner_type as OwnerType) || 'activity',
+        owner_id: (data.owner_id as string) || 'general',
+        tags: data.tags ? JSON.parse(data.tags as string) : undefined,
+        metadata: data.metadata ? JSON.parse(data.metadata as string) : undefined,
+      },
+      token
+    );
+
+    console.log("useCreateMediaRecord: result:", result);
+
+    if (!result.success || !result.data) {
+      console.error('Failed to create media record:', result.error_message);
+      return {
+        success: false,
+        error_message: result.error_message || 'Failed to create media record',
+      };
+    }
+
+    console.log("useCreateMediaRecord: result.data:", result.data);
+    return {
+      success: true,
+      data: result.data,
+      message: 'File uploaded successfully',
+    };
   });
 });
 
@@ -254,6 +285,8 @@ interface GalleryMediaItem {
   type: 'image' | 'video';
   variants: string[];
   accountHash?: string;
+  /** Direct CDN URL for R2 storage */
+  cdnUrl?: string;
   meta?: {
     activityId?: string;
     tags?: string[];
@@ -274,14 +307,20 @@ export default component$(() => {
 
   // Media actions
   const getMediaAction = useGetMedia();
-  const uploadMediaAction = useUploadMedia();
   const deleteMediaAction = useDeleteMedia();
+  const getPresignedUrlAction = useGetPresignedUrl();
+  const createMediaRecordAction = useCreateMediaRecord();
 
   // Media state
   const selectedMedia = useStore<{ items: GalleryMediaItem[] }>({ items: [] });
 
   // OG Image state for Social sharing
   const ogImageUrl = useSignal<string>('');
+
+  // SEO fields state for live preview
+  const seoTitle = useSignal<string>('');
+  const seoDescription = useSignal<string>('');
+  const seoSlug = useSignal<string>('');
 
   // Handle media change from gallery manager
   const handleMediaChange = $((media: GalleryMediaItem[]) => {
@@ -293,10 +332,13 @@ export default component$(() => {
     if (media.length > 0) {
       const selected = media[0];
       // Get the best URL for OG image (prefer large variant or hero)
-      // Cloudflare Images URL format: https://imagedelivery.net/{accountHash}/{imageId}/{variant}
       if (selected.accountHash) {
+        // Cloudflare Images URL format: https://imagedelivery.net/{accountHash}/{imageId}/{variant}
         // Use 'hero' variant for OG images (1920x1080, ideal for social media)
         ogImageUrl.value = `https://imagedelivery.net/${selected.accountHash}/${selected.id}/hero`;
+      } else if (selected.cdnUrl) {
+        // R2 storage: use cdnUrl directly
+        ogImageUrl.value = selected.cdnUrl;
       } else if (selected.variants && selected.variants.length > 0) {
         // Fallback to first variant URL
         ogImageUrl.value = selected.variants[0];
@@ -461,85 +503,71 @@ export default component$(() => {
                     </div>
                   </div>
 
-                  <div class="space-y-4">
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">URL Slug</span>
-                        <span class="label-text-alt text-base-content/50">Used in the URL path</span>
-                      </label>
+                  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">URL Slug</legend>
+                    <input
+                      type="text"
+                      name="slug"
+                      class="input input-bordered w-full"
+                      value={seoSlug.value || activity.slug}
+                      required
+                      pattern="[a-z0-9-]+"
+                      title="Only lowercase letters, numbers, and hyphens"
+                      onInput$={(e) => seoSlug.value = (e.target as HTMLInputElement).value}
+                    />
+                    <p class="label text-xs text-base-content/50">
+                      /en-US/activities/{seoSlug.value || activity.slug}
+                    </p>
+                  </fieldset>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                      <legend class="fieldset-legend">Category</legend>
                       <input
-                        type="text"
-                        name="slug"
-                        class="input input-bordered bg-base-100"
-                        value={activity.slug}
-                        required
-                        pattern="[a-z0-9-]+"
-                        title="Only lowercase letters, numbers, and hyphens"
+                        type="number"
+                        name="category_id"
+                        class="input input-bordered w-full"
+                        value={activity.category_id || ''}
+                        placeholder="Category ID"
+                        min="1"
                       />
-                      <label class="label">
-                        <span class="label-text-alt text-base-content/50">
-                          /en-US/activities/{activity.slug}
-                        </span>
-                      </label>
-                    </div>
+                      {activity.category && (
+                        <p class="label text-xs text-base-content/50">
+                          {activity.category.icon} {activity.category.name}
+                        </p>
+                      )}
+                    </fieldset>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div class="form-control">
-                        <label class="label">
-                          <span class="label-text font-medium">Category</span>
-                        </label>
-                        <input
-                          type="number"
-                          name="category_id"
-                          class="input input-bordered bg-base-100"
-                          value={activity.category_id || ''}
-                          placeholder="Category ID"
-                          min="1"
-                        />
-                        {activity.category && (
-                          <label class="label">
-                            <span class="label-text-alt text-base-content/50">
-                              {activity.category.icon} {activity.category.name}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-
-                      <div class="form-control">
-                        <label class="label">
-                          <span class="label-text font-medium">Status</span>
-                        </label>
-                        <select name="status" class="select select-bordered bg-base-100" value={activity.status} required>
-                          <option value="draft">Draft</option>
-                          <option value="published">Published</option>
-                          <option value="archived">Archived</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Vendor</span>
-                      </label>
-                      <select
-                        name="vendor_id"
-                        class="select select-bordered bg-base-100"
-                        value={activity.vendor_id || ''}
-                      >
-                        <option value="">No vendor assigned</option>
-                        {vendors.map((vendor: any) => {
-                          const label = vendor.status !== 'verified'
-                            ? `${vendor.business_name} (${vendor.status})`
-                            : vendor.business_name;
-                          return (
-                            <option key={vendor.id} value={vendor.id}>
-                              {label}
-                            </option>
-                          );
-                        })}
+                    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                      <legend class="fieldset-legend">Status</legend>
+                      <select name="status" class="select select-bordered w-full" value={activity.status} required>
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                        <option value="archived">Archived</option>
                       </select>
-                    </div>
+                    </fieldset>
                   </div>
+
+                  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">Vendor</legend>
+                    <select
+                      name="vendor_id"
+                      class="select select-bordered w-full"
+                      value={activity.vendor_id || ''}
+                    >
+                      <option value="">No vendor assigned</option>
+                      {vendors.map((vendor: any) => {
+                        const label = vendor.status !== 'verified'
+                          ? `${vendor.business_name} (${vendor.status})`
+                          : vendor.business_name;
+                        return (
+                          <option key={vendor.id} value={vendor.id}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </fieldset>
                 </div>
               </div>
             </section>
@@ -566,9 +594,10 @@ export default component$(() => {
                     onMediaChange={handleMediaChange}
                     maxItems={20}
                     allowReorder={true}
-                    uploadAction={uploadMediaAction}
                     getMediaAction={getMediaAction}
                     deleteAction={deleteMediaAction}
+                    getPresignedUrlAction={getPresignedUrlAction}
+                    createMediaRecordAction={createMediaRecordAction}
                   />
 
                   <div class="mt-4 text-sm text-base-content/60">
@@ -596,12 +625,10 @@ export default component$(() => {
                   </div>
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Atoll</span>
-                      </label>
+                    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                      <legend class="fieldset-legend">Atoll</legend>
                       <select
-                        class="select select-bordered bg-base-100"
+                        class="select select-bordered w-full"
                         value={activity.island?.atoll_id || ''}
                         onChange$={(e) => {
                           const value = (e.target as HTMLSelectElement).value;
@@ -615,13 +642,11 @@ export default component$(() => {
                           </option>
                         ))}
                       </select>
-                    </div>
+                    </fieldset>
 
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Island</span>
-                      </label>
-                      <select name="island_id" class="select select-bordered bg-base-100" value={activity.island_id || ''}>
+                    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                      <legend class="fieldset-legend">Island</legend>
+                      <select name="island_id" class="select select-bordered w-full" value={activity.island_id || ''}>
                         <option value="">Select island</option>
                         {filteredIslands.map((island) => (
                           <option key={island.id} value={island.id}>
@@ -630,13 +655,11 @@ export default component$(() => {
                         ))}
                       </select>
                       {activity.island && (
-                        <label class="label">
-                          <span class="label-text-alt text-base-content/50">
-                            Current: {activity.island.name}
-                          </span>
-                        </label>
+                        <p class="label text-xs text-base-content/50">
+                          Current: {activity.island.name}
+                        </p>
                       )}
-                    </div>
+                    </fieldset>
                   </div>
                 </div>
               </div>
@@ -658,114 +681,108 @@ export default component$(() => {
                     </div>
                   </div>
 
-                  <div class="space-y-4">
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Meta Title</span>
-                        <span class="label-text-alt text-base-content/50">50-60 characters</span>
-                      </label>
+                  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">Meta Title</legend>
+                    <input
+                      type="text"
+                      name="seo_title"
+                      class="input input-bordered w-full"
+                      value={seoTitle.value || activity.seo_metadata.title || ''}
+                      required
+                      maxLength={60}
+                      onInput$={(e) => seoTitle.value = (e.target as HTMLInputElement).value}
+                    />
+                    <p class="label text-xs text-base-content/50">50-60 characters recommended</p>
+                  </fieldset>
+
+                  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">Meta Description</legend>
+                    <textarea
+                      name="seo_description"
+                      class="textarea textarea-bordered w-full h-24"
+                      required
+                      maxLength={160}
+                      value={seoDescription.value || activity.seo_metadata.description || ''}
+                      onInput$={(e) => seoDescription.value = (e.target as HTMLTextAreaElement).value}
+                    />
+                    <p class="label text-xs text-base-content/50">150-160 characters recommended</p>
+                  </fieldset>
+
+                  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">Keywords</legend>
+                    <input
+                      type="text"
+                      name="seo_keywords"
+                      class="input input-bordered w-full"
+                      value={activity.seo_metadata.keywords?.join(', ') || ''}
+                      placeholder="maldives, snorkeling, diving..."
+                    />
+                    <p class="label text-xs text-base-content/50">Comma separated</p>
+                  </fieldset>
+
+                  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
+                    <legend class="fieldset-legend">Social Image</legend>
+                    <div class="flex gap-2">
                       <input
-                        type="text"
-                        name="seo_title"
-                        class="input input-bordered bg-base-100"
-                        value={activity.seo_metadata.title || ''}
-                        required
-                        maxLength={60}
+                        type="url"
+                        name="og_image"
+                        class="input input-bordered flex-1"
+                        value={ogImageUrl.value || activity.seo_metadata.og_image || ''}
+                        placeholder="https://..."
+                        onInput$={(e) => ogImageUrl.value = (e.target as HTMLInputElement).value}
+                      />
+                      <MediaLibrary
+                        onSelectMedia={handleOgImageSelect}
+                        multiSelect={false}
+                        activityId={activity.id}
+                        getMediaAction={getMediaAction}
+                        getPresignedUrlAction={getPresignedUrlAction}
+                        createMediaRecordAction={createMediaRecordAction}
+                        deleteAction={deleteMediaAction}
+                        defaultPrivacyLevel="public"
                       />
                     </div>
-
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Meta Description</span>
-                        <span class="label-text-alt text-base-content/50">150-160 characters</span>
-                      </label>
-                      <textarea
-                        name="seo_description"
-                        class="textarea textarea-bordered bg-base-100 h-24"
-                        required
-                        maxLength={160}
-                      >{activity.seo_metadata.description || ''}</textarea>
-                    </div>
-
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Keywords</span>
-                        <span class="label-text-alt text-base-content/50">Comma separated</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="seo_keywords"
-                        class="input input-bordered bg-base-100"
-                        value={activity.seo_metadata.keywords?.join(', ') || ''}
-                        placeholder="maldives, snorkeling, diving..."
-                      />
-                    </div>
-
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text font-medium">Social Image</span>
-                        <span class="label-text-alt text-base-content/50">For Facebook, Twitter cards (1200x630px recommended)</span>
-                      </label>
-                      <div class="flex gap-2">
-                        <input
-                          type="url"
-                          name="og_image"
-                          class="input input-bordered bg-base-100 flex-1"
-                          value={ogImageUrl.value || activity.seo_metadata.og_image || ''}
-                          placeholder="https://..."
-                          onInput$={(e) => ogImageUrl.value = (e.target as HTMLInputElement).value}
-                        />
-                        <MediaLibrary
-                          onSelectMedia={handleOgImageSelect}
-                          multiSelect={false}
-                          activityId={activity.id}
-                          getMediaAction={getMediaAction}
-                          uploadAction={uploadMediaAction}
-                          deleteAction={deleteMediaAction}
-                          defaultPrivacyLevel="public"
-                        />
-                      </div>
-                      {/* Image Preview */}
-                      {(ogImageUrl.value || activity.seo_metadata.og_image) && (
-                        <div class="mt-3">
-                          <p class="text-xs text-base-content/50 mb-2">Preview:</p>
-                          <div class="relative aspect-[1200/630] max-w-md bg-base-200 rounded-lg overflow-hidden">
-                            <img
-                              src={ogImageUrl.value || activity.seo_metadata.og_image}
-                              alt="Social media preview"
-                              class="w-full h-full object-cover"
-                              width={1200}
-                              height={630}
-                            />
-                            <button
-                              type="button"
-                              class="absolute top-2 right-2 btn btn-circle btn-sm btn-error"
-                              onClick$={() => ogImageUrl.value = ''}
-                              title="Remove image"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
+                    <p class="label text-xs text-base-content/50">For Facebook, Twitter cards (1200x630px recommended)</p>
+                    {/* Image Preview */}
+                    {(ogImageUrl.value || activity.seo_metadata.og_image) && (
+                      <div class="mt-3">
+                        <p class="text-xs text-base-content/50 mb-2">Preview:</p>
+                        <div class="relative aspect-1200/630 max-w-md bg-base-200 rounded-lg overflow-hidden">
+                          <img
+                            src={ogImageUrl.value || activity.seo_metadata.og_image}
+                            alt="Social media preview"
+                            class="w-full h-full object-cover"
+                            width={1200}
+                            height={630}
+                          />
+                          <button
+                            type="button"
+                            class="absolute top-2 right-2 btn btn-circle btn-sm btn-error"
+                            onClick$={() => ogImageUrl.value = ''}
+                            title="Remove image"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Search Preview */}
-                    <div class="mt-4 p-4 bg-base-100 rounded-lg">
-                      <p class="text-xs text-base-content/50 mb-2">Search Preview</p>
-                      <div class="space-y-1">
-                        <p class="text-blue-600 text-lg hover:underline cursor-pointer truncate">
-                          {activity.seo_metadata.title || title}
-                        </p>
-                        <p class="text-green-700 text-sm">
-                          rihigo.com/en-US/activities/{activity.slug}
-                        </p>
-                        <p class="text-sm text-base-content/70 line-clamp-2">
-                          {activity.seo_metadata.description || 'No description set'}
-                        </p>
                       </div>
+                    )}
+                  </fieldset>
+
+                  {/* Search Preview */}
+                  <div class="mt-4 p-4 bg-base-100 rounded-lg">
+                    <p class="text-xs text-base-content/50 mb-2">Search Preview (Live)</p>
+                    <div class="space-y-1">
+                      <p class="text-blue-600 text-lg hover:underline cursor-pointer truncate">
+                        {seoTitle.value || activity.seo_metadata.title || title}
+                      </p>
+                      <p class="text-green-700 text-sm">
+                        rihigo.com/en-US/activities/{seoSlug.value || activity.slug}
+                      </p>
+                      <p class="text-sm text-base-content/70 line-clamp-2">
+                        {seoDescription.value || activity.seo_metadata.description || 'No description set'}
+                      </p>
                     </div>
                   </div>
                 </div>

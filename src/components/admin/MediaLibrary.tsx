@@ -14,7 +14,7 @@ import {
   useSignal,
   useStore,
   $,
-  useTask$,
+  useVisibleTask$,
   noSerialize,
   type NoSerialize,
   type QRL,
@@ -30,7 +30,7 @@ import {
   ModalFooter,
 } from "~/components/ui/Modal";
 
-// Legacy MediaItem interface for backward compatibility with existing cloudflare-images
+// MediaItem interface supporting both Cloudflare Images and R2 storage
 interface LegacyMediaItem {
   id: string;
   filename: string;
@@ -38,6 +38,8 @@ interface LegacyMediaItem {
   type: "image" | "video";
   variants: string[];
   accountHash?: string;
+  /** Direct CDN URL for R2 storage */
+  cdnUrl?: string;
   meta?: {
     activityId?: string;
     tags?: string[];
@@ -55,6 +57,11 @@ export interface MediaLibraryProps {
   selectedMedia?: MediaItem[];
   activityId?: string;
   allowUpload?: boolean;
+  /** Action to get presigned upload URL (step 1) */
+  getPresignedUrlAction?: ActionStore<any, Record<string, any>>;
+  /** Action to create media record after upload (step 2) */
+  createMediaRecordAction?: ActionStore<any, Record<string, any>>;
+  /** @deprecated Use getPresignedUrlAction + createMediaRecordAction instead */
   uploadAction?: ActionStore<any, Record<string, any>>;
   getMediaAction?: ActionStore<any, Record<string, any>>;
   deleteAction?: ActionStore<any, Record<string, any>>;
@@ -72,6 +79,8 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     selectedMedia = [],
     activityId,
     allowUpload = true,
+    getPresignedUrlAction,
+    createMediaRecordAction,
     uploadAction,
     getMediaAction,
     defaultPrivacyLevel = "public",
@@ -84,6 +93,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
   const currentPage = useSignal(1);
   const searchQuery = useSignal("");
   const viewMode = useSignal<"grid" | "list">("grid");
+  const hasFileSelected = useSignal(false);
 
   const mediaStore = useStore<{
     items: MediaItem[];
@@ -151,12 +161,13 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     }
   });
 
-  // Load media when modal opens
-  useTask$(async ({ track }) => {
+  // Load media when modal opens (client-side only)
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track }) => {
     track(() => isOpen.value);
     if (isOpen.value && getMediaAction) {
-      console.log("MediaLibrary: useTask triggered, loading media...");
-      await loadMedia();
+      console.log("MediaLibrary: useVisibleTask triggered, loading media...");
+      loadMedia();
     }
   });
 
@@ -170,8 +181,11 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
 
+    console.log("MediaLibrary: File selected:", file?.name, file?.type, file?.size);
+
     if (file) {
       const validation = isValidMediaFile(file);
+      console.log("MediaLibrary: File validation:", validation);
       if (!validation.valid) {
         alert(validation.error);
         return;
@@ -180,48 +194,94 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
       uploadForm.file = noSerialize(file);
       uploadForm.fileName = file.name;
       uploadForm.preview = URL.createObjectURL(file);
+      hasFileSelected.value = true;
+      console.log("MediaLibrary: File set, hasFileSelected:", hasFileSelected.value);
     }
   });
 
-  // Handle upload
+  // Handle upload using presigned URL flow
   const handleUpload = $(async () => {
-    if (!uploadForm.file || !uploadAction) return;
+    if (!uploadForm.file) return;
+
+    // Check if we have the required actions for proper upload
+    if (!getPresignedUrlAction || !createMediaRecordAction) {
+      console.error("MediaLibrary: Missing getPresignedUrlAction or createMediaRecordAction");
+      alert("Upload not configured properly. Please contact support.");
+      return;
+    }
 
     isUploading.value = true;
 
     try {
-      const fileBuffer = await uploadForm.file.arrayBuffer();
-      const fileData = {
-        buffer: Array.from(new Uint8Array(fileBuffer)),
-        name: uploadForm.file.name,
-        type: uploadForm.file.type,
-        size: uploadForm.file.size,
+      const file = uploadForm.file;
+
+      // Step 1: Get presigned upload URL
+      console.log("MediaLibrary: Getting presigned URL...");
+      const presignedResult = await getPresignedUrlAction.submit({
+        filename: file.name,
+        content_type: file.type,
+        file_size: file.size,
+      });
+
+      if (!presignedResult.value?.success || !presignedResult.value?.data) {
+        throw new Error(presignedResult.value?.error_message || "Failed to get upload URL");
+      }
+
+      const { upload_url, key: storage_key } = presignedResult.value.data;
+      console.log("MediaLibrary: Got presigned URL, storage_key:", storage_key, ", uploading to storage...");
+
+      // Step 2: Upload file directly to Cloudflare R2
+      const uploadResponse = await fetch(upload_url, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload to storage failed: ${uploadResponse.status}`);
+      }
+
+      console.log("MediaLibrary: File uploaded to storage, creating record...");
+
+      // Step 3: Create media record in database
+      const metadata = {
+        alt: uploadForm.alt || undefined,
+        description: uploadForm.description || undefined,
       };
 
-      await uploadAction.submit({
-        file: fileData,
-        activityId: activityId || "",
-        description: uploadForm.description,
-        alt: uploadForm.alt,
-        tags: JSON.stringify(uploadForm.tags),
+      const createResult = await createMediaRecordAction.submit({
+        original_filename: file.name,
+        content_type: file.type,
+        file_size: file.size,
+        storage_key: storage_key,
         privacy_level: uploadForm.privacyLevel,
         owner_type: ownerType,
         owner_id: activityId || ownerId,
+        tags: uploadForm.tags.length > 0 ? JSON.stringify(uploadForm.tags) : undefined,
+        metadata: JSON.stringify(metadata),
       });
 
-      if (uploadAction.value?.success) {
-        uploadForm.file = null;
-        uploadForm.fileName = "";
-        uploadForm.preview = null;
-        uploadForm.description = "";
-        uploadForm.alt = "";
-        uploadForm.tags = [];
-
-        await loadMedia();
-      } else {
-        alert(uploadAction.value?.message || "Upload failed");
+      if (!createResult.value?.success) {
+        throw new Error(createResult.value?.error_message || "Failed to save media record");
       }
+
+      console.log("MediaLibrary: Upload complete!");
+
+      // Reset form
+      uploadForm.file = null;
+      uploadForm.fileName = "";
+      uploadForm.preview = null;
+      uploadForm.description = "";
+      uploadForm.alt = "";
+      uploadForm.tags = [];
+      hasFileSelected.value = false;
+
+      // Reload media list
+      await loadMedia();
     } catch (error) {
+      console.error("MediaLibrary: Upload error:", error);
       alert(error instanceof Error ? error.message : "Upload failed");
     } finally {
       isUploading.value = false;
@@ -237,6 +297,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     uploadForm.alt = "";
     uploadForm.tags = [];
     uploadForm.privacyLevel = defaultPrivacyLevel;
+    hasFileSelected.value = false;
   });
 
   // Toggle media selection
@@ -347,6 +408,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
             {/* View Mode Toggle */}
             <div class="join">
               <button
+                type="button"
                 class={`btn btn-sm join-item ${viewMode.value === "grid" ? "btn-active" : ""}`}
                 onClick$={() => (viewMode.value = "grid")}
               >
@@ -355,6 +417,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 </svg>
               </button>
               <button
+                type="button"
                 class={`btn btn-sm join-item ${viewMode.value === "list" ? "btn-active" : ""}`}
                 onClick$={() => (viewMode.value = "list")}
               >
@@ -398,7 +461,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
         </div>
 
         {/* Upload Form */}
-        {uploadForm.file && (
+        {hasFileSelected.value && (
           <div class="p-4 border-b border-base-200 bg-info/10">
             <h3 class="text-lg font-medium mb-3">Upload Media</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -486,7 +549,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
           ) : mediaStore.error ? (
             <div class="text-center py-8 text-error">
               <p>{mediaStore.error}</p>
-              <button onClick$={loadMedia} class="btn btn-sm btn-primary mt-2">
+              <button type="button" onClick$={loadMedia} class="btn btn-sm btn-primary mt-2">
                 Retry
               </button>
             </div>
@@ -512,6 +575,7 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 {getMediaAction ? "Yes" : "No"}
               </p>
               <button
+                type="button"
                 onClick$={loadMedia}
                 class="btn btn-sm btn-outline mt-2"
               >
@@ -533,6 +597,8 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                 const imageUrls = media.accountHash
                   ? getResponsiveImageUrls(media.id, media.accountHash)
                   : null;
+                // For R2 storage, use cdnUrl directly; for Cloudflare Images, use responsive URLs
+                const displayUrl = imageUrls?.small || media.cdnUrl || (media.variants && media.variants[0]);
 
                 return (
                   <div
@@ -548,9 +614,9 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                       <>
                         <div class="aspect-square mb-2 relative">
                           {media.type === "image" ? (
-                            imageUrls ? (
+                            displayUrl ? (
                               <img
-                                src={imageUrls.small}
+                                src={displayUrl}
                                 alt={media.meta?.alt || media.filename}
                                 class="w-full h-full object-cover rounded"
                                 width={200}
@@ -596,11 +662,11 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
                       </>
                     ) : (
                       <>
-                        <div class="w-12 h-12 flex-shrink-0 mr-3">
+                        <div class="w-12 h-12 shrink-0 mr-3">
                           {media.type === "image" ? (
-                            imageUrls ? (
+                            displayUrl ? (
                               <img
-                                src={imageUrls.thumbnail}
+                                src={displayUrl}
                                 alt={media.meta?.alt || media.filename}
                                 class="w-full h-full object-cover rounded"
                                 width={48}
@@ -673,11 +739,9 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
               </span>
             )}
           </div>
-          <form method="dialog">
-            <button type="submit" class="btn btn-ghost">
-              Cancel
-            </button>
-          </form>
+          <button type="button" onClick$={handleClose} class="btn btn-ghost">
+            Cancel
+          </button>
           <button
             type="button"
             onClick$={applySelection}

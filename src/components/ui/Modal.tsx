@@ -93,11 +93,11 @@ export const Modal = component$<ModalProps>(
         >
           <Slot />
         </div>
-        {/* Backdrop form for click-outside-to-close */}
+        {/* Backdrop for click-outside-to-close */}
         {closeOnBackdropClick && (
-          <form method="dialog" class="modal-backdrop">
-            <button type="submit">close</button>
-          </form>
+          <div class="modal-backdrop" onClick$={handleClose}>
+            <button type="button" class="sr-only">close</button>
+          </div>
         )}
       </dialog>
     );
@@ -127,27 +127,26 @@ export const ModalHeader = component$<ModalHeaderProps>(
       >
         <Slot />
         {onClose$ && (
-          <form method="dialog">
-            <button
-              type="submit"
-              class="btn btn-ghost btn-sm btn-circle"
-              aria-label="Close modal"
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-circle"
+            aria-label="Close modal"
+            onClick$={onClose$}
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </form>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         )}
       </div>
     );

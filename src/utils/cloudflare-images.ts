@@ -39,6 +39,8 @@ export interface MediaItem {
   type: 'image' | 'video';
   variants: string[];
   accountHash?: string;
+  /** Direct CDN URL for R2 storage */
+  cdnUrl?: string;
   meta?: {
     activityId?: string;
     tags?: string[];
