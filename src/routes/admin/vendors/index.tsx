@@ -8,7 +8,7 @@ import { ErrorState } from "~/components/error-state/error-state";
 
 export const useVendors = routeLoader$<ApiResponse<Vendor[]>>(async (requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
-        const response = await apiClient.vendors.list(1, 100, token);
+        const response = await apiClient.vendors.list(token, undefined, 1, 100);
         return response;
     });
 });

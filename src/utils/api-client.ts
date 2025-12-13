@@ -589,8 +589,32 @@ export const apiClient = {
      * Vendors (Admin only)
      */
     vendors: {
-        async list(page = 1, pageSize = 20, token: string): Promise<PaginatedResponse> {
-            return apiRequest(`/api/admin/vendors?page=${page}&page_size=${pageSize}`, {}, token);
+        /**
+         * List vendors with optional filters
+         * @param filters - Filter options (status, is_verified, island_id, search)
+         * @param page - Page number (default: 1)
+         * @param pageSize - Items per page (default: 20)
+         * @param token - Auth token
+         */
+        async list(
+            token: string,
+            filters?: {
+                status?: 'pending' | 'active' | 'suspended' | 'inactive';
+                is_verified?: boolean;
+                island_id?: number;
+                search?: string;
+            },
+            page = 1,
+            pageSize = 20
+        ): Promise<PaginatedResponse> {
+            const params = new URLSearchParams();
+            params.append('page', page.toString());
+            params.append('page_size', pageSize.toString());
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.is_verified !== undefined) params.append('is_verified', filters.is_verified.toString());
+            if (filters?.island_id) params.append('island_id', filters.island_id.toString());
+            if (filters?.search) params.append('search', filters.search);
+            return apiRequest(`/api/admin/vendors?${params.toString()}`, {}, token);
         },
 
         async getById(id: string, token: string): Promise<ApiResponse> {
@@ -617,15 +641,21 @@ export const apiClient = {
             }, token);
         },
 
-        // Verify vendor
+        /**
+         * Verify a vendor
+         * Sets is_verified to true and records verification details
+         */
         async verify(id: string, token: string): Promise<ApiResponse> {
             return apiRequest(`/api/admin/vendors/${id}/verify`, {
                 method: 'POST',
             }, token);
         },
 
-        // Update vendor status
-        async updateStatus(id: string, status: string, token: string): Promise<ApiResponse> {
+        /**
+         * Update vendor status
+         * @param status - New status (pending, active, suspended, inactive)
+         */
+        async updateStatus(id: string, status: 'pending' | 'active' | 'suspended' | 'inactive', token: string): Promise<ApiResponse> {
             return apiRequest(`/api/admin/vendors/${id}/status`, {
                 method: 'PUT',
                 body: JSON.stringify({ status }),
@@ -637,10 +667,32 @@ export const apiClient = {
             return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {}, token);
         },
 
-        async addStaff(vendorId: string, data: { user_email: string; role: string }, token: string): Promise<ApiResponse> {
+        async addStaff(
+            vendorId: string,
+            data: { user_email: string; role: string; permissions?: Record<string, boolean> },
+            token: string
+        ): Promise<ApiResponse> {
             return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {
                 method: 'POST',
                 body: JSON.stringify(data),
+            }, token);
+        },
+
+        async updateStaff(
+            vendorId: string,
+            staffId: string,
+            data: { role?: string; permissions?: Record<string, boolean>; is_active?: boolean },
+            token: string
+        ): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff/${staffId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        async removeStaff(vendorId: string, staffId: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff/${staffId}`, {
+                method: 'DELETE',
             }, token);
         },
 
@@ -650,10 +702,12 @@ export const apiClient = {
         },
 
         // Legacy user management methods (kept for backward compatibility, but use staff methods instead)
+        /** @deprecated Use getStaff instead */
         async getUsers(vendorId: string, token: string): Promise<ApiResponse> {
             return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {}, token);
         },
 
+        /** @deprecated Use addStaff instead */
         async addUser(vendorId: string, data: any, token: string): Promise<ApiResponse> {
             return apiRequest(`/api/admin/vendors/${vendorId}/staff`, {
                 method: 'POST',
@@ -661,15 +715,17 @@ export const apiClient = {
             }, token);
         },
 
+        /** @deprecated Use updateStaff instead */
         async updateUser(vendorId: string, userId: string, data: any, token: string): Promise<ApiResponse> {
-            return apiRequest(`/api/admin/vendors/${vendorId}/users/${userId}`, {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff/${userId}`, {
                 method: 'PUT',
                 body: JSON.stringify(data),
             }, token);
         },
 
+        /** @deprecated Use removeStaff instead */
         async removeUser(vendorId: string, userId: string, token: string): Promise<ApiResponse> {
-            return apiRequest(`/api/admin/vendors/${vendorId}/users/${userId}`, {
+            return apiRequest(`/api/admin/vendors/${vendorId}/staff/${userId}`, {
                 method: 'DELETE',
             }, token);
         },

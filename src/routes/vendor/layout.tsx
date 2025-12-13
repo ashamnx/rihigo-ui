@@ -8,19 +8,128 @@ import { ToastContainer } from "~/components/toast/ToastContainer";
 import { NotificationProvider } from "~/context/notification-context";
 import { NotificationBell } from "~/components/notifications/NotificationBell";
 import type { Notification } from "~/types/notification";
+import type { Vendor } from "~/types/vendor";
+import type { VendorStaffRole } from "~/types/vendor-user";
 
-export const onRequest: RequestHandler = (event) => {
-    const session: Session | null = event.sharedMap.get('session');
+// Extended session type with accessToken
+interface ExtendedSession extends Session {
+    accessToken?: string;
+}
+
+// Vendor context stored in sharedMap
+export interface VendorContext {
+    vendor: Vendor;
+    role: VendorStaffRole;
+}
+
+export const onRequest: RequestHandler = async (event) => {
+    const session = event.sharedMap.get('session') as ExtendedSession | null;
     if (!session || new Date(session.expires) < new Date()) {
         throw event.redirect(302, `/auth/sign-in?callbackUrl=${event.url.pathname}`);
     }
 
-    // TODO: Add vendor role check here when role management is implemented
-    // For now, we'll allow any authenticated user to access the vendor portal
+    // Check if user has vendor access by fetching their vendor profile
+    const apiUrl = event.env.get('API_URL') || 'http://localhost:8080';
+    const token = session.accessToken;
+
+    if (!token) {
+        throw event.redirect(302, `/auth/sign-in?callbackUrl=${event.url.pathname}`);
+    }
+
+    try {
+        const response = await fetch(`${apiUrl}/api/vendor/profile`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            // User is not associated with any vendor - redirect to access denied page
+            console.log('Vendor profile not found for user, redirecting to access denied');
+            throw event.redirect(302, '/auth/vendor-access-denied');
+        }
+
+        // API returns { success: true, data: { vendor: Vendor, staff: VendorStaff } }
+        // or { success: true, data: Vendor } with role/staff info embedded
+        const data = await response.json() as {
+            success: boolean;
+            data?: {
+                vendor?: Vendor;
+                staff?: { role: VendorStaffRole; is_active: boolean };
+            } | (Vendor & { role?: VendorStaffRole; staff?: Array<{ role: VendorStaffRole; is_active: boolean }> });
+            error_message?: string;
+        };
+
+        if (!data.success || !data.data) {
+            console.log('Vendor profile request unsuccessful:', data.error_message);
+            throw event.redirect(302, '/auth/vendor-access-denied');
+        }
+
+        // Handle both response formats
+        let vendor: Vendor;
+        let role: VendorStaffRole = 'staff';
+        let staffIsActive = true;
+
+        if ('vendor' in data.data && data.data.vendor) {
+            // Format: { vendor: Vendor, staff: StaffInfo }
+            vendor = data.data.vendor;
+            if (data.data.staff) {
+                role = data.data.staff.role || 'staff';
+                staffIsActive = data.data.staff.is_active !== false;
+            }
+        } else {
+            // Format: Vendor with optional embedded role/staff
+            vendor = data.data as Vendor;
+            const vendorWithRole = data.data as Vendor & { role?: VendorStaffRole; staff?: Array<{ role: VendorStaffRole; is_active: boolean }> };
+            role = vendorWithRole.role || 'staff';
+            // Check staff array for is_active if present
+            if (vendorWithRole.staff && vendorWithRole.staff.length > 0) {
+                staffIsActive = vendorWithRole.staff[0].is_active !== false;
+                role = vendorWithRole.staff[0].role || role;
+            }
+        }
+
+      console.log({ vendor, role, staffIsActive});
+        // Check if vendor is active
+        if (vendor.status !== 'active') {
+            console.log('Vendor account is not active:', vendor.status);
+            throw event.redirect(302, '/auth/vendor-access-denied?reason=inactive');
+        }
+
+        // Check if staff member is active
+        if (!staffIsActive) {
+            console.log('Staff member is not active');
+            throw event.redirect(302, '/auth/vendor-access-denied?reason=staff_inactive');
+        }
+
+        // Store vendor context for use by route loaders
+        event.sharedMap.set('vendorContext', {
+            vendor,
+            role,
+        } as VendorContext);
+
+    } catch (error) {
+        // If it's already a redirect response, rethrow it
+        if (error instanceof Response || (error as any)?.status) {
+            throw error;
+        }
+        console.error('Error checking vendor access:', error);
+        throw event.redirect(302, '/auth/vendor-access-denied?reason=error');
+    }
 
     // Prevent caching of authenticated pages to avoid user data leakage
     event.headers.set('Cache-Control', 'private, no-store');
 };
+
+// Get vendor context (set by onRequest handler after validation)
+export const useVendorContext = routeLoader$(async (requestEvent) => {
+    const vendorContext = requestEvent.sharedMap.get('vendorContext') as VendorContext | null;
+    if (!vendorContext) {
+        // This should not happen as onRequest handles the redirect
+        throw requestEvent.redirect(302, '/auth/vendor-access-denied');
+    }
+    return vendorContext;
+});
 
 // Get session token and API URL for notification context
 export const useSessionData = routeLoader$(async (requestEvent) => {

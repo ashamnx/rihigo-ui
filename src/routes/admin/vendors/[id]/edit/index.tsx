@@ -52,7 +52,8 @@ export const useVerifyVendor = routeAction$(async (_, requestEvent) => {
 export const useUpdateStatus = routeAction$(async (data, requestEvent) => {
   const vendorId = requestEvent.params.id;
   return authenticatedRequest(requestEvent, async (token) => {
-    return await apiClient.vendors.updateStatus(vendorId, data.status as string, token);
+    const status = data.status as 'pending' | 'active' | 'suspended' | 'inactive';
+    return await apiClient.vendors.updateStatus(vendorId, status, token);
   });
 });
 

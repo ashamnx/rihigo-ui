@@ -37,7 +37,7 @@ export const useDashboardStats = routeLoader$(async (requestEvent) => {
 
         // Fetch vendors count
         const vendorsResponse = await authenticatedRequest(requestEvent, async (token) => {
-            return await apiClient.vendors.list(1, 1, token);
+            return await apiClient.vendors.list(token, undefined, 1, 1);
         });
         if (vendorsResponse?.pagination_data) {
             stats.vendors.total = vendorsResponse.pagination_data.total_count || 0;

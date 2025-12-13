@@ -276,7 +276,32 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 - **Qwik Docs**: https://qwik.dev/
 - **QwikCity Routing**: https://qwik.dev/qwikcity/routing/overview/
 - Always use Modular Forms for forms
-- always call http://localhost:8080/api/docs using curl to get the api docs and fields and validations
 - Always add head to new pages
 - dont use import.meta.env to access env variables. instead use qwik recommended way.
 - Always wireup navigation when adding new pages
+
+# Access API Docs
+GET http://localhost:8080/api/docs
+To resolve "$ref": "./components/schemas/user.yaml#/UpdateUserInput":
+
+# Get just the UpdateUserInput schema
+curl http://localhost:8080/api/docs/components/schemas/user?ref=UpdateUserInput
+
+Usage examples:
+
+| $ref                                            | API Endpoint
+|
+|-------------------------------------------------|----------------------------
+---------------------------|
+| ./components/schemas/user.yaml#/UpdateUserInput |
+/api/docs/components/schemas/user?ref=UpdateUserInput |
+| ./components/schemas/vendor.yaml#/Vendor        |
+/api/docs/components/schemas/vendor?ref=Vendor        |
+| ./paths/vendor/profile.yaml#/vendor-profile     |
+/api/docs/paths/vendor/profile?ref=vendor-profile     |
+
+Discovery endpoint:
+# See all available modules and how to use them
+curl http://localhost:8080/api/docs/modules
+
+

@@ -1,4 +1,4 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { component$, useSignal, useStore } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeLoader$, routeAction$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
@@ -32,12 +32,41 @@ export const useAddStaff = routeAction$(async (data, requestEvent) => {
   });
 });
 
+export const useUpdateStaff = routeAction$(async (data, requestEvent) => {
+  const vendorId = requestEvent.params.id;
+  return authenticatedRequest(requestEvent, async (token) => {
+    const staffId = data.staff_id as string;
+    const updateData: { role?: string; is_active?: boolean } = {};
+    if (data.role) updateData.role = data.role as string;
+    if (data.is_active !== undefined) updateData.is_active = data.is_active === 'true';
+    return await apiClient.vendors.updateStaff(vendorId, staffId, updateData, token);
+  });
+});
+
+export const useRemoveStaff = routeAction$(async (data, requestEvent) => {
+  const vendorId = requestEvent.params.id;
+  return authenticatedRequest(requestEvent, async (token) => {
+    const staffId = data.staff_id as string;
+    return await apiClient.vendors.removeStaff(vendorId, staffId, token);
+  });
+});
+
 export default component$(() => {
   const vendorResponse = useVendor();
   const vendorStaffResponse = useVendorStaff();
   const addStaffAction = useAddStaff();
+  const updateStaffAction = useUpdateStaff();
+  const removeStaffAction = useRemoveStaff();
 
   const showAddModal = useSignal(false);
+  const showEditModal = useSignal(false);
+  const showRemoveModal = useSignal(false);
+  const editingStaff = useStore<{ id: string; email: string; role: string; is_active: boolean }>({
+    id: '',
+    email: '',
+    role: '',
+    is_active: true,
+  });
 
   const vendor = vendorResponse.value.data;
   const staffMembers = vendorStaffResponse.value.data || [];
@@ -73,15 +102,10 @@ export default component$(() => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <span class="badge badge-success badge-sm">Active</span>;
-      case 'inactive':
-        return <span class="badge badge-ghost badge-sm">Inactive</span>;
-      default:
-        return <span class="badge badge-sm">{status}</span>;
-    }
+  const getStatusBadge = (isActive: boolean) => {
+    return isActive
+      ? <span class="badge badge-success badge-sm">Active</span>
+      : <span class="badge badge-ghost badge-sm">Inactive</span>;
   };
 
   return (
@@ -116,21 +140,29 @@ export default component$(() => {
       </div>
 
       {/* Alerts */}
-      {addStaffAction.value?.success && (
+      {(addStaffAction.value?.success || updateStaffAction.value?.success || removeStaffAction.value?.success) && (
         <div class="alert alert-success mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>Staff member added successfully</span>
+          <span>
+            {addStaffAction.value?.success && 'Staff member added successfully'}
+            {updateStaffAction.value?.success && 'Staff member updated successfully'}
+            {removeStaffAction.value?.success && 'Staff member removed successfully'}
+          </span>
         </div>
       )}
 
-      {addStaffAction.value?.success === false && (
+      {(addStaffAction.value?.success === false || updateStaffAction.value?.success === false || removeStaffAction.value?.success === false) && (
         <div class="alert alert-error mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>{addStaffAction.value.error_message || 'Failed to add staff member'}</span>
+          <span>
+            {addStaffAction.value?.success === false && (addStaffAction.value.error_message || 'Failed to add staff member')}
+            {updateStaffAction.value?.success === false && (updateStaffAction.value.error_message || 'Failed to update staff member')}
+            {removeStaffAction.value?.success === false && (removeStaffAction.value.error_message || 'Failed to remove staff member')}
+          </span>
         </div>
       )}
 
@@ -152,12 +184,13 @@ export default component$(() => {
                   <th>Role</th>
                   <th>Status</th>
                   <th>Added</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {staffMembers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} class="text-center py-8 text-gray-500">
+                    <td colSpan={5} class="text-center py-8 text-gray-500">
                       <div class="flex flex-col items-center gap-2">
                         <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -179,19 +212,51 @@ export default component$(() => {
                         <div class="flex items-center gap-3">
                           <div class="avatar placeholder">
                             <div class="bg-neutral text-neutral-content rounded-full w-10">
-                              <span>{staff.user_email.charAt(0).toUpperCase()}</span>
+                              <span>{staff.user.email ? staff.user.email.charAt(0).toUpperCase() : '?'}</span>
                             </div>
                           </div>
                           <div>
-                            <div class="font-medium">{staff.user_email}</div>
-                            <div class="text-xs text-gray-500">ID: {staff.user_id}</div>
+                            <div class="font-medium">{staff.user.email || 'N/A'}</div>
+                            <div class="text-xs text-gray-500">ID: {staff.user_id || 'N/A'}</div>
                           </div>
                         </div>
                       </td>
                       <td>{getRoleBadge(staff.role)}</td>
-                      <td>{getStatusBadge(staff.status)}</td>
+                      <td>{getStatusBadge(staff.is_active)}</td>
                       <td class="text-sm text-gray-600">
                         {staff.created_at ? new Date(staff.created_at).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td>
+                        <div class="flex gap-2">
+                          <button
+                            class="btn btn-ghost btn-sm"
+                            title="Edit staff"
+                            onClick$={() => {
+                              editingStaff.id = staff.id;
+                              editingStaff.email = staff.user.email || '';
+                              editingStaff.role = staff.role;
+                              editingStaff.is_active = staff.is_active;
+                              showEditModal.value = true;
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                          </button>
+                          <button
+                            class="btn btn-ghost btn-sm text-error"
+                            title="Remove staff"
+                            onClick$={() => {
+                              editingStaff.id = staff.id;
+                              editingStaff.email = staff.user.email || '';
+                              showRemoveModal.value = true;
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -268,6 +333,155 @@ export default component$(() => {
           </div>
           <form method="dialog" class="modal-backdrop">
             <button onClick$={() => showAddModal.value = false}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Edit Staff Modal */}
+      {showEditModal.value && (
+        <dialog class="modal modal-open">
+          <div class="modal-box max-w-md">
+            <h3 class="font-bold text-lg mb-4">Edit Staff Member</h3>
+            <Form action={updateStaffAction} onSubmitCompleted$={() => {
+              if (updateStaffAction.value?.success) {
+                showEditModal.value = false;
+              }
+            }}>
+              <input type="hidden" name="staff_id" value={editingStaff.id} />
+
+              {/* Email (read-only) */}
+              <div class="form-control w-full mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">Email Address</span>
+                </label>
+                <input
+                  type="email"
+                  value={editingStaff.email}
+                  class="input input-bordered w-full bg-base-200"
+                  disabled
+                />
+              </div>
+
+              {/* Role Selection */}
+              <div class="form-control w-full mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">Role <span class="text-error">*</span></span>
+                </label>
+                <select
+                  name="role"
+                  class="select select-bordered w-full"
+                  value={editingStaff.role}
+                  onChange$={(e) => editingStaff.role = (e.target as HTMLSelectElement).value}
+                >
+                  {VENDOR_STAFF_ROLES.map((role) => (
+                    <option
+                      key={role.id}
+                      value={role.id}
+                      selected={role.id === editingStaff.role}
+                    >
+                      {`${role.label} - ${role.description}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Active Status Toggle */}
+              <div class="form-control w-full mb-4">
+                <label class="label cursor-pointer">
+                  <span class="label-text font-semibold">Active Status</span>
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    class="toggle toggle-primary"
+                    checked={editingStaff.is_active}
+                    value={editingStaff.is_active ? 'true' : 'false'}
+                    onChange$={(e) => editingStaff.is_active = (e.target as HTMLInputElement).checked}
+                  />
+                </label>
+                <label class="label">
+                  <span class="label-text-alt text-gray-500">
+                    {editingStaff.is_active ? 'Staff member can access the vendor portal' : 'Staff member access is disabled'}
+                  </span>
+                </label>
+                {/* Hidden input to ensure value is sent */}
+                <input type="hidden" name="is_active" value={editingStaff.is_active ? 'true' : 'false'} />
+              </div>
+
+              <div class="modal-action">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  onClick$={() => showEditModal.value = false}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  disabled={updateStaffAction.isRunning}
+                >
+                  {updateStaffAction.isRunning ? (
+                    <>
+                      <span class="loading loading-spinner"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            </Form>
+          </div>
+          <form method="dialog" class="modal-backdrop">
+            <button onClick$={() => showEditModal.value = false}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Remove Staff Confirmation Modal */}
+      {showRemoveModal.value && (
+        <dialog class="modal modal-open">
+          <div class="modal-box max-w-md">
+            <h3 class="font-bold text-lg mb-4">Remove Staff Member</h3>
+            <p class="mb-4">
+              Are you sure you want to remove <span class="font-semibold">{editingStaff.email}</span> from this vendor?
+            </p>
+            <p class="text-sm text-gray-500 mb-4">
+              This action will revoke their access to the vendor portal. They can be re-added later if needed.
+            </p>
+            <Form action={removeStaffAction} onSubmitCompleted$={() => {
+              if (removeStaffAction.value?.success) {
+                showRemoveModal.value = false;
+              }
+            }}>
+              <input type="hidden" name="staff_id" value={editingStaff.id} />
+              <div class="modal-action">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  onClick$={() => showRemoveModal.value = false}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-error"
+                  disabled={removeStaffAction.isRunning}
+                >
+                  {removeStaffAction.isRunning ? (
+                    <>
+                      <span class="loading loading-spinner"></span>
+                      Removing...
+                    </>
+                  ) : (
+                    'Remove Staff'
+                  )}
+                </button>
+              </div>
+            </Form>
+          </div>
+          <form method="dialog" class="modal-backdrop">
+            <button onClick$={() => showRemoveModal.value = false}>close</button>
           </form>
         </dialog>
       )}

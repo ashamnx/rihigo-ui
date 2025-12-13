@@ -41,7 +41,7 @@ export const useIslands = routeLoader$(async () => {
 export const useVendors = routeLoader$(async (requestEvent) => {
   return authenticatedRequest(requestEvent, async (token) => {
     try {
-      return await apiClient.vendors.list(1, 100, token);
+      return await apiClient.vendors.list(token, { status: 'active' }, 1, 100);
     } catch (error) {
       console.error('Failed to load vendors:', error);
       return { success: false, data: [], error_message: 'Failed to load vendors' };
