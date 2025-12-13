@@ -476,7 +476,7 @@ export default component$(() => {
                     <div class="flex-1">
                         <span class="text-lg font-semibold">Vendor Portal</span>
                     </div>
-                    <div class="flex-none gap-2">
+                    <div class="flex-none flex items-center gap-2">
                         {/* Vendor badge */}
                         <div class="badge badge-primary">Vendor</div>
 
@@ -490,7 +490,7 @@ export default component$(() => {
                         </Link>
 
                         {/* Notification Bell */}
-                        <NotificationBell isScrolled={false} lang="en-US" />
+                        <NotificationBell isScrolled={true} lang="en-US" />
 
                         {/* Profile dropdown */}
                         <div class="dropdown dropdown-end">
