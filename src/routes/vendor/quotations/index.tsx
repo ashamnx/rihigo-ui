@@ -1,5 +1,5 @@
 import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { authenticatedRequest, apiClient } from '~/utils/api-client';
 import type { Quotation } from '~/types/quotation';
 import { quotationStatusLabels, quotationStatusColors } from '~/types/quotation';
@@ -417,3 +417,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Quotations | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Manage customer quotations and proposals",
+        },
+    ],
+};

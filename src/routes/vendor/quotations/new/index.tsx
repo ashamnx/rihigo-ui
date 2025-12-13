@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, useStore, $, useComputed$ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Form, Link, useNavigate, zod$, z } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Form, Link, useNavigate, zod$, z, type DocumentHead } from '@builder.io/qwik-city';
 import { authenticatedRequest, apiClient } from '~/utils/api-client';
 import type { Guest } from '~/types/guest';
 import type { VendorResource, ServiceType } from '~/types/resource';
@@ -771,3 +771,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "New Quotation | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Create a new quotation for your customer",
+        },
+    ],
+};

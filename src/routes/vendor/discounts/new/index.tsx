@@ -1,5 +1,5 @@
 import { component$, useSignal, useStore, $, useComputed$ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate, zod$, z } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Link, useNavigate, zod$, z, type DocumentHead } from '@builder.io/qwik-city';
 import { authenticatedRequest, apiClient } from '~/utils/api-client';
 import type { DiscountType, DiscountApplicability } from '~/types/discount';
 import { discountTypeLabels, dayOfWeekShortLabels } from '~/types/discount';
@@ -658,3 +658,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "New Discount | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Set up a new discount or promotion",
+        },
+    ],
+};

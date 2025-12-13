@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { routeAction$, routeLoader$, Form, Link, useNavigate, useLocation, zod$, z } from '@builder.io/qwik-city';
+import { routeAction$, routeLoader$, Form, Link, useNavigate, useLocation, zod$, z, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import type { InvoiceCreateInput, InvoiceItemInput } from '~/types/invoice';
 import type { ItemType, ItemUnit } from '~/types/quotation';
@@ -663,3 +663,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "New Invoice | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Create a new invoice for your customer",
+        },
+    ],
+};

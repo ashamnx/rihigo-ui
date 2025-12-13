@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, useStore, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Form } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Form, type DocumentHead } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
 import { authenticatedRequest } from '~/utils/auth';
 import type { PaymentMethod } from '~/types/payment';
@@ -522,3 +522,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Payment Methods | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Configure accepted payment methods for your property",
+        },
+    ],
+};

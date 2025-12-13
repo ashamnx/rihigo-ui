@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeAction$, routeLoader$, Form, Link, useNavigate, useLocation, zod$, z } from '@builder.io/qwik-city';
+import { routeAction$, routeLoader$, Form, Link, useNavigate, useLocation, zod$, z, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import type { PaymentCreateInput, PaymentMethod } from '~/types/payment';
 import { paymentMethodLabels } from '~/types/payment';
@@ -428,3 +428,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "New Payment | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Record a new payment transaction",
+        },
+    ],
+};

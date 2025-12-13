@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeAction$, routeLoader$, Form, Link, useNavigate, useLocation, zod$, z } from '@builder.io/qwik-city';
+import { routeAction$, routeLoader$, Form, Link, useNavigate, useLocation, zod$, z, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import type { RefundCreateInput, RefundReasonType, RefundMethod } from '~/types/payment';
 import { refundReasonLabels, refundMethodLabels, paymentMethodLabels } from '~/types/payment';
@@ -370,3 +370,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "New Refund | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Create a new refund request",
+        },
+    ],
+};

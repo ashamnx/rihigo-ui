@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { EmptyState } from '~/components/vendor/shared/EmptyState';
 import { FilterBar, type FilterDefinition } from '~/components/vendor/shared/FilterBar';
@@ -381,3 +381,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Refunds | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Process and track customer refunds",
+        },
+    ],
+};

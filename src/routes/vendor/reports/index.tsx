@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
 import { authenticatedRequest } from '~/utils/auth';
@@ -305,3 +306,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Reports & Analytics | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "View your property's performance metrics and analytics",
+        },
+    ],
+};

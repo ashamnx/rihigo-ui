@@ -1,5 +1,5 @@
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { authenticatedRequest, apiClient } from '~/utils/api-client';
 import type { DiscountRule, DiscountStatus } from '~/types/discount';
 import {
@@ -555,3 +555,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Discount Details | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "View and manage discount details",
+        },
+    ],
+};

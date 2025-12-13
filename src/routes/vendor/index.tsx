@@ -1,4 +1,5 @@
 import { component$ } from "@builder.io/qwik";
+import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$, Link } from "@builder.io/qwik-city";
 import { authenticatedRequest, apiClient } from "~/utils/api-client";
 
@@ -216,3 +217,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Dashboard | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Rihigo vendor portal dashboard",
+        },
+    ],
+};

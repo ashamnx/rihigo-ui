@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, useStore, $ } from '@builder.io/qwik';
+import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeLoader$, routeAction$, Form } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
 import { authenticatedRequest } from '~/utils/auth';
@@ -417,3 +418,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Payments Report | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Payment transactions and method breakdown",
+        },
+    ],
+};

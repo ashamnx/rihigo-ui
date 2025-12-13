@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { StatusBadge } from '~/components/vendor/shared/StatusBadge';
 import { EmptyState } from '~/components/vendor/shared/EmptyState';
@@ -11,6 +11,7 @@ import {
     type Guest,
     type GuestFilters,
     guestLoyaltyLabels,
+    getGuestFullName,
 } from '~/types/guest';
 import { authenticatedRequest } from '~/utils/auth';
 import { apiClient } from '~/utils/api-client';
@@ -305,3 +306,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Guests | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Manage your guest profiles and customer database",
+        },
+    ],
+};

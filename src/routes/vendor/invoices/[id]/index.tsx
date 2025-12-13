@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { StatusBadge } from '~/components/vendor/shared/StatusBadge';
 import { ConfirmModal, showModal } from '~/components/vendor/shared/ConfirmModal';
@@ -529,3 +529,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Invoice Details | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "View and manage invoice details",
+        },
+    ],
+};

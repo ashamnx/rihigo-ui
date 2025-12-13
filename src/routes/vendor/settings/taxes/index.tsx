@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, useStore, $, useComputed$ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Form } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Form, type DocumentHead } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
 import { authenticatedRequest } from '~/utils/auth';
 import type {
@@ -916,3 +916,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Tax Configuration | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Manage tax rates, exemptions, and settings for your property",
+        },
+    ],
+};

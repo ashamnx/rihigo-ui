@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, $ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import { ConfirmModal, showModal } from '~/components/vendor/shared/ConfirmModal';
 import {
@@ -670,3 +670,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Refund Details | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "View and manage refund request details",
+        },
+    ],
+};

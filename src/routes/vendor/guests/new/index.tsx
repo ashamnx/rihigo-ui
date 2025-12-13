@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal } from '@builder.io/qwik';
-import { routeAction$, Form, Link, useNavigate, zod$, z } from '@builder.io/qwik-city';
+import { routeAction$, Form, Link, useNavigate, zod$, z, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import type { GuestCreateInput } from '~/types/guest';
 import { authenticatedRequest } from '~/utils/auth';
@@ -436,3 +436,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "New Guest | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Add a new guest to your customer database",
+        },
+    ],
+};

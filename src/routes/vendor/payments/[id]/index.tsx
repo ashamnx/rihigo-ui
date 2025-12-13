@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, $ } from '@builder.io/qwik';
-import { routeLoader$, Link, useNavigate } from '@builder.io/qwik-city';
+import { routeLoader$, Link, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
 import { PageHeader } from '~/components/vendor/shared/PageHeader';
 import {
     type Payment,
@@ -490,3 +490,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Payment Details | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "View payment transaction details",
+        },
+    ],
+};

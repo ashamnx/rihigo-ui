@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { component$, useSignal, useStore, $, useComputed$ } from '@builder.io/qwik';
-import { routeLoader$, routeAction$, Form } from '@builder.io/qwik-city';
+import { routeLoader$, routeAction$, Form, type DocumentHead } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
 import { authenticatedRequest } from '~/utils/auth';
 import type { VendorBillingSettings, BillingSettingsInput } from '~/types/billing';
@@ -763,3 +763,13 @@ export default component$(() => {
         </div>
     );
 });
+
+export const head: DocumentHead = {
+    title: "Billing Settings | Vendor Portal | Rihigo",
+    meta: [
+        {
+            name: "description",
+            content: "Configure invoice numbering, payment terms, and billing automation",
+        },
+    ],
+};
