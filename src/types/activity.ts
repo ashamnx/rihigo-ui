@@ -332,6 +332,7 @@ export interface ActivityFilters {
     page_size?: number;
     category_id?: number;
     island_id?: number;
+    atoll_code?: string;
     lang?: string;
 }
 

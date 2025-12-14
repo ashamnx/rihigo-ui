@@ -273,7 +273,7 @@ export default component$(() => {
                     <option value="">Select Atoll</option>
                     {atolls.value.map((atoll) => (
                       <option key={atoll.id} value={atoll.id}>
-                        {atoll.name}
+                        {`${atoll.code} - ${atoll.name}`}
                       </option>
                     ))}
                   </select>

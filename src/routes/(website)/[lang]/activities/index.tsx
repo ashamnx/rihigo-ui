@@ -1,7 +1,34 @@
 import { $, component$, useOnDocument } from '@builder.io/qwik';
-import { routeLoader$, useLocation, type DocumentHead } from '@builder.io/qwik-city';
-import type { Activity, ActivityFilters } from '~/types/activity';
-import { getActivities } from '~/services/activity-api';
+import { routeLoader$, useLocation, useNavigate, type DocumentHead } from '@builder.io/qwik-city';
+import type { Activity, ActivityCategory, ActivityFilters, Atoll, Island } from '~/types/activity';
+import { getActivities, getAtolls, getCategories, getIslands } from '~/services/activity-api';
+
+export const useCategoriesData = routeLoader$(async () => {
+  try {
+    return await getCategories();
+  } catch (error) {
+    console.error('Failed to load categories:', error);
+    return [] as ActivityCategory[];
+  }
+});
+
+export const useAtollsData = routeLoader$(async () => {
+  try {
+    return await getAtolls();
+  } catch (error) {
+    console.error('Failed to load atolls:', error);
+    return [] as Atoll[];
+  }
+});
+
+export const useIslandsData = routeLoader$(async () => {
+  try {
+    return await getIslands();
+  } catch (error) {
+    console.error('Failed to load islands:', error);
+    return [] as Island[];
+  }
+});
 
 export const useActivitiesData = routeLoader$(async (requestEvent) => {
   // Cache headers are set by layout's onRequest based on auth status
@@ -9,6 +36,7 @@ export const useActivitiesData = routeLoader$(async (requestEvent) => {
   const page = parseInt(url.searchParams.get('page') || '1');
   const category_id = url.searchParams.get('category_id');
   const island_id = url.searchParams.get('island_id');
+  const atoll_code = url.searchParams.get('atoll_code');
   const lang = requestEvent.params.lang || 'en';
 
   const filters: ActivityFilters = {
@@ -19,6 +47,7 @@ export const useActivitiesData = routeLoader$(async (requestEvent) => {
 
   if (category_id) filters.category_id = parseInt(category_id);
   if (island_id) filters.island_id = parseInt(island_id);
+  if (atoll_code) filters.atoll_code = atoll_code;
 
   try {
     const result = await getActivities(filters);
@@ -31,8 +60,40 @@ export const useActivitiesData = routeLoader$(async (requestEvent) => {
 
 export default component$(() => {
   const activitiesData = useActivitiesData();
+  const categoriesData = useCategoriesData();
+  const atollsData = useAtollsData();
+  const islandsData = useIslandsData();
   const location = useLocation();
+  const nav = useNavigate();
   const lang = location.params.lang || 'en';
+
+  // Get current filter values from URL
+  const currentCategoryId = location.url.searchParams.get('category_id') || '';
+  const currentAtollCode = location.url.searchParams.get('atoll_code') || '';
+  const currentIslandId = location.url.searchParams.get('island_id') || '';
+
+  // Find the selected atoll's ID to filter islands
+  const selectedAtoll = atollsData.value.find((a) => a.code === currentAtollCode);
+  const filteredIslands = currentAtollCode
+    ? islandsData.value.filter((island) => island.atoll_id === selectedAtoll?.id)
+    : islandsData.value;
+
+  const handleFilterChange$ = $((key: string, value: string) => {
+    const params = new URLSearchParams(location.url.searchParams);
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    // Reset to page 1 when filters change
+    params.delete('page');
+    // Clear island selection when atoll changes
+    if (key === 'atoll_code') {
+      params.delete('island_id');
+    }
+    const queryString = params.toString();
+    nav(`/${lang}/activities${queryString ? `?${queryString}` : ''}`);
+  });
 
   // Staggered animation for activity cards entering the view
   useOnDocument(
@@ -77,15 +138,44 @@ export default component$(() => {
       <h1 class="text-4xl font-bold mb-8">Explore Activities</h1>
 
       {/* Filters Section */}
-      <div class="mb-8 flex gap-4">
-        <select class="select select-bordered w-full max-w-xs">
+      <div class="mb-8 flex flex-wrap gap-4">
+        <select
+          class="select select-bordered w-full max-w-xs"
+          value={currentCategoryId}
+          onChange$={(e) => handleFilterChange$('category_id', (e.target as HTMLSelectElement).value)}
+        >
           <option value="">All Categories</option>
-          {/* TODO: Load categories dynamically */}
+          {categoriesData.value.map((category) => (
+            <option key={category.id} value={category.id}>
+              {`${category.icon} ${category.name}`}
+            </option>
+          ))}
         </select>
 
-        <select class="select select-bordered w-full max-w-xs">
+        <select
+          class="select select-bordered w-full max-w-xs"
+          value={currentAtollCode}
+          onChange$={(e) => handleFilterChange$('atoll_code', (e.target as HTMLSelectElement).value)}
+        >
+          <option value="">All Atolls</option>
+          {atollsData.value.map((atoll) => (
+            <option key={atoll.id} value={atoll.code}>
+              {atoll.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          class="select select-bordered w-full max-w-xs"
+          value={currentIslandId}
+          onChange$={(e) => handleFilterChange$('island_id', (e.target as HTMLSelectElement).value)}
+        >
           <option value="">All Islands</option>
-          {/* TODO: Load islands dynamically */}
+          {filteredIslands.map((island) => (
+            <option key={island.id} value={island.id}>
+              {island.name}
+            </option>
+          ))}
         </select>
       </div>
 
