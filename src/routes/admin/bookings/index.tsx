@@ -103,6 +103,15 @@ export default component$(() => {
     }
   };
 
+  const getVendorStatusStyle = (status?: string) => {
+    switch (status) {
+      case 'confirmed': return 'badge-success';
+      case 'rejected': return 'badge-error';
+      case 'pending': return 'badge-warning';
+      default: return 'badge-ghost';
+    }
+  };
+
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -245,6 +254,7 @@ export default component$(() => {
                   <th>Date</th>
                   <th>Amount</th>
                   <th>Status</th>
+                  <th>Vendor</th>
                   <th class="text-right">Actions</th>
                 </tr>
               </thead>
@@ -294,6 +304,11 @@ export default component$(() => {
                       <td>
                         <span class={`badge badge-sm ${getStatusStyle(booking.status)}`}>
                           {booking.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span class={`badge badge-sm ${getVendorStatusStyle(booking.vendor_confirmation_status)}`}>
+                          {booking.vendor_confirmation_status || 'pending'}
                         </span>
                       </td>
                       <td>

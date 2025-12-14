@@ -1,11 +1,12 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { RequestHandler, routeAction$, z, zod$ } from "@builder.io/qwik-city";
+import type { RequestHandler} from "@builder.io/qwik-city";
+import { routeAction$, z, zod$ } from "@builder.io/qwik-city";
 import { Link, useLocation, Form } from "@builder.io/qwik-city";
 import { useSession, useSignOut } from "~/routes/plugin@auth";
 import type { Session } from '@auth/qwik';
 import { authenticatedRequest } from "~/utils/auth";
 import { apiClient } from "~/utils/api-client";
-import { OwnerType, PrivacyLevel } from "~/types/media";
+import type { OwnerType, PrivacyLevel } from "~/types/media";
 
 export const onRequest: RequestHandler = (event) => {
     const session = event.sharedMap.get('session') as (Session & { user?: { role?: string } }) | null;
@@ -16,7 +17,7 @@ export const onRequest: RequestHandler = (event) => {
     }
 
     // Check admin role - redirect non-admins to home page
-    if (session.user?.role !== 'admin') {
+    if (session.user.role !== 'admin') {
         throw event.redirect(302, '/');
     }
 
@@ -46,6 +47,7 @@ const navSections = [
         items: [
             { label: 'Vendors', link: '/admin/vendors', icon: 'vendors' },
             { label: 'Bookings', link: '/admin/bookings', icon: 'bookings' },
+            { label: 'Payments', link: '/admin/payments', icon: 'payments' },
             { label: 'Support Tickets', link: '/admin/tickets', icon: 'tickets' },
         ]
     },
@@ -111,6 +113,11 @@ const NavIcon = ({ name }: { name: string }) => {
         bookings: (
             <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" />
+            </svg>
+        ),
+        payments: (
+            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
             </svg>
         ),
         tickets: (

@@ -320,7 +320,7 @@ export default component$(() => {
                                         const dbPrice = pkg.prices?.[0];
                                         const priceAmount = dbPrice?.amount ?? pricingTiers[0]?.price;
                                         const inclusions = (pkg.options_config as any)?.inclusions || [];
-                                        const duration = pkg.options_config?.duration || (pkg.options_config as any)?.bookingOptions?.duration;
+                                        const duration = pkg.options_config.duration || (pkg.options_config as any)?.bookingOptions?.duration;
                                         const isSelected = selectedPackage.value === pkg.id;
 
                                         return (
@@ -485,8 +485,8 @@ export default component$(() => {
                                                 const pricingTiers = (pkg.options_config as any)?.pricingTiers || [];
                                                 const dbPrice = pkg.prices?.[0];
                                                 const priceAmount = dbPrice?.amount ?? pricingTiers[0]?.price;
-                                                const duration = pkg.options_config?.duration || (pkg.options_config as any)?.bookingOptions?.duration;
-                                                const maxPax = pkg.options_config?.max_pax || (pkg.options_config as any)?.bookingOptions?.maxBookingsPerDay;
+                                                const duration = pkg.options_config.duration || (pkg.options_config as any)?.bookingOptions?.duration;
+                                                const maxPax = pkg.options_config.max_pax || (pkg.options_config as any)?.bookingOptions?.maxBookingsPerDay;
                                                 const isSelected = selectedPackage.value === pkg.id;
 
                                                 return (
@@ -664,8 +664,8 @@ export const head: DocumentHead = ({ resolveValue, params }) => {
     }
 
     const activity = activityData.data;
-    const title = activity.translations?.[lang]?.title || activity.seo_metadata?.title || activity.slug;
-    const description = activity.translations?.[lang]?.description || activity.seo_metadata?.description || '';
+    const title = activity.translations?.[lang]?.title || activity.seo_metadata.title || activity.slug;
+    const description = activity.translations?.[lang]?.description || activity.seo_metadata.description || '';
     const truncatedDescription = description.length > 155 ? description.substring(0, 152) + '...' : description;
 
     const images = Array.isArray(activity.images) ? activity.images :

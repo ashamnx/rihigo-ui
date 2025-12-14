@@ -37,7 +37,7 @@ export default component$(() => {
   const createAction = useCreateGuestTicket();
 
   // If ticket was created successfully, show confirmation
-  if (createAction.value?.success && createAction.value?.ticketNumber) {
+  if (createAction.value?.success && createAction.value.ticketNumber) {
     return (
       <div class="min-h-screen bg-base-100">
         <div class="container mx-auto px-4 py-12 max-w-2xl">

@@ -280,7 +280,7 @@ export const doesTaxApply = (
     isForeigner: boolean = true
 ): boolean => {
     // Check service type
-    const serviceTypes = taxRate.applies_to?.service_types || [];
+    const serviceTypes = taxRate.applies_to.service_types || [];
     if (serviceTypes.length > 0 && !serviceTypes.includes(serviceType)) {
         return false;
     }

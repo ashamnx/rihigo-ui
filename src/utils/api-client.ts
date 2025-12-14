@@ -372,6 +372,95 @@ export const apiClient = {
             }, token);
         },
     },
+
+    /**
+     * BML Payments
+     */
+    bmlPayments: {
+        /**
+         * Initiate a BML payment for a booking
+         * POST /api/payments/bml/initiate
+         */
+        async initiate(
+            data: {
+                booking_id: string;
+                redirect_url: string;
+                metadata?: Record<string, unknown>;
+            },
+            token: string
+        ): Promise<ApiResponse<{
+            payment_id: string;
+            payment_url: string;
+            transaction_reference: string;
+            expires_at: string;
+        }>> {
+            return apiRequest('/api/payments/bml/initiate', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+
+        /**
+         * Get payment status
+         * GET /api/payments/bml/{id}/status
+         */
+        async getStatus(
+            paymentId: string,
+            token: string
+        ): Promise<ApiResponse<{
+            id: string;
+            booking_id: string;
+            status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+            amount: number;
+            currency: string;
+            transaction_reference: string;
+            bml_transaction_id?: string;
+            paid_at?: string;
+            error_message?: string;
+            created_at: string;
+            updated_at: string;
+        }>> {
+            return apiRequest(`/api/payments/bml/${paymentId}/status`, {}, token);
+        },
+
+        /**
+         * Forward webhook to backend (no auth needed)
+         * POST /api/webhooks/bml
+         */
+        async forwardWebhook(payload: unknown): Promise<ApiResponse> {
+            return apiRequest('/api/webhooks/bml', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+        },
+
+        /**
+         * Process refund (admin only)
+         * POST /api/admin/payments/bml/{id}/refund
+         */
+        async refund(
+            paymentId: string,
+            data: {
+                amount: number;
+                reason?: string;
+                notes?: string;
+            },
+            token: string
+        ): Promise<ApiResponse<{
+            id: string;
+            payment_id: string;
+            amount: number;
+            status: 'pending' | 'processing' | 'completed' | 'failed';
+            refund_reference: string;
+            created_at: string;
+        }>> {
+            return apiRequest(`/api/admin/payments/bml/${paymentId}/refund`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+            }, token);
+        },
+    },
+
     currency: {
         async listAll(): Promise<ApiResponse<Currency[]>> {
             return apiRequest('/api/currencies');
@@ -787,9 +876,78 @@ export const apiClient = {
                 const queryString = params.toString();
                 return apiRequest(`/api/admin/bookings${queryString ? '?' + queryString : ''}`, {}, token);
             },
-            async updateStatus(id: string, data: { status: string; payment_status?: string }, token: string): Promise<ApiResponse> {
+            async getById(id: string, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/bookings/${id}`, {}, token);
+            },
+            async updateStatus(id: string, data: { status?: string; payment_status?: string; vendor_confirmation_status?: string; vendor_notes?: string }, token: string): Promise<ApiResponse> {
                 return apiRequest(`/api/admin/bookings/${id}/status`, {
                     method: 'PUT',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+            /**
+             * Confirm or reject vendor confirmation status (admin)
+             * POST /api/admin/bookings/{id}/confirm
+             */
+            async confirmVendorStatus(id: string, data: { action: 'confirm' | 'reject'; notes?: string }, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/bookings/${id}/confirm`, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                }, token);
+            },
+        },
+        payments: {
+            /**
+             * List all customer payments with filters
+             * GET /api/admin/payments
+             */
+            async list(token: string, filters?: {
+                status?: string;
+                provider?: string;
+                booking_id?: string;
+                user_id?: string;
+                page?: number;
+                page_size?: number;
+                sort_by?: string;
+                sort_order?: 'asc' | 'desc';
+                include_booking?: boolean;
+            }): Promise<ApiResponse> {
+                const params = new URLSearchParams();
+                if (filters?.status) params.append('status', filters.status);
+                if (filters?.provider) params.append('provider', filters.provider);
+                if (filters?.booking_id) params.append('booking_id', filters.booking_id);
+                if (filters?.user_id) params.append('user_id', filters.user_id);
+                if (filters?.page) params.append('page', filters.page.toString());
+                if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+                if (filters?.sort_by) params.append('sort_by', filters.sort_by);
+                if (filters?.sort_order) params.append('sort_order', filters.sort_order);
+                if (filters?.include_booking) params.append('include_booking', 'true');
+                const queryString = params.toString();
+                return apiRequest(`/api/admin/payments${queryString ? '?' + queryString : ''}`, {}, token);
+            },
+            /**
+             * Get a single payment by ID
+             * GET /api/admin/payments/{id}
+             */
+            async getById(id: string, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/payments/${id}`, {}, token);
+            },
+            /**
+             * Sync payment status with BML
+             * POST /api/admin/payments/{id}/sync
+             */
+            async sync(id: string, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/payments/${id}/sync`, {
+                    method: 'POST',
+                }, token);
+            },
+            /**
+             * Initiate refund
+             * POST /api/admin/payments/bml/{id}/refund
+             */
+            async refund(id: string, data: { amount: number; reason?: string; notes?: string }, token: string): Promise<ApiResponse> {
+                return apiRequest(`/api/admin/payments/bml/${id}/refund`, {
+                    method: 'POST',
                     body: JSON.stringify(data),
                 }, token);
             },

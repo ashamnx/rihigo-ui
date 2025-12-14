@@ -532,11 +532,12 @@ const ActivityCard = component$<{ activity: any; locale: string }>(
     // Use currency context for price formatting
     const { selectedCurrency, currencies } = useCurrency();
 
-    // Get the first image or use placeholder
+    // Get the first image, fallback to og_image, then default placeholder
     const image =
       activity.images && activity.images.length > 0
         ? activity.images[0]
-        : "https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/f179a2f9-a5ce-4bea-fe2b-1f016f753700/public";
+        : activity.seo_metadata.og_image ||
+          "https://imagedelivery.net/qcaLCK1uCdpYtBNx7SBE1g/f179a2f9-a5ce-4bea-fe2b-1f016f753700/public";
 
     // Truncate description
     const truncatedDescription =

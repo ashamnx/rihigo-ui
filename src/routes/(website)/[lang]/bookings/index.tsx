@@ -240,7 +240,7 @@ export default component$(() => {
 
                         {/* Actions */}
                         <div class="mt-4 flex flex-wrap gap-2">
-                          {booking.status === 'confirmed' && booking.payment_status === 'pending' && (
+                          {booking.vendor_confirmation_status === 'confirmed' && booking.payment_status === 'pending' && (
                             <Link
                               href={`/${lang}/bookings/${booking.id}/pay`}
                               class="btn btn-sm btn-success gap-1"

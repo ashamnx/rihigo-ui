@@ -122,7 +122,7 @@ export default component$(() => {
   });
 
   // Success state
-  if (submitAction.value?.success && submitAction.value?.requestNumber) {
+  if (submitAction.value?.success && submitAction.value.requestNumber) {
     return (
       <div class="min-h-screen bg-base-100">
         <div class="container mx-auto px-4 py-12 max-w-2xl">

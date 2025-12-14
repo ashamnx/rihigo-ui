@@ -259,8 +259,8 @@ export function generateActivitySchema(
   activity: Activity,
   lang: string = 'en-US'
 ): TouristAttractionSchema {
-  const title = activity.translations?.[lang]?.title || activity.seo_metadata?.title || activity.slug;
-  const description = activity.translations?.[lang]?.description || activity.seo_metadata?.description || '';
+  const title = activity.translations?.[lang]?.title || activity.seo_metadata.title || activity.slug;
+  const description = activity.translations?.[lang]?.description || activity.seo_metadata.description || '';
   const activityUrl = `${SITE_URL}/${lang}/activities/${activity.slug}`;
 
   // Parse images
@@ -455,8 +455,8 @@ export function generateActivityMeta(
   twitterDescription: string;
   canonicalUrl: string;
 } {
-  const title = activity.translations?.[lang]?.title || activity.seo_metadata?.title || activity.slug;
-  const description = activity.translations?.[lang]?.description || activity.seo_metadata?.description || '';
+  const title = activity.translations?.[lang]?.title || activity.seo_metadata.title || activity.slug;
+  const description = activity.translations?.[lang]?.description || activity.seo_metadata.description || '';
 
   // Get first image
   const images = Array.isArray(activity.images)

@@ -78,7 +78,7 @@ self.addEventListener("notificationclick", (event) => {
     return;
   }
 
-  const urlToOpen = (notifEvent.notification.data as { url?: string })?.url || "/";
+  const urlToOpen = (notifEvent.notification.data as { url?: string }).url || "/";
 
   notifEvent.waitUntil(
     self.clients

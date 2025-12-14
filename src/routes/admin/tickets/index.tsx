@@ -144,7 +144,7 @@ export default component$(() => {
       searchTerm.value === '' ||
       ticket.ticket_number.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      ticket.user?.name?.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+      ticket.user?.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
       ticket.guest_email?.toLowerCase().includes(searchTerm.value.toLowerCase());
 
     return matchesStatus && matchesPriority && matchesCategory && matchesSearch;

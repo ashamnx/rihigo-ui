@@ -17,7 +17,7 @@ export const useDashboardStats = routeLoader$(async (requestEvent) => {
         const activitiesResponse = await authenticatedRequest(requestEvent, async (token) => {
             return await apiClient.activities.listAdmin(1, 1, token);
         });
-        if (activitiesResponse?.pagination_data) {
+        if (activitiesResponse.pagination_data) {
             stats.activities.total = activitiesResponse.pagination_data.total_count || 0;
         }
 
@@ -25,7 +25,7 @@ export const useDashboardStats = routeLoader$(async (requestEvent) => {
         const bookingsResponse = await authenticatedRequest(requestEvent, async (token) => {
             return await apiClient.bookings.list(1, 100, token);
         });
-        if (bookingsResponse?.data) {
+        if (bookingsResponse.data) {
             const bookings = bookingsResponse.data as Array<{ status: string; payment_status: string; total_price: number }>;
             stats.bookings.total = bookings.length;
             stats.bookings.pending = bookings.filter(b => b.status === 'pending').length;
@@ -39,7 +39,7 @@ export const useDashboardStats = routeLoader$(async (requestEvent) => {
         const vendorsResponse = await authenticatedRequest(requestEvent, async (token) => {
             return await apiClient.vendors.list(token, undefined, 1, 1);
         });
-        if (vendorsResponse?.pagination_data) {
+        if (vendorsResponse.pagination_data) {
             stats.vendors.total = vendorsResponse.pagination_data.total_count || 0;
         }
 

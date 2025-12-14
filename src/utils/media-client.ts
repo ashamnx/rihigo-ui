@@ -101,7 +101,7 @@ export async function uploadMedia(
           storageProvider,
           storageKey: '',
           filename: file.name,
-          error: result.errors?.[0]?.message || 'Upload failed',
+          error: result.errors[0]?.message || 'Upload failed',
         };
       }
 

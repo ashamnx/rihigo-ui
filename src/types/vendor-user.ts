@@ -3,7 +3,7 @@
  * For managing staff assigned to vendors with roles
  * Based on API: GET/POST /api/admin/vendors/{id}/staff
  */
-import { UserProfile } from "~/types/api";
+import type { UserProfile } from "~/types/api";
 
 export interface VendorStaffPermissions {
   can_manage_activities: boolean;

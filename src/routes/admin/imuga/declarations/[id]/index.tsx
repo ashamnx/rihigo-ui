@@ -134,7 +134,7 @@ export default component$(() => {
 
   const handleCopyExport = $(async () => {
     const result = await exportAction.submit({});
-    if (result.value?.success && result.value?.data) {
+    if (result.value.success && result.value.data) {
       await navigator.clipboard.writeText(
         JSON.stringify(result.value.data, null, 2)
       );
@@ -143,7 +143,7 @@ export default component$(() => {
 
   const handleDownloadExport = $(async () => {
     const result = await exportAction.submit({});
-    if (result.value?.success && result.value?.data) {
+    if (result.value.success && result.value.data) {
       const blob = new Blob([JSON.stringify(result.value.data, null, 2)], {
         type: 'application/json',
       });

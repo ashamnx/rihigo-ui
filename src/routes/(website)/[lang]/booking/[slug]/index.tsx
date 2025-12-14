@@ -577,7 +577,7 @@ export default component$(() => {
 
     const canProceed = useComputed$(() => {
         const step = steps[currentStep.value];
-        switch (step?.key) {
+        switch (step.key) {
             case 'select':
                 // Must have package (if needed), date (if needed), and guests >= 1
                 const packageOk = !needsPackageSelection || !!selectedPackageId.value;

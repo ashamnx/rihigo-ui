@@ -61,8 +61,6 @@ export interface MediaLibraryProps {
   getPresignedUrlAction?: ActionStore<any, Record<string, any>>;
   /** Action to create media record after upload (step 2) */
   createMediaRecordAction?: ActionStore<any, Record<string, any>>;
-  /** @deprecated Use getPresignedUrlAction + createMediaRecordAction instead */
-  uploadAction?: ActionStore<any, Record<string, any>>;
   getMediaAction?: ActionStore<any, Record<string, any>>;
   deleteAction?: ActionStore<any, Record<string, any>>;
   /** Default privacy level for uploads */
@@ -81,7 +79,6 @@ export const MediaLibrary = component$<MediaLibraryProps>((props) => {
     allowUpload = true,
     getPresignedUrlAction,
     createMediaRecordAction,
-    uploadAction,
     getMediaAction,
     defaultPrivacyLevel = "public",
     ownerType = "activity",

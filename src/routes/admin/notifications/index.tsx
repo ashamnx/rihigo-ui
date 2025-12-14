@@ -321,25 +321,25 @@ export default component$(() => {
                 <div class="stat bg-base-200 rounded-xl">
                   <div class="stat-title">Total Sent</div>
                   <div class="stat-value text-primary">
-                    {stats.value.total_sent?.toLocaleString() || 0}
+                    {stats.value.total_sent.toLocaleString() || 0}
                   </div>
                 </div>
                 <div class="stat bg-base-200 rounded-xl">
                   <div class="stat-title">Delivered</div>
                   <div class="stat-value text-success">
-                    {stats.value.total_delivered?.toLocaleString() || 0}
+                    {stats.value.total_delivered.toLocaleString() || 0}
                   </div>
                 </div>
                 <div class="stat bg-base-200 rounded-xl">
                   <div class="stat-title">Failed</div>
                   <div class="stat-value text-error">
-                    {stats.value.total_failed?.toLocaleString() || 0}
+                    {stats.value.total_failed.toLocaleString() || 0}
                   </div>
                 </div>
                 <div class="stat bg-base-200 rounded-xl">
                   <div class="stat-title">Read</div>
                   <div class="stat-value text-info">
-                    {stats.value.total_read?.toLocaleString() || 0}
+                    {stats.value.total_read.toLocaleString() || 0}
                   </div>
                 </div>
               </div>

@@ -48,7 +48,7 @@ export default component$(() => {
   const navigate = useNavigate();
 
   // Redirect on success
-  if (createAction.value?.success && createAction.value?.data?.declaration_id) {
+  if (createAction.value?.success && createAction.value.data?.declaration_id) {
     navigate(`/admin/imuga/declarations/${createAction.value.data.declaration_id}`);
   }
 

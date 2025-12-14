@@ -18,6 +18,9 @@ export interface Booking {
   customer_info: CustomerInfo;
   payment_status: 'pending' | 'paid' | 'refunded';
   payment_method?: string;
+  payment_id?: string; // BML payment ID when payment is made
+  vendor_confirmation_status?: 'pending' | 'confirmed' | 'rejected';
+  vendor_notes?: string;
   notes?: string;
   created_at: string;
   updated_at: string;

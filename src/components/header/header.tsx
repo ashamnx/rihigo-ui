@@ -16,7 +16,7 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
     const session = useSession();
     const signOut = useSignOut();
     // Check admin role from session (fetched from backend during auth)
-    const isUserAdmin = session.value?.user?.role === 'admin';
+    const isUserAdmin = session.value?.user.role === 'admin';
     const isMobileMenuOpen = useSignal(false);
     const isScrolled = useSignal(false);
 

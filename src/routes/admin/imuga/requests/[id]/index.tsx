@@ -92,7 +92,7 @@ export default component$(() => {
   const rejectionReason = useSignal('');
 
   // Redirect on successful conversion
-  if (convertAction.value?.success && convertAction.value?.data?.declaration_id) {
+  if (convertAction.value?.success && convertAction.value.data?.declaration_id) {
     navigate(`/admin/imuga/declarations/${convertAction.value.data.declaration_id}`);
   }
 
