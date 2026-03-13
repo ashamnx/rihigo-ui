@@ -1,4 +1,4 @@
-import { component$, useStore, $ } from '@builder.io/qwik';
+import { component$, useStore, useSignal, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, Link, useLocation } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
@@ -119,6 +119,25 @@ export default component$(() => {
     const traveler = formState.travelers[index];
     (traveler as any)[field] = value;
     formState.travelers = [...formState.travelers];
+  });
+
+  const documentErrors = useSignal<string[]>([]);
+
+  const validateDocuments = $(() => {
+    const errors: string[] = [];
+    formState.travelers.forEach((traveler, index) => {
+      const name = traveler.first_name && traveler.last_name
+        ? `${traveler.first_name} ${traveler.last_name}`
+        : `Traveler ${index + 1}`;
+      if (!traveler.photo_url) {
+        errors.push(`${name}: Missing traveler photo`);
+      }
+      if (!traveler.passport_image_url) {
+        errors.push(`${name}: Missing passport photo page`);
+      }
+    });
+    documentErrors.value = errors;
+    return errors.length === 0;
   });
 
   // Success state
@@ -565,6 +584,23 @@ export default component$(() => {
             ))}
           </div>
 
+          {/* Document Validation Errors */}
+          {documentErrors.value.length > 0 && (
+            <div class="alert alert-warning mb-6">
+              <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <div>
+                <p class="font-semibold">Missing required documents:</p>
+                <ul class="list-disc list-inside mt-1 text-sm">
+                  {documentErrors.value.map((error, i) => (
+                    <li key={i}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* Privacy Notice */}
           <div class="text-xs text-base-content/50 mb-6 px-2">
             By submitting this form, you agree to our{' '}
@@ -580,6 +616,15 @@ export default component$(() => {
             type="submit"
             class="btn btn-primary w-full"
             disabled={submitAction.isRunning}
+            preventdefault:click
+            onClick$={async (e) => {
+              const isValid = await validateDocuments();
+              if (isValid) {
+                // Allow normal form submission
+                const form = (e.target as HTMLElement).closest('form');
+                if (form) form.requestSubmit();
+              }
+            }}
           >
             {submitAction.isRunning ? (
               <>

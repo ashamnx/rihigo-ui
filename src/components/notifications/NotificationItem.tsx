@@ -94,6 +94,7 @@ function formatRelativeTime(dateStr: string): string {
 interface NotificationItemProps {
   notification: Notification;
   compact?: boolean;
+  lang?: string;
   onAction$?: QRL<() => void>;
 }
 
@@ -102,7 +103,7 @@ interface NotificationItemProps {
  * Displays a single notification with icon, content, and actions
  */
 export const NotificationItem = component$<NotificationItemProps>(
-  ({ notification, compact = false, onAction$ }) => {
+  ({ notification, compact = false, lang = "en-US", onAction$ }) => {
     const { markAsRead, deleteNotification } = useNotifications();
 
     const handleClick = $(async () => {
@@ -171,8 +172,13 @@ export const NotificationItem = component$<NotificationItemProps>(
 
     // Wrap in Link if action_url exists
     if (notification.action_url) {
+      // Prepend lang prefix if action_url doesn't already include one
+      const langPattern = /^\/(en-US|it-IT)\//;
+      const href = langPattern.test(notification.action_url)
+        ? notification.action_url
+        : `/${lang}${notification.action_url.startsWith('/') ? '' : '/'}${notification.action_url}`;
       return (
-        <Link href={notification.action_url} onClick$={handleClick} class="group block">
+        <Link href={href} onClick$={handleClick} class="group block">
           {content}
         </Link>
       );

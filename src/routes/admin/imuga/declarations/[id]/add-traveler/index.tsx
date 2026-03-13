@@ -487,16 +487,13 @@ export default component$(() => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-control md:col-span-2">
               <label class="label">
-                <span class="label-text">
-                  Address Line 1 <span class="text-error">*</span>
-                </span>
+                <span class="label-text">Address Line 1</span>
               </label>
               <input
                 type="text"
                 name="permanent_address_line1"
                 class="input input-bordered w-full"
                 placeholder="Street address"
-                required
               />
             </div>
             <div class="form-control md:col-span-2">
@@ -512,16 +509,13 @@ export default component$(() => {
             </div>
             <div class="form-control">
               <label class="label">
-                <span class="label-text">
-                  City <span class="text-error">*</span>
-                </span>
+                <span class="label-text">City</span>
               </label>
               <input
                 type="text"
                 name="permanent_address_city"
                 class="input input-bordered w-full"
                 placeholder="City"
-                required
               />
             </div>
             <div class="form-control">
@@ -548,14 +542,11 @@ export default component$(() => {
             </div>
             <div class="form-control">
               <label class="label">
-                <span class="label-text">
-                  Country <span class="text-error">*</span>
-                </span>
+                <span class="label-text">Country</span>
               </label>
               <select
                 name="permanent_address_country"
                 class="select select-bordered w-full"
-                required
               >
                 <option value="">Select country</option>
                 {COUNTRIES.map((c) => (

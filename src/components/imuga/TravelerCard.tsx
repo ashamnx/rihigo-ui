@@ -1,4 +1,4 @@
-import { component$, type QRL } from '@builder.io/qwik';
+import { component$, useSignal, type QRL } from '@builder.io/qwik';
 import type { ImugaTraveler } from '~/types/imuga';
 import {
   TRAVELER_TITLES,
@@ -16,6 +16,9 @@ interface TravelerCardProps {
 
 export const TravelerCard = component$<TravelerCardProps>(
   ({ traveler, index, onEdit$, onDelete$ }) => {
+    const modalImageUrl = useSignal('');
+    const modalImageAlt = useSignal('');
+
     const formatDate = (dateStr: string) => {
       if (!dateStr) return '-';
       return new Date(dateStr).toLocaleDateString('en-US', {
@@ -215,9 +218,13 @@ export const TravelerCard = component$<TravelerCardProps>(
                     <img
                       src={traveler.photo_url}
                       alt="Traveler photo"
-                      class="w-20 h-24 object-cover rounded"
+                      class="w-20 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                       width={80}
                       height={96}
+                      onClick$={() => {
+                        modalImageUrl.value = traveler.photo_url!;
+                        modalImageAlt.value = 'Traveler photo';
+                      }}
                     />
                   </div>
                 )}
@@ -227,14 +234,44 @@ export const TravelerCard = component$<TravelerCardProps>(
                     <img
                       src={traveler.passport_image_url}
                       alt="Passport"
-                      class="w-32 h-24 object-cover rounded"
+                      class="w-32 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                       width={128}
                       height={96}
+                      onClick$={() => {
+                        modalImageUrl.value = traveler.passport_image_url!;
+                        modalImageAlt.value = 'Passport';
+                      }}
                     />
                   </div>
                 )}
               </div>
             </div>
+          )}
+
+          {/* Image Modal */}
+          {modalImageUrl.value && (
+            <dialog class="modal modal-open" onClick$={() => { modalImageUrl.value = ''; }}>
+              <div class="modal-box max-w-3xl" onClick$={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                  onClick$={() => { modalImageUrl.value = ''; }}
+                >
+                  X
+                </button>
+                <h3 class="font-bold text-lg mb-4">{modalImageAlt.value}</h3>
+                <img
+                  src={modalImageUrl.value}
+                  alt={modalImageAlt.value}
+                  class="w-full h-auto rounded"
+                  width={800}
+                  height={600}
+                />
+              </div>
+              <form method="dialog" class="modal-backdrop">
+                <button type="button" onClick$={() => { modalImageUrl.value = ''; }}>close</button>
+              </form>
+            </dialog>
           )}
         </div>
       </div>

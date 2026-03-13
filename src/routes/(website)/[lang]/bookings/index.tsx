@@ -1,5 +1,5 @@
 import {component$, useSignal} from '@builder.io/qwik';
-import {routeLoader$, useLocation, Link, type DocumentHead} from '@builder.io/qwik-city';
+import {routeLoader$, routeAction$, useLocation, Link, type DocumentHead} from '@builder.io/qwik-city';
 import {inlineTranslate} from 'qwik-speak';
 import type {Booking} from '~/types/booking';
 import {authenticatedRequest, apiClient} from '~/utils/api-client';
@@ -12,13 +12,22 @@ export const useUserBookings = routeLoader$(async (requestEvent) => {
   );
 });
 
+export const useCancelBooking = routeAction$(async (data, requestEvent) => {
+  const bookingId = data.booking_id as string;
+  return authenticatedRequest(requestEvent, async (token) => {
+    return apiClient.bookings.cancel(bookingId, token);
+  });
+});
+
 export default component$(() => {
   const bookingsResponse = useUserBookings();
+  const cancelAction = useCancelBooking();
   const location = useLocation();
   const t = inlineTranslate();
   const lang = location.params.lang || 'en';
 
   const filterStatus = useSignal<string>('all');
+  const cancellingBookingId = useSignal<string>('');
 
   // Redirect to login if not authenticated
   if (!bookingsResponse.value.success && bookingsResponse.value.error_message === 'Authentication required') {
@@ -87,6 +96,49 @@ export default component$(() => {
       </div>
 
       <div class="container mx-auto py-12 max-w-7xl px-6 lg:px-8">
+        {/* Cancel success/error messages */}
+        {cancelAction.value?.success && (
+          <div class="alert alert-success mb-4">
+            <span>Booking cancelled successfully.</span>
+          </div>
+        )}
+        {cancelAction.value?.success === false && (
+          <div class="alert alert-error mb-4">
+            <span>{cancelAction.value.error_message || 'Failed to cancel booking.'}</span>
+          </div>
+        )}
+
+        {/* Cancel Confirmation Dialog */}
+        {cancellingBookingId.value && !cancelAction.isRunning && (
+          <dialog class="modal modal-open">
+            <div class="modal-box">
+              <h3 class="font-bold text-lg">Cancel Booking</h3>
+              <p class="py-4">Are you sure you want to cancel this booking? This action cannot be undone.</p>
+              <div class="modal-action">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  onClick$={() => { cancellingBookingId.value = ''; }}
+                >
+                  No, Keep It
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-error"
+                  onClick$={() => {
+                    cancelAction.submit({ booking_id: cancellingBookingId.value });
+                  }}
+                >
+                  Yes, Cancel Booking
+                </button>
+              </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+              <button type="button" onClick$={() => { cancellingBookingId.value = ''; }}>close</button>
+            </form>
+          </dialog>
+        )}
+
         {/* Filters */}
         <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div class="flex flex-wrap gap-2">
@@ -269,8 +321,22 @@ export default component$(() => {
                           )}
 
                           {booking.status === 'confirmed' && isUpcoming && (
-                            <button class="btn btn-sm btn-outline btn-error">
-                              {t('bookings.card.cancel@@Cancel Booking')}
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline btn-error"
+                              disabled={cancelAction.isRunning && cancellingBookingId.value === booking.id}
+                              onClick$={() => {
+                                cancellingBookingId.value = booking.id;
+                              }}
+                            >
+                              {cancelAction.isRunning && cancellingBookingId.value === booking.id ? (
+                                <>
+                                  <span class="loading loading-spinner loading-xs"></span>
+                                  Cancelling...
+                                </>
+                              ) : (
+                                t('bookings.card.cancel@@Cancel Booking')
+                              )}
                             </button>
                           )}
                         </div>

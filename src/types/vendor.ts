@@ -28,6 +28,7 @@ export interface Vendor {
   verified_by?: string;
   created_at: string;
   created_by?: string;
+  created_by_name?: string;
   updated_at: string;
 }
 

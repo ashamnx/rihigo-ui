@@ -34,6 +34,16 @@ export const useVendors = routeLoader$(async (requestEvent) => {
   });
 });
 
+export const useCategories = routeLoader$(async () => {
+  try {
+    const response = await apiClient.categories.list();
+    return response.data || [];
+  } catch (error) {
+    console.error('Failed to load categories:', error);
+    return [];
+  }
+});
+
 export const useCreateActivity = routeAction$(async (data, requestEvent) => {
   return authenticatedRequest(requestEvent, async (token) => {
       try {
@@ -72,6 +82,7 @@ export default component$(() => {
   const atolls = useAtolls();
   const islands = useIslands();
   const vendorsResponse = useVendors();
+  const categories = useCategories();
   const createActivityAction = useCreateActivity();
   const selectedAtoll = useSignal<number | undefined>();
   const seoTitleLength = useSignal(0);
@@ -200,22 +211,23 @@ export default component$(() => {
 
               {/* Two Column Grid */}
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Category ID */}
+                {/* Category */}
                 <div class="form-control">
                   <label class="label">
-                    <span class="label-text font-medium">Category ID</span>
+                    <span class="label-text font-medium">Category</span>
                     <span class="badge badge-ghost badge-sm">Optional</span>
                   </label>
-                  <input
-                    type="number"
+                  <select
                     name="category_id"
-                    class="input input-bordered focus:input-primary transition-all"
-                    placeholder="e.g., 5 for fishing"
-                    min="1"
-                  />
-                  <label class="label">
-                    <span class="label-text-alt">Reference activity_categories table</span>
-                  </label>
+                    class="select select-bordered focus:select-primary transition-all"
+                  >
+                    <option value="">Select Category</option>
+                    {(categories.value as any[]).map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>
+                        {`${cat.icon ? cat.icon + ' ' : ''}${cat.name}`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Status */}

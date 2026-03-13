@@ -66,6 +66,7 @@ export const NotificationDropdown = component$<NotificationDropdownProps>(
                   key={notification.id}
                   notification={notification}
                   compact
+                  lang={lang}
                   onAction$={onClose$}
                 />
               ))}

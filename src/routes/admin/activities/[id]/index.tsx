@@ -49,6 +49,16 @@ export const useVendors = routeLoader$(async (requestEvent) => {
   });
 });
 
+export const useCategories = routeLoader$(async () => {
+  try {
+    const response = await apiClient.categories.list();
+    return response.data || [];
+  } catch (error) {
+    console.error('Failed to load categories:', error);
+    return [];
+  }
+});
+
 export const useRelatedActivities = routeLoader$(async (requestEvent) => {
   const activityId = requestEvent.params.id;
   return authenticatedRequest(requestEvent, async (token) => {
@@ -300,6 +310,7 @@ export default component$(() => {
   const atolls = useAtolls();
   const islands = useIslands();
   const vendorsResponse = useVendors();
+  const categories = useCategories();
   const relatedActivitiesData = useRelatedActivities();
   const updateActivityAction = useUpdateActivity();
   const selectedAtoll = useSignal<number | undefined>();
@@ -523,19 +534,18 @@ export default component$(() => {
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">
                       <legend class="fieldset-legend">Category</legend>
-                      <input
-                        type="number"
+                      <select
                         name="category_id"
-                        class="input input-bordered w-full"
+                        class="select select-bordered w-full"
                         value={activity.category_id || ''}
-                        placeholder="Category ID"
-                        min="1"
-                      />
-                      {activity.category && (
-                        <p class="label text-xs text-base-content/50">
-                          {activity.category.icon} {activity.category.name}
-                        </p>
-                      )}
+                      >
+                        <option value="">Select Category</option>
+                        {(categories.value as any[]).map((cat: any) => (
+                          <option key={cat.id} value={cat.id}>
+                            {`${cat.icon ? cat.icon + ' ' : ''}${cat.name}`}
+                          </option>
+                        ))}
+                      </select>
                     </fieldset>
 
                     <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4">

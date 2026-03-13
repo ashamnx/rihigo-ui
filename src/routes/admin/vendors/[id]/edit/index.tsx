@@ -564,8 +564,8 @@ export default component$(() => {
               <div>
                 <span class="text-gray-600 block">Created</span>
                 <span>{new Date(vendor.created_at).toLocaleDateString()}</span>
-                {vendor.created_by && (
-                  <span class="text-xs text-gray-500 block">by {vendor.created_by}</span>
+                {(vendor.created_by_name || vendor.created_by) && (
+                  <span class="text-xs text-gray-500 block">by {vendor.created_by_name || vendor.created_by}</span>
                 )}
               </div>
               <div>

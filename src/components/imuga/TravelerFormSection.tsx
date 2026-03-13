@@ -58,6 +58,7 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
               type="button"
               class="btn btn-ghost btn-xs text-error"
               onClick$={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 onRemove$(index);
               }}
@@ -400,9 +401,7 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
               {/* Address Line 1 */}
               <div class="form-control md:col-span-2">
                 <label class="label">
-                  <span class="label-text">
-                    Address Line 1 <span class="text-error">*</span>
-                  </span>
+                  <span class="label-text">Address Line 1</span>
                 </label>
                 <input
                   type="text"
@@ -415,7 +414,6 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
                       (e.target as HTMLInputElement).value
                     )
                   }
-                  required
                 />
               </div>
 
@@ -441,9 +439,7 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
               {/* City */}
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text">
-                    City <span class="text-error">*</span>
-                  </span>
+                  <span class="label-text">City</span>
                 </label>
                 <input
                   type="text"
@@ -456,7 +452,6 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
                       (e.target as HTMLInputElement).value
                     )
                   }
-                  required
                 />
               </div>
 
@@ -501,9 +496,7 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
               {/* Country */}
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text">
-                    Country <span class="text-error">*</span>
-                  </span>
+                  <span class="label-text">Country</span>
                 </label>
                 <select
                   class="select select-bordered select-sm w-full"
@@ -515,7 +508,6 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
                       (e.target as HTMLSelectElement).value
                     )
                   }
-                  required
                 >
                   <option value="">Select country</option>
                   {COUNTRIES.map((c) => (

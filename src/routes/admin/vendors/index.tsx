@@ -213,8 +213,8 @@ export default component$(() => {
                       </td>
                       <td class="text-sm text-gray-600">
                         <div>{new Date(vendor.created_at).toLocaleDateString()}</div>
-                        {vendor.created_by && (
-                          <div class="text-xs text-gray-400">by {vendor.created_by}</div>
+                        {(vendor.created_by_name || vendor.created_by) && (
+                          <div class="text-xs text-gray-400">by {vendor.created_by_name || vendor.created_by}</div>
                         )}
                       </td>
                       <td>

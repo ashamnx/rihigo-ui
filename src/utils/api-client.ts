@@ -365,6 +365,12 @@ export const apiClient = {
             }, token);
         },
 
+        async cancel(id: string, token: string): Promise<ApiResponse> {
+            return apiRequest(`/api/bookings/${id}/cancel`, {
+                method: 'POST',
+            }, token);
+        },
+
         async updateStatus(id: string, data: any, token: string): Promise<ApiResponse> {
             return apiRequest(`/api/admin/bookings/${id}/status`, {
                 method: 'PUT',

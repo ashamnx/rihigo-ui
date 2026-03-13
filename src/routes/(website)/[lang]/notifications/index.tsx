@@ -1,6 +1,6 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { routeLoader$ } from "@builder.io/qwik-city";
+import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import type { Notification, NotificationType } from "~/types/notification";
@@ -28,6 +28,8 @@ type FilterType = "all" | "unread" | NotificationType;
 
 export default component$(() => {
   const t = inlineTranslate();
+  const location = useLocation();
+  const lang = location.params.lang || 'en-US';
   const data = useNotificationsData();
   const filter = useSignal<FilterType>("all");
 
@@ -105,7 +107,7 @@ export default component$(() => {
           ) : (
             <div class="divide-y divide-gray-200">
               {filteredNotifications.map((notification: Notification) => (
-                <NotificationItem key={notification.id} notification={notification} />
+                <NotificationItem key={notification.id} notification={notification} lang={lang} />
               ))}
             </div>
           )}
