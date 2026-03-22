@@ -1,4 +1,4 @@
-import { component$, useStore, useSignal, $ } from '@builder.io/qwik';
+import { component$, useStore, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { routeAction$, Form, Link, useLocation } from '@builder.io/qwik-city';
 import { apiClient } from '~/utils/api-client';
@@ -89,6 +89,9 @@ export default component$(() => {
   const lang = location.params.lang || 'en-US';
   const submitAction = useSubmitRequest();
 
+  const DRAFT_KEY = 'imuga_draft_v1';
+  const hasDraft = useSignal(false);
+
   const formState = useStore<FormState>({
     requester_name: '',
     requester_email: '',
@@ -105,13 +108,87 @@ export default component$(() => {
     travelers: [createEmptyTravelerData()],
   });
 
+  // Restore draft from localStorage on mount (client-only, last resort)
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved) as Partial<FormState>;
+        // Restore text fields only (images excluded from draft to stay within localStorage limits)
+        if (draft.requester_name) formState.requester_name = draft.requester_name;
+        if (draft.requester_email) formState.requester_email = draft.requester_email;
+        if (draft.requester_phone) formState.requester_phone = draft.requester_phone;
+        if (draft.group_name) formState.group_name = draft.group_name;
+        if (draft.accommodation_name) formState.accommodation_name = draft.accommodation_name;
+        if (draft.accommodation_island) formState.accommodation_island = draft.accommodation_island;
+        if (draft.accommodation_atoll) formState.accommodation_atoll = draft.accommodation_atoll;
+        if (draft.arrival_date) formState.arrival_date = draft.arrival_date;
+        if (draft.departure_date) formState.departure_date = draft.departure_date;
+        if (draft.arrival_flight) formState.arrival_flight = draft.arrival_flight;
+        if (draft.departure_flight) formState.departure_flight = draft.departure_flight;
+        if (draft.notes) formState.notes = draft.notes;
+        if (draft.travelers && draft.travelers.length > 0) {
+          formState.travelers = draft.travelers;
+        }
+        hasDraft.value = true;
+      }
+    } catch {
+      // Ignore parse errors from corrupted localStorage data
+    }
+  });
+
+  const saveDraft = $(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      // Strip image fields from travelers to avoid exceeding localStorage limits (~5MB)
+      const travelersWithoutImages = formState.travelers.map((t) => ({
+        ...t,
+        passport_image_url: '',
+        photo_url: '',
+      }));
+      const draft: FormState = {
+        requester_name: formState.requester_name,
+        requester_email: formState.requester_email,
+        requester_phone: formState.requester_phone,
+        group_name: formState.group_name,
+        accommodation_name: formState.accommodation_name,
+        accommodation_island: formState.accommodation_island,
+        accommodation_atoll: formState.accommodation_atoll,
+        arrival_date: formState.arrival_date,
+        departure_date: formState.departure_date,
+        arrival_flight: formState.arrival_flight,
+        departure_flight: formState.departure_flight,
+        notes: formState.notes,
+        travelers: travelersWithoutImages,
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      hasDraft.value = true;
+    } catch {
+      // localStorage may be full or unavailable
+    }
+  });
+
+  const clearDraft = $(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(DRAFT_KEY);
+    hasDraft.value = false;
+  });
+
+  const updateTopLevelField = $((field: keyof FormState, value: any) => {
+    (formState as any)[field] = value;
+    saveDraft();
+  });
+
   const addTraveler = $(() => {
     formState.travelers = [...formState.travelers, createEmptyTravelerData()];
+    saveDraft();
   });
 
   const removeTraveler = $((index: number) => {
     if (formState.travelers.length > 1) {
       formState.travelers = formState.travelers.filter((_, i) => i !== index);
+      saveDraft();
     }
   });
 
@@ -119,6 +196,7 @@ export default component$(() => {
     const traveler = formState.travelers[index];
     (traveler as any)[field] = value;
     formState.travelers = [...formState.travelers];
+    saveDraft();
   });
 
   const documentErrors = useSignal<string[]>([]);
@@ -138,6 +216,16 @@ export default component$(() => {
     });
     documentErrors.value = errors;
     return errors.length === 0;
+  });
+
+  // Clear draft on successful submission (client-only, last resort)
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track }) => {
+    const result = track(() => submitAction.value);
+    if (result?.success) {
+      localStorage.removeItem(DRAFT_KEY);
+      hasDraft.value = false;
+    }
   });
 
   // Success state
@@ -240,10 +328,23 @@ export default component$(() => {
             </svg>
             Back
           </Link>
-          <h1 class="text-2xl font-bold">IMUGA Declaration Request</h1>
-          <p class="text-base-content/60 mt-1">
-            Submit your travel declaration for entry to the Maldives
-          </p>
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-bold">IMUGA Declaration Request</h1>
+              <p class="text-base-content/60 mt-1">
+                Submit your travel declaration for entry to the Maldives
+              </p>
+            </div>
+            {hasDraft.value && (
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm text-base-content/50"
+                onClick$={clearDraft}
+              >
+                Clear draft
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Info Banner */}
@@ -320,7 +421,7 @@ export default component$(() => {
                   placeholder="Your full name"
                   value={formState.requester_name}
                   onInput$={(e) =>
-                    (formState.requester_name = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('requester_name', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -338,7 +439,7 @@ export default component$(() => {
                   placeholder="your@email.com"
                   value={formState.requester_email}
                   onInput$={(e) =>
-                    (formState.requester_email = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('requester_email', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -354,7 +455,7 @@ export default component$(() => {
                   placeholder="+1 234 567 8900"
                   value={formState.requester_phone}
                   onInput$={(e) =>
-                    (formState.requester_phone = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('requester_phone', (e.target as HTMLInputElement).value)
                   }
                 />
               </div>
@@ -371,7 +472,7 @@ export default component$(() => {
                   placeholder="e.g., Smith Family Trip"
                   value={formState.group_name}
                   onInput$={(e) =>
-                    (formState.group_name = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('group_name', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -396,9 +497,7 @@ export default component$(() => {
                   placeholder="Hotel/Resort name"
                   value={formState.accommodation_name}
                   onInput$={(e) =>
-                    (formState.accommodation_name = (
-                      e.target as HTMLInputElement
-                    ).value)
+                    updateTopLevelField('accommodation_name', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -416,9 +515,7 @@ export default component$(() => {
                   placeholder="e.g., Malé"
                   value={formState.accommodation_island}
                   onInput$={(e) =>
-                    (formState.accommodation_island = (
-                      e.target as HTMLInputElement
-                    ).value)
+                    updateTopLevelField('accommodation_island', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -436,9 +533,7 @@ export default component$(() => {
                   placeholder="e.g., Kaafu"
                   value={formState.accommodation_atoll}
                   onInput$={(e) =>
-                    (formState.accommodation_atoll = (
-                      e.target as HTMLInputElement
-                    ).value)
+                    updateTopLevelField('accommodation_atoll', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -462,7 +557,7 @@ export default component$(() => {
                   class="input input-bordered w-full"
                   value={formState.arrival_date}
                   onInput$={(e) =>
-                    (formState.arrival_date = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('arrival_date', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -479,7 +574,7 @@ export default component$(() => {
                   class="input input-bordered w-full"
                   value={formState.departure_date}
                   onInput$={(e) =>
-                    (formState.departure_date = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('departure_date', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -497,7 +592,7 @@ export default component$(() => {
                   placeholder="e.g., SQ452"
                   value={formState.arrival_flight}
                   onInput$={(e) =>
-                    (formState.arrival_flight = (e.target as HTMLInputElement).value)
+                    updateTopLevelField('arrival_flight', (e.target as HTMLInputElement).value)
                   }
                   required
                 />
@@ -513,9 +608,7 @@ export default component$(() => {
                   placeholder="e.g., SQ453"
                   value={formState.departure_flight}
                   onInput$={(e) =>
-                    (formState.departure_flight = (
-                      e.target as HTMLInputElement
-                    ).value)
+                    updateTopLevelField('departure_flight', (e.target as HTMLInputElement).value)
                   }
                 />
               </div>
@@ -533,7 +626,7 @@ export default component$(() => {
                 placeholder="Any special requests or additional information..."
                 value={formState.notes}
                 onInput$={(e) =>
-                  (formState.notes = (e.target as HTMLTextAreaElement).value)
+                  updateTopLevelField('notes', (e.target as HTMLTextAreaElement).value)
                 }
               />
             </div>

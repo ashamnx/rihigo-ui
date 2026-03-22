@@ -102,12 +102,16 @@ async function apiRequest<T = any>(
             headers,
         });
 
-        if (!response.ok) {
-            console.log(response);
-            throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
-        }
         const data = await response.json() as ApiResponse<T>;
         console.log(`API response [${options.method || 'GET'} ${endpoint}]:`, data);
+
+        if (!response.ok) {
+            return {
+                success: false,
+                error_message: data.error_message || `API request failed with status ${response.status}`,
+                errors: data.errors,
+            };
+        }
 
         // API returns success field, just return as-is
         return data;
@@ -1762,6 +1766,16 @@ export const apiClient = {
          */
         async getRequestStatus(requestNumber: string): Promise<ApiResponse<ImugaRequest>> {
             return apiRequest(`/api/imuga-requests/${requestNumber}`);
+        },
+
+        /**
+         * Extract passport fields from an image using AI
+         */
+        async extractPassport(imageBase64: string): Promise<ApiResponse> {
+            return apiRequest('/api/imuga-requests/extract-passport', {
+                method: 'POST',
+                body: JSON.stringify({ image_base64: imageBase64 }),
+            });
         },
     },
 
