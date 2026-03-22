@@ -394,7 +394,7 @@ export default component$(() => {
             apiEndpoint="/api/imuga-requests/extract-passport"
             accept="image/jpeg,image/png"
             label="Upload Passport Photo Page"
-            onExtract$={$((fields: Record<string, any>) => {
+            onExtract$={$(async (fields: Record<string, any>) => {
               // Find the first traveler with empty name, or use the first one
               let targetIndex = formState.travelers.findIndex(
                 (t) => !t.first_name && !t.last_name
@@ -419,17 +419,14 @@ export default component$(() => {
                 nationality: 'nationality',
               };
 
-              const traveler = formState.travelers[targetIndex];
               for (const [extractedKey, travelerKey] of Object.entries(fieldMap)) {
                 if (fields[extractedKey] && fields[extractedKey] !== '') {
-                  (traveler as any)[travelerKey] = fields[extractedKey];
+                  await updateTraveler(targetIndex, travelerKey, fields[extractedKey]);
                 }
               }
               if (fields._image_base64) {
-                traveler.passport_image_url = fields._image_base64;
+                await updateTraveler(targetIndex, 'passport_image_url', fields._image_base64);
               }
-              formState.travelers = [...formState.travelers];
-              saveDraft();
             })}
           />
         </div>
