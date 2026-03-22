@@ -69,6 +69,39 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
           )}
         </div>
         <div class="collapse-content">
+          {/* AI Passport Extraction */}
+          <div class="mb-6">
+            <DocumentExtractor
+              documentType="Passport"
+              apiEndpoint="/api/imuga-requests/extract-passport"
+              accept="image/jpeg,image/png"
+              label="Scan Passport to Auto-fill"
+              onExtract$={$(async (fields: Record<string, any>) => {
+                const fieldMap: Record<string, string> = {
+                  first_name: 'first_name',
+                  last_name: 'last_name',
+                  middle_name: 'middle_name',
+                  date_of_birth: 'date_of_birth',
+                  place_of_birth: 'place_of_birth',
+                  gender: 'gender',
+                  passport_number: 'passport_number',
+                  passport_issue_date: 'passport_issue_date',
+                  passport_expiry_date: 'passport_expiry_date',
+                  passport_issuing_country: 'passport_issuing_country',
+                  nationality: 'nationality',
+                };
+                for (const [extractedKey, travelerKey] of Object.entries(fieldMap)) {
+                  if (fields[extractedKey] && fields[extractedKey] !== '') {
+                    await onUpdate$(index, travelerKey, fields[extractedKey]);
+                  }
+                }
+                if (fields._image_base64) {
+                  await onUpdate$(index, 'passport_image_url', fields._image_base64);
+                }
+              })}
+            />
+          </div>
+
           {/* Personal Information */}
           <div class="border-b border-base-300 pb-4 mb-4">
             <h4 class="font-semibold text-sm mb-3 text-primary">
@@ -236,39 +269,6 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
               Passport Details
             </h4>
 
-            {/* AI Passport Extraction */}
-            <div class="mb-4">
-              <DocumentExtractor
-                documentType="Passport"
-                apiEndpoint="/api/imuga-requests/extract-passport"
-                accept="image/jpeg,image/png"
-                label="Passport Scan"
-                onExtract$={$(async (fields: Record<string, any>) => {
-                  const fieldMap: Record<string, string> = {
-                    first_name: 'first_name',
-                    last_name: 'last_name',
-                    middle_name: 'middle_name',
-                    date_of_birth: 'date_of_birth',
-                    place_of_birth: 'place_of_birth',
-                    gender: 'gender',
-                    passport_number: 'passport_number',
-                    passport_issue_date: 'passport_issue_date',
-                    passport_expiry_date: 'passport_expiry_date',
-                    passport_issuing_country: 'passport_issuing_country',
-                    nationality: 'nationality',
-                  };
-                  for (const [extractedKey, travelerKey] of Object.entries(fieldMap)) {
-                    if (fields[extractedKey] && fields[extractedKey] !== '') {
-                      await onUpdate$(index, travelerKey, fields[extractedKey]);
-                    }
-                  }
-                  // Set the passport image from the uploaded scan
-                  if (fields._image_base64) {
-                    await onUpdate$(index, 'passport_image_url', fields._image_base64);
-                  }
-                })}
-              />
-            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Passport Number */}
