@@ -5,6 +5,7 @@ import { apiClient } from '~/utils/api-client';
 import type { TravelerInputData, CreateImugaRequestInput } from '~/types/imuga';
 import { createEmptyTravelerData } from '~/types/imuga';
 import { TravelerFormSection } from '~/components/imuga/TravelerFormSection';
+import { DocumentExtractor } from '~/components/ai/DocumentExtractor';
 
 interface FormState {
   // Requester Info
@@ -373,6 +374,64 @@ export default component$(() => {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Passport Scanner */}
+        <div class="bg-base-200 rounded-xl p-6 mb-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <svg class="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="font-semibold">Scan Passport to Auto-fill</h2>
+              <p class="text-sm text-base-content/60">Upload a passport photo page to automatically fill traveler details</p>
+            </div>
+          </div>
+          <DocumentExtractor
+            documentType="Passport"
+            apiEndpoint="/api/imuga-requests/extract-passport"
+            accept="image/jpeg,image/png"
+            label="Upload Passport Photo Page"
+            onExtract$={$((fields: Record<string, any>) => {
+              // Find the first traveler with empty name, or use the first one
+              let targetIndex = formState.travelers.findIndex(
+                (t) => !t.first_name && !t.last_name
+              );
+              if (targetIndex === -1) {
+                // All travelers have names — add a new one
+                formState.travelers = [...formState.travelers, createEmptyTravelerData()];
+                targetIndex = formState.travelers.length - 1;
+              }
+
+              const fieldMap: Record<string, string> = {
+                first_name: 'first_name',
+                last_name: 'last_name',
+                middle_name: 'middle_name',
+                date_of_birth: 'date_of_birth',
+                place_of_birth: 'place_of_birth',
+                gender: 'gender',
+                passport_number: 'passport_number',
+                passport_issue_date: 'passport_issue_date',
+                passport_expiry_date: 'passport_expiry_date',
+                passport_issuing_country: 'passport_issuing_country',
+                nationality: 'nationality',
+              };
+
+              const traveler = formState.travelers[targetIndex];
+              for (const [extractedKey, travelerKey] of Object.entries(fieldMap)) {
+                if (fields[extractedKey] && fields[extractedKey] !== '') {
+                  (traveler as any)[travelerKey] = fields[extractedKey];
+                }
+              }
+              if (fields._image_base64) {
+                traveler.passport_image_url = fields._image_base64;
+              }
+              formState.travelers = [...formState.travelers];
+              saveDraft();
+            })}
+          />
         </div>
 
         {/* Error Message */}
