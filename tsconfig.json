@@ -27,7 +27,8 @@
     ],
     "types": [
       "@cloudflare/workers-types/2023-07-01",
-      "node"
+      "node",
+      "vitest/globals"
     ]
   },
   "include": ["src", "./*.d.ts", "./*.config.ts"]
