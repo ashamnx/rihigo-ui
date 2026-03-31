@@ -5,6 +5,7 @@ import { apiClient } from '~/utils/api-client';
 import type { TravelerInputData, CreateImugaRequestInput } from '~/types/imuga';
 import { createEmptyTravelerData } from '~/types/imuga';
 import { TravelerFormSection } from '~/components/imuga/TravelerFormSection';
+import { PhoneCodeSelect } from '~/components/imuga/CountrySelect';
 import { DocumentExtractor } from '~/components/ai/DocumentExtractor';
 
 interface FormState {
@@ -12,6 +13,7 @@ interface FormState {
   requester_name: string;
   requester_email: string;
   requester_phone: string;
+  requester_phone_country_code: string;
   // Group Info
   group_name: string;
   // Accommodation
@@ -55,7 +57,9 @@ export const useSubmitRequest = routeAction$(async (formData, requestEvent) => {
   const requestData: CreateImugaRequestInput = {
     requester_email: formData.requester_email as string,
     requester_name: formData.requester_name as string,
-    requester_phone: formData.requester_phone as string || undefined,
+    requester_phone: formData.requester_phone
+      ? `${formData.requester_phone_country_code || ''} ${formData.requester_phone}`.trim()
+      : undefined,
     group_name: formData.group_name as string,
     accommodation_name: formData.accommodation_name as string,
     accommodation_island: formData.accommodation_island as string,
@@ -97,6 +101,7 @@ export default component$(() => {
     requester_name: '',
     requester_email: '',
     requester_phone: '',
+    requester_phone_country_code: '+1',
     group_name: '',
     accommodation_name: '',
     accommodation_island: '',
@@ -120,6 +125,7 @@ export default component$(() => {
         if (draft.requester_name) formState.requester_name = draft.requester_name;
         if (draft.requester_email) formState.requester_email = draft.requester_email;
         if (draft.requester_phone) formState.requester_phone = draft.requester_phone;
+        if (draft.requester_phone_country_code) formState.requester_phone_country_code = draft.requester_phone_country_code;
         if (draft.group_name) formState.group_name = draft.group_name;
         if (draft.accommodation_name) formState.accommodation_name = draft.accommodation_name;
         if (draft.accommodation_island) formState.accommodation_island = draft.accommodation_island;
@@ -152,6 +158,7 @@ export default component$(() => {
         requester_name: formState.requester_name,
         requester_email: formState.requester_email,
         requester_phone: formState.requester_phone,
+        requester_phone_country_code: formState.requester_phone_country_code,
         group_name: formState.group_name,
         accommodation_name: formState.accommodation_name,
         accommodation_island: formState.accommodation_island,
@@ -504,16 +511,25 @@ export default component$(() => {
                 <label class="label">
                   <span class="label-text">Phone Number</span>
                 </label>
-                <input
-                  type="tel"
-                  name="requester_phone"
-                  class="input input-bordered w-full"
-                  placeholder="+1 234 567 8900"
-                  value={formState.requester_phone}
-                  onInput$={(e) =>
-                    updateTopLevelField('requester_phone', (e.target as HTMLInputElement).value)
-                  }
-                />
+                <div class="flex gap-2">
+                  <div class="w-32">
+                    <PhoneCodeSelect
+                      name="requester_phone_country_code"
+                      value={formState.requester_phone_country_code}
+                      onChange$={(value) => updateTopLevelField('requester_phone_country_code', value)}
+                    />
+                  </div>
+                  <input
+                    type="tel"
+                    name="requester_phone"
+                    class="input input-bordered flex-1"
+                    placeholder="Phone number"
+                    value={formState.requester_phone}
+                    onInput$={(e) =>
+                      updateTopLevelField('requester_phone', (e.target as HTMLInputElement).value)
+                    }
+                  />
+                </div>
               </div>
               <div class="form-control">
                 <label class="label">
@@ -762,14 +778,12 @@ export default component$(() => {
 
           {/* Submit Button */}
           <button
-            type="submit"
+            type="button"
             class="btn btn-primary w-full"
             disabled={submitAction.isRunning}
-            preventdefault:click
             onClick$={async (e) => {
               const isValid = await validateDocuments();
               if (isValid) {
-                // Allow normal form submission
                 const form = (e.target as HTMLElement).closest('form');
                 if (form) form.requestSubmit();
               }

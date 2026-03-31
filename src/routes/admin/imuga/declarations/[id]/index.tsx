@@ -59,19 +59,32 @@ export const useValidate = routeAction$(async (_data, requestEvent) => {
       declarationId,
       token
     );
-    const isValid = response.data?.valid || false;
-    const validationErrors = response.data?.errors || [];
+
+    if (!response.success) {
+      return {
+        success: false,
+        data: null,
+        message: response.error_message || 'Failed to validate',
+      };
+    }
+
+    const result = response.data;
+    const isValid = result?.is_valid || false;
+    const declarationErrors = (result?.errors || []).map(
+      (e: { field: string; message: string }) => e.message
+    );
+    const travelerErrors = result?.traveler_errors || {};
+
     return {
-      success: response.success,
+      success: true,
       data: {
-        valid: isValid,
-        errors: validationErrors as string[],
+        is_valid: isValid,
+        declaration_errors: declarationErrors as string[],
+        traveler_errors: travelerErrors as Record<string, { field: string; message: string }[]>,
       },
-      message: response.success
-        ? isValid
-          ? 'Declaration is valid and ready for export'
-          : 'Declaration has validation errors'
-        : response.error_message || 'Failed to validate',
+      message: isValid
+        ? 'Declaration is valid and ready for export'
+        : 'Declaration has validation errors',
     };
   });
 });
@@ -545,22 +558,47 @@ export default component$(() => {
             {validateAction.value && (
               <div
                 class={`mt-4 alert ${
-                  validateAction.value.data?.valid ? 'alert-success' : 'alert-warning'
+                  validateAction.value.data?.is_valid ? 'alert-success' : 'alert-warning'
                 }`}
               >
                 <span>{validateAction.value.message}</span>
               </div>
             )}
 
-            {validateAction.value?.data?.errors &&
-              validateAction.value.data.errors.length > 0 && (
+            {validateAction.value?.data?.declaration_errors &&
+              validateAction.value.data.declaration_errors.length > 0 && (
                 <div class="mt-4">
-                  <p class="font-medium text-error mb-2">Validation Errors:</p>
+                  <p class="font-medium text-error mb-2">Declaration Errors:</p>
                   <ul class="list-disc list-inside text-sm text-error">
-                    {validateAction.value.data.errors.map((error: string, i: number) => (
+                    {validateAction.value.data.declaration_errors.map((error: string, i: number) => (
                       <li key={i}>{error}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+            {validateAction.value?.data?.traveler_errors &&
+              Object.keys(validateAction.value.data.traveler_errors).length > 0 && (
+                <div class="mt-4">
+                  <p class="font-medium text-error mb-2">Traveler Errors:</p>
+                  {Object.entries(validateAction.value.data.traveler_errors).map(
+                    ([travelerId, errors]: [string, { field: string; message: string }[]]) => {
+                      const traveler = travelers.find((t) => t.id === travelerId);
+                      const name = traveler
+                        ? `${traveler.first_name} ${traveler.last_name}`
+                        : `Traveler ${travelerId.substring(0, 8)}`;
+                      return (
+                        <div key={travelerId} class="mb-2 ml-2">
+                          <p class="text-sm font-medium text-error">{name}:</p>
+                          <ul class="list-disc list-inside text-sm text-error ml-4">
+                            {errors.map((e: { field: string; message: string }, i: number) => (
+                              <li key={i}>{e.message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    }
+                  )}
                 </div>
               )}
           </div>

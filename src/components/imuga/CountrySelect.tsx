@@ -1,5 +1,6 @@
 import { component$, type QRL } from '@builder.io/qwik';
 import { COUNTRIES } from '~/types/imuga';
+import { SearchableSelect } from './SearchableSelect';
 
 interface CountrySelectProps {
   name: string;
@@ -25,38 +26,24 @@ export const CountrySelect = component$<CountrySelectProps>(
     class: className = '',
     onChange$,
   }) => {
+    const options = COUNTRIES.map((c) => ({
+      value: c.code,
+      label: showPhoneCode ? `${c.name} (${c.phone_code})` : c.name,
+      searchText: `${c.phone_code} ${c.code}`,
+    }));
+
     return (
-      <div class="form-control">
-        {label && (
-          <label class="label">
-            <span class="label-text">
-              {label}
-              {required && <span class="text-error ml-1">*</span>}
-            </span>
-          </label>
-        )}
-        <select
-          name={name}
-          value={value}
-          class={`select select-bordered w-full ${className}`}
-          required={required}
-          disabled={disabled}
-          onChange$={(e) => {
-            if (onChange$) {
-              onChange$((e.target as HTMLSelectElement).value);
-            }
-          }}
-        >
-          <option value="">{placeholder}</option>
-          {COUNTRIES.map((country) => (
-            <option key={country.code} value={country.code}>
-              {showPhoneCode
-                ? `${country.name} (${country.phone_code})`
-                : country.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchableSelect
+        name={name}
+        value={value}
+        label={label}
+        required={required}
+        disabled={disabled}
+        placeholder={placeholder}
+        options={options}
+        class={className}
+        onChange$={onChange$}
+      />
     );
   }
 );
@@ -81,36 +68,24 @@ export const PhoneCodeSelect = component$<PhoneCodeSelectProps>(
     class: className = '',
     onChange$,
   }) => {
+    const options = COUNTRIES.map((c) => ({
+      value: c.phone_code,
+      label: `${c.phone_code} (${c.code})`,
+      searchText: c.name,
+    }));
+
     return (
-      <div class="form-control">
-        {label && (
-          <label class="label">
-            <span class="label-text">
-              {label}
-              {required && <span class="text-error ml-1">*</span>}
-            </span>
-          </label>
-        )}
-        <select
-          name={name}
-          value={value}
-          class={`select select-bordered w-full ${className}`}
-          required={required}
-          disabled={disabled}
-          onChange$={(e) => {
-            if (onChange$) {
-              onChange$((e.target as HTMLSelectElement).value);
-            }
-          }}
-        >
-          <option value="">Code</option>
-          {COUNTRIES.map((country) => (
-            <option key={country.code} value={country.phone_code}>
-              {`${country.phone_code} (${country.code})`}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SearchableSelect
+        name={name}
+        value={value}
+        label={label}
+        required={required}
+        disabled={disabled}
+        placeholder="Code"
+        options={options}
+        class={className}
+        onChange$={onChange$}
+      />
     );
   }
 );

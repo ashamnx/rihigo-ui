@@ -4,7 +4,6 @@ import {
   TRAVELER_TITLES,
   GENDERS,
   VISIT_PURPOSES,
-  COUNTRIES,
   CURRENCIES,
 } from '~/types/imuga';
 import { CountrySelect, PhoneCodeSelect } from './CountrySelect';
@@ -41,7 +40,18 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
     };
 
     return (
-      <div class="collapse collapse-arrow bg-base-200 mb-4">
+      <div class="collapse collapse-arrow bg-base-200 mb-4 relative">
+        {canRemove && onRemove$ && (
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs text-error absolute right-12 top-4 z-10"
+            onClick$={() => {
+              onRemove$(index);
+            }}
+          >
+            Remove
+          </button>
+        )}
         <input
           type="checkbox"
           checked={isExpanded.value}
@@ -52,19 +62,6 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
             <span class="badge badge-primary badge-sm">{index + 1}</span>
             <span>{getTravelerName()}</span>
           </div>
-          {canRemove && onRemove$ && (
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs text-error"
-              onClick$={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onRemove$(index);
-              }}
-            >
-              Remove
-            </button>
-          )}
         </div>
         <div class="collapse-content">
           {/* Personal Information */}
@@ -389,134 +386,6 @@ export const TravelerFormSection = component$<TravelerFormSectionProps>(
                     required
                   />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Permanent Address */}
-          <div class="border-b border-base-300 pb-4 mb-4">
-            <h4 class="font-semibold text-sm mb-3 text-primary">
-              Permanent Address
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Address Line 1 */}
-              <div class="form-control md:col-span-2">
-                <label class="label">
-                  <span class="label-text">Address Line 1</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered input-sm w-full"
-                  value={traveler.permanent_address.line1}
-                  onInput$={(e) =>
-                    updateNestedField(
-                      'permanent_address',
-                      'line1',
-                      (e.target as HTMLInputElement).value
-                    )
-                  }
-                />
-              </div>
-
-              {/* Address Line 2 */}
-              <div class="form-control md:col-span-2">
-                <label class="label">
-                  <span class="label-text">Address Line 2</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered input-sm w-full"
-                  value={traveler.permanent_address.line2}
-                  onInput$={(e) =>
-                    updateNestedField(
-                      'permanent_address',
-                      'line2',
-                      (e.target as HTMLInputElement).value
-                    )
-                  }
-                />
-              </div>
-
-              {/* City */}
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">City</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered input-sm w-full"
-                  value={traveler.permanent_address.city}
-                  onInput$={(e) =>
-                    updateNestedField(
-                      'permanent_address',
-                      'city',
-                      (e.target as HTMLInputElement).value
-                    )
-                  }
-                />
-              </div>
-
-              {/* State/Province */}
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">State/Province</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered input-sm w-full"
-                  value={traveler.permanent_address.state}
-                  onInput$={(e) =>
-                    updateNestedField(
-                      'permanent_address',
-                      'state',
-                      (e.target as HTMLInputElement).value
-                    )
-                  }
-                />
-              </div>
-
-              {/* Postal Code */}
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Postal Code</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered input-sm w-full"
-                  value={traveler.permanent_address.postal_code}
-                  onInput$={(e) =>
-                    updateNestedField(
-                      'permanent_address',
-                      'postal_code',
-                      (e.target as HTMLInputElement).value
-                    )
-                  }
-                />
-              </div>
-
-              {/* Country */}
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Country</span>
-                </label>
-                <select
-                  class="select select-bordered select-sm w-full"
-                  value={traveler.permanent_address.country}
-                  onChange$={(e) =>
-                    updateNestedField(
-                      'permanent_address',
-                      'country',
-                      (e.target as HTMLSelectElement).value
-                    )
-                  }
-                >
-                  <option value="">Select country</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
           </div>

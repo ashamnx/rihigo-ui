@@ -365,9 +365,15 @@ export interface ExportTravelerData {
 }
 
 // Validation Result
+export interface ImugaValidationError {
+  field: string;
+  message: string;
+}
+
 export interface ValidationResult {
-  valid: boolean;
-  errors?: string[];
+  is_valid: boolean;
+  errors?: ImugaValidationError[];
+  traveler_errors?: Record<string, ImugaValidationError[]>;
 }
 
 // UI Constants

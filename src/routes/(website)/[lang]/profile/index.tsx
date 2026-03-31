@@ -216,6 +216,26 @@ export const useUpdatePreferences = routeAction$(
   },
 );
 
+export const useLookupImugaRequest = routeAction$(async (formData) => {
+  const requestNumber = (formData.request_number as string || '').trim();
+  if (!requestNumber) {
+    return { success: false, error: 'Please enter a request number' };
+  }
+
+  const response = await apiClient.imugaPublic.getRequestStatus(requestNumber);
+  if (response.success && response.data) {
+    return {
+      success: true,
+      data: response.data,
+    };
+  }
+
+  return {
+    success: false,
+    error: response.error_message || 'Request not found',
+  };
+});
+
 export default component$(() => {
   const profile = useUserProfile();
   const recentBookings = useRecentBookings();
@@ -223,6 +243,7 @@ export default component$(() => {
   const saveNotificationPreferencesAction = useSaveNotificationPreferences();
   const updateProfileAction = useUpdateProfile();
   const updatePreferencesAction = useUpdatePreferences();
+  const lookupImugaAction = useLookupImugaRequest();
   const location = useLocation();
   const t = inlineTranslate();
   const lang = location.params.lang || "en-US";
@@ -795,6 +816,83 @@ export default component$(() => {
                       </div>
                     )}
                   </Form>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* IMUGA Request Lookup (visible in overview) */}
+        {activeTab.value === "overview" && (
+          <div class="mt-6">
+            <div class="card bg-white shadow-lg">
+              <div class="card-body">
+                <h2 class="card-title mb-4">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  IMUGA Request Status
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">
+                  Track your IMUGA travel declaration request status
+                </p>
+                <Form action={lookupImugaAction} class="flex gap-2">
+                  <input
+                    type="text"
+                    name="request_number"
+                    class="input input-bordered flex-1"
+                    placeholder="Enter request number (e.g., REQ-2025-00001)"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    disabled={lookupImugaAction.isRunning}
+                  >
+                    {lookupImugaAction.isRunning ? (
+                      <span class="loading loading-spinner loading-sm"></span>
+                    ) : (
+                      'Check Status'
+                    )}
+                  </button>
+                </Form>
+
+                {lookupImugaAction.value?.success === false && (
+                  <div class="alert alert-error mt-4">
+                    <span>{lookupImugaAction.value.error}</span>
+                  </div>
+                )}
+
+                {lookupImugaAction.value?.success && lookupImugaAction.value.data && (
+                  <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="font-mono font-bold">{lookupImugaAction.value.data.request_number}</span>
+                      <span class={`badge ${
+                        lookupImugaAction.value.data.status === 'completed' ? 'badge-success' :
+                        lookupImugaAction.value.data.status === 'pending' ? 'badge-warning' :
+                        lookupImugaAction.value.data.status === 'processing' ? 'badge-info' :
+                        'badge-error'
+                      }`}>
+                        {lookupImugaAction.value.data.status.charAt(0).toUpperCase() + lookupImugaAction.value.data.status.slice(1)}
+                      </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                      <div>
+                        <p class="text-gray-500">Group</p>
+                        <p class="font-medium">{lookupImugaAction.value.data.group_name}</p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500">Travelers</p>
+                        <p class="font-medium">{lookupImugaAction.value.data.total_travelers}</p>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/${lang}/imuga/${lookupImugaAction.value.data.request_number}`}
+                      class="btn btn-primary btn-sm"
+                    >
+                      View Full Details
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

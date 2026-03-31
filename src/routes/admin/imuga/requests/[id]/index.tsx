@@ -208,7 +208,7 @@ export default component$(() => {
                 </button>
               </>
             )}
-            {request.status === 'completed' && !request.declaration_id && (
+            {(request.status === 'completed' || request.status === 'processing') && !request.declaration_id && (
               <button
                 class="btn btn-primary btn-sm"
                 onClick$={async () => {
@@ -516,9 +516,10 @@ export default component$(() => {
                             <img
                               src={traveler.photo_url}
                               alt="Traveler photo"
-                              class="w-20 h-24 object-cover rounded"
+                              class="w-20 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                               width={80}
                               height={96}
+                              onClick$={() => { window.open(traveler.photo_url!, '_blank'); }}
                             />
                           </div>
                         )}
@@ -528,9 +529,10 @@ export default component$(() => {
                             <img
                               src={traveler.passport_image_url}
                               alt="Passport"
-                              class="w-32 h-24 object-cover rounded"
+                              class="w-32 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                               width={128}
                               height={96}
+                              onClick$={() => { window.open(traveler.passport_image_url!, '_blank'); }}
                             />
                           </div>
                         )}

@@ -7,9 +7,9 @@ import {
   TRAVELER_TITLES,
   GENDERS,
   VISIT_PURPOSES,
-  COUNTRIES,
   CURRENCIES,
 } from '~/types/imuga';
+import { CountrySelect, PhoneCodeSelect } from '~/components/imuga/CountrySelect';
 
 export const useDeclaration = routeLoader$(async (requestEvent) => {
   const declarationId = requestEvent.params.id;
@@ -321,44 +321,18 @@ export default component$(() => {
                 required
               />
             </div>
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text">
-                  Nationality <span class="text-error">*</span>
-                </span>
-              </label>
-              <select
-                name="nationality"
-                class="select select-bordered w-full"
-                required
-              >
-                <option value="">Select nationality</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text">
-                  Country of Residence <span class="text-error">*</span>
-                </span>
-              </label>
-              <select
-                name="country_of_residence"
-                class="select select-bordered w-full"
-                required
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CountrySelect
+              name="nationality"
+              label="Nationality"
+              placeholder="Select nationality"
+              required
+            />
+            <CountrySelect
+              name="country_of_residence"
+              label="Country of Residence"
+              placeholder="Select country"
+              required
+            />
           </div>
         </div>
 
@@ -406,25 +380,12 @@ export default component$(() => {
                 required
               />
             </div>
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text">
-                  Issuing Country <span class="text-error">*</span>
-                </span>
-              </label>
-              <select
-                name="passport_issuing_country"
-                class="select select-bordered w-full"
-                required
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CountrySelect
+              name="passport_issuing_country"
+              label="Issuing Country"
+              placeholder="Select country"
+              required
+            />
           </div>
         </div>
 
@@ -446,24 +407,11 @@ export default component$(() => {
                 required
               />
             </div>
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text">
-                  Phone Country Code <span class="text-error">*</span>
-                </span>
-              </label>
-              <select
-                name="phone_country_code"
-                class="select select-bordered w-full"
-                required
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.phone_code}>
-                    {`${c.phone_code} (${c.name})`}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <PhoneCodeSelect
+              name="phone_country_code"
+              label="Phone Country Code"
+              required
+            />
             <div class="form-control">
               <label class="label">
                 <span class="label-text">
@@ -540,22 +488,11 @@ export default component$(() => {
                 placeholder="Postal code"
               />
             </div>
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text">Country</span>
-              </label>
-              <select
-                name="permanent_address_country"
-                class="select select-bordered w-full"
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CountrySelect
+              name="permanent_address_country"
+              label="Country"
+              placeholder="Select country"
+            />
           </div>
         </div>
 

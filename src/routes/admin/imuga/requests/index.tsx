@@ -64,9 +64,31 @@ export const useProcessRequest = routeAction$(async (data, requestEvent) => {
   });
 });
 
+export const useConvertRequest = routeAction$(async (data, requestEvent) => {
+  const requestId = data.request_id as string;
+
+  return authenticatedRequest(requestEvent, async (token) => {
+    const response = await apiClient.imugaRequests.convert(requestId, token);
+
+    if (response.success && response.data) {
+      return {
+        success: true,
+        message: 'Declaration created successfully',
+        declaration_id: response.data.id,
+      };
+    }
+
+    return {
+      success: false,
+      message: response.error_message || 'Failed to convert to declaration',
+    };
+  });
+});
+
 export default component$(() => {
   const requestsData = useRequests();
   const processAction = useProcessRequest();
+  const convertAction = useConvertRequest();
 
   const filterStatus = useSignal<string>('all');
   const searchTerm = useSignal<string>('');
@@ -227,6 +249,15 @@ export default component$(() => {
           <span>{processAction.value.message}</span>
         </div>
       )}
+      {convertAction.value?.message && (
+        <div
+          class={`alert ${
+            convertAction.value.success ? 'alert-success' : 'alert-error'
+          }`}
+        >
+          <span>{convertAction.value.message}</span>
+        </div>
+      )}
 
       {/* Table */}
       <div class="bg-base-200 rounded-xl overflow-hidden">
@@ -334,6 +365,21 @@ export default component$(() => {
                               Reject
                             </button>
                           </>
+                        )}
+                        {(request.status === 'processing' || request.status === 'completed') && !request.declaration_id && (
+                          <button
+                            class="btn btn-ghost btn-xs text-primary"
+                            onClick$={async () => {
+                              await convertAction.submit({ request_id: request.id });
+                            }}
+                            disabled={convertAction.isRunning}
+                          >
+                            {convertAction.isRunning ? (
+                              <span class="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              'Convert'
+                            )}
+                          </button>
                         )}
                         {request.declaration_id && (
                           <Link
