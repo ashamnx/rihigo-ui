@@ -1,0 +1,77 @@
+import js from '@eslint/js';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import { qwikEslint9Plugin } from 'eslint-plugin-qwik';
+
+export default tseslint.config(
+  {
+    ignores: [
+      '**/*.log',
+      '**/.DS_Store',
+      '.vscode/',
+      '.history/',
+      '.yarn/',
+      '.cache/',
+      '.rollup.cache/',
+      '.netlify/',
+      'bazel-*/',
+      'dist/',
+      'dist-dev/',
+      'build/',
+      'lib/',
+      'lib-types/',
+      'etc/',
+      'external/',
+      'node_modules/',
+      'temp/',
+      'tsc-out/',
+      'target/',
+      'output/',
+      'server/',
+      'tsdoc-metadata.json',
+      'tsconfig.tsbuildinfo',
+      'rollup.config.js',
+      'pnpm-lock.yaml',
+      'package-lock.json',
+      'yarn.lock',
+      'vite.config.ts',
+      '*.spec.tsx',
+      '*.spec.ts',
+    ],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  qwikEslint9Plugin.configs.recommended,
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.serviceworker,
+      },
+      parser: tseslint.parser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-inferrable-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-this-alias': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      'prefer-spread': 'off',
+      'no-case-declarations': 'off',
+      'no-console': 'off',
+      'no-useless-assignment': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/consistent-type-imports': 'warn',
+      '@typescript-eslint/no-unnecessary-condition': 'warn',
+    },
+  },
+);
