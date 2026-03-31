@@ -154,22 +154,6 @@ export const TravelerCard = component$<TravelerCardProps>(
               </p>
             </div>
 
-            {/* Address */}
-            <div class="col-span-2">
-              <p class="text-xs text-base-content/60">Address</p>
-              <p class="text-sm">
-                {traveler.permanent_address.line1}
-                {traveler.permanent_address.line2 &&
-                  `, ${traveler.permanent_address.line2}`}
-                , {traveler.permanent_address.city}
-                {traveler.permanent_address.state &&
-                  `, ${traveler.permanent_address.state}`}
-                {traveler.permanent_address.postal_code &&
-                  ` ${traveler.permanent_address.postal_code}`}
-                , {getCountryName(traveler.permanent_address.country)}
-              </p>
-            </div>
-
             {/* Health */}
             <div>
               <p class="text-xs text-base-content/60">Yellow Fever Travel</p>
