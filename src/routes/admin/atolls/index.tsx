@@ -146,7 +146,7 @@ export default component$(() => {
                       </td>
                       <td>
                         <div class="text-sm text-base-content/70">
-                          - islands
+                          {atoll.island_count != null ? `${atoll.island_count} islands` : '-'}
                         </div>
                       </td>
                       <td class="text-right">

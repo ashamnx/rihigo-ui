@@ -4,20 +4,21 @@ export type CustomerPaymentStatus = 'pending' | 'processing' | 'completed' | 'fa
 
 export interface CustomerPayment {
     id: string;
+    payment_number: string;
     booking_id: string;
     user_id: string;
-    transaction_id: string;
-    transaction_reference: string;
     amount: number;
     currency: string;
-    status: CustomerPaymentStatus;
-    provider: string;
+    amount_usd: number;
+    exchange_rate: number;
+    payment_provider: string;
+    provider_transaction_id?: string;
     provider_response?: Record<string, unknown>;
-    error_message?: string;
+    status: CustomerPaymentStatus;
+    payment_url?: string;
+    redirect_url?: string;
+    failure_reason?: string;
     paid_at?: string;
-    refunded_at?: string;
-    refund_amount?: number;
-    refund_reason?: string;
     created_at: string;
     updated_at: string;
     // Related data (when include_booking=true)

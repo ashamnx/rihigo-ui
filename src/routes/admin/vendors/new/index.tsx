@@ -3,6 +3,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, Link, routeAction$, routeLoader$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import type { VendorCreateInput } from "~/types/vendor";
+import { ApiErrorAlert } from "~/components/ui/ApiErrorAlert";
 
 export const useIslands = routeLoader$(async () => {
   const response = await apiClient.islands.list();
@@ -59,12 +60,7 @@ export default component$(() => {
       </div>
 
       {createAction.value?.success === false && (
-        <div class="alert alert-error mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{createAction.value.error_message || 'Failed to create vendor'}</span>
-        </div>
+        <ApiErrorAlert response={createAction.value} fallbackMessage="Failed to create vendor" />
       )}
 
       <Form action={createAction}>
@@ -100,13 +96,14 @@ export default component$(() => {
               {/* Business Registration Number */}
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-semibold">Business Registration Number</span>
+                  <span class="label-text font-semibold">Business Registration Number <span class="text-error">*</span></span>
                 </label>
                 <input
                   type="text"
                   name="business_registration_number"
                   placeholder="e.g., BRN-2024-001"
                   class="input input-bordered w-full"
+                  required
                 />
               </div>
 

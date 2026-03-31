@@ -271,7 +271,8 @@ export default component$(() => {
             </thead>
             <tbody>
               {filteredUsers.map((user) => {
-                const joinedDate = new Date(user.created_at);
+                const joinedDate = user.created_at ? new Date(user.created_at) : null;
+                const isValidDate = joinedDate && !isNaN(joinedDate.getTime()) && joinedDate.getFullYear() > 1970;
 
                 return (
                   <tr key={user.id}>
@@ -321,7 +322,7 @@ export default component$(() => {
                     </td>
                     <td>
                       <div class="text-xs">
-                        {joinedDate.toLocaleDateString()}
+                        {isValidDate ? joinedDate.toLocaleDateString() : "-"}
                       </div>
                     </td>
                     <td>

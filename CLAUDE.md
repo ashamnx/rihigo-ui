@@ -269,6 +269,43 @@ Admin routes (`/admin/*`) require authentication. Admin panel includes:
 - Configured in `playwright.config.ts`
 - Test full user flows including authentication
 
+## Deployment
+
+**Production server**: `178.128.208.168` (DigitalOcean VPS)
+
+### Deploy UI
+```bash
+npm run deploy       # Build + rsync + restart rihigo-ui service
+```
+This runs `npm run build`, rsyncs to `/var/www/rihigo-ui/` on the server, installs deps with bun, and restarts the `rihigo-ui` systemd service.
+
+### Deploy API
+```bash
+cd ../api
+make deploy          # Full deployment: rsync source, build on server, atomic switch, health check
+make deploy-quick    # Quick restart without rebuild
+make rollback        # Rollback to previous version
+make deploy-status   # Show current deployment status
+make deploy-logs     # Tail production logs
+make deploy-health   # Run health check
+```
+API deploys use zero-downtime atomic symlink switching to `/opt/rihigo/current`. Automatic rollback on health check failure. Keeps 3 latest releases.
+
+### Deploy Both
+```bash
+# From the repo root (/Users/ashamnx/code/rihigo)
+make deploy          # Deploys API only (use UI npm script separately)
+```
+Or deploy in parallel:
+```bash
+npm run deploy & (cd ../api && make deploy) & wait
+```
+
+### Pre-deploy Checklist
+1. Run `npm run build.types` — verify no type errors
+2. Run `npm run lint` — verify no lint errors
+3. Commit changes before deploying
+
 ## Related Documentation
 
 - **Authentication**: See `BOOKING_AUTHENTICATION.md`

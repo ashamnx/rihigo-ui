@@ -4,6 +4,7 @@ import { Form, Link, routeLoader$, routeAction$ } from "@builder.io/qwik-city";
 import { apiClient, authenticatedRequest } from "~/utils/api-client";
 import type { ApiResponse } from "~/types/api";
 import type { Vendor, VendorUpdateInput } from "~/types/vendor";
+import { ApiErrorAlert } from "~/components/ui/ApiErrorAlert";
 
 export const useVendor = routeLoader$<ApiResponse<Vendor>>(async (requestEvent) => {
   const vendorId = requestEvent.params.id;
@@ -151,12 +152,7 @@ export default component$(() => {
 
       {/* Error Alerts */}
       {updateAction.value?.success === false && (
-        <div class="alert alert-error mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{updateAction.value.error_message || 'Failed to update vendor'}</span>
-        </div>
+        <ApiErrorAlert response={updateAction.value} fallbackMessage="Failed to update vendor" />
       )}
 
       {verifyAction.value?.success === false && (
@@ -269,7 +265,7 @@ export default component$(() => {
               {/* Business Registration Number */}
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-semibold">Business Registration Number</span>
+                  <span class="label-text font-semibold">Business Registration Number <span class="text-error">*</span></span>
                 </label>
                 <input
                   type="text"
@@ -277,6 +273,7 @@ export default component$(() => {
                   value={vendor.business_registration_number || ''}
                   placeholder="e.g., BRN-2024-001"
                   class="input input-bordered w-full"
+                  required
                 />
               </div>
 

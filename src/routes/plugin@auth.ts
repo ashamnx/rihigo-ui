@@ -1,5 +1,6 @@
 import {QwikAuth$} from "@auth/qwik";
 import Google from '@auth/qwik/providers/google';
+import Credentials from '@auth/qwik/providers/credentials';
 
 interface BackendUser {
     id: string;
@@ -68,6 +69,30 @@ async function getOrCreateUser(idToken: string, email: string, name?: string, im
 }
 
 /**
+ * Craft a JWT token for test authentication that the Go backend will accept.
+ * Requires SKIP_SIGNATURE_VERIFICATION=true on the backend.
+ */
+function craftTestToken(userId: string, email: string, googleClientId: string): string {
+    const now = Math.floor(Date.now() / 1000);
+    const header = { alg: 'RS256', typ: 'JWT', kid: 'test' };
+    const payload = {
+        sub: userId,
+        email,
+        email_verified: true,
+        name: 'Test User',
+        iss: 'accounts.google.com',
+        aud: googleClientId,
+        iat: now,
+        exp: now + 86400,
+    };
+
+    const encode = (obj: Record<string, unknown>) =>
+        Buffer.from(JSON.stringify(obj)).toString('base64url');
+
+    return `${encode(header)}.${encode(payload)}.test-signature`;
+}
+
+/**
  * Refresh an expired access token using the refresh token
  */
 async function refreshAccessToken(token: any) {
@@ -113,56 +138,11 @@ async function refreshAccessToken(token: any) {
 }
 
 export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
-    (event) => ({
-        secret: event.env.get('AUTH_SECRET'),
-        trustHost: true,
-        debug: event.env.get('NODE_ENV') !== 'production',
-        // Custom cookie configuration for Cloudflare proxy
-        // Don't use __Secure- prefix (Cloudflare strips it) but still use secure: true
-        useSecureCookies: false,
-        cookies: {
-            sessionToken: {
-                name: 'authjs.session-token',
-                options: {
-                    httpOnly: true,
-                    sameSite: 'lax',
-                    path: '/',
-                    secure: true, // Must be true for HTTPS sites
-                },
-            },
-            callbackUrl: {
-                name: 'authjs.callback-url',
-                options: {
-                    httpOnly: true,
-                    sameSite: 'lax',
-                    path: '/',
-                    secure: true,
-                },
-            },
-            csrfToken: {
-                name: 'authjs.csrf-token',
-                options: {
-                    httpOnly: true,
-                    sameSite: 'lax',
-                    path: '/',
-                    secure: true,
-                },
-            },
-            pkceCodeVerifier: {
-                name: 'authjs.pkce.code_verifier',
-                options: {
-                    httpOnly: true,
-                    sameSite: 'lax',
-                    path: '/',
-                    secure: true,
-                },
-            },
-        },
-        providers: [
+    (event) => {
+        const providers: any[] = [
             Google({
                 clientId: event.env.get('AUTH_GOOGLE_ID'),
                 clientSecret: event.env.get('AUTH_GOOGLE_SECRET'),
-                // Request offline access to get refresh token
                 authorization: {
                     params: {
                         prompt: "consent",
@@ -171,80 +151,168 @@ export const {onRequest, useSession, useSignIn, useSignOut} = QwikAuth$(
                     },
                 },
             }),
-        ],
-        callbacks: {
-            // 1. JWT Callback: Store tokens and handle refresh
-            async jwt({ token, account, user }) {
-                // Initial sign in - save tokens from account
-                if (account && user) {
-                    console.log('Initial sign in - storing tokens');
+        ];
 
-                    // Get or create user in backend database and fetch role
-                    // Use the ID token to authenticate with our backend API
-                    let userRole: 'admin' | 'user' = 'user';
-                    try {
-                        if (account.id_token) {
-                            const backendUser = await getOrCreateUser(
-                                account.id_token,
-                                user.email as string,
-                                user.name || undefined,
-                                user.image || undefined
-                            );
-                            console.log('Backend user synchronized:', backendUser.id);
-                            userRole = backendUser.role;
+        if (event.env.get('AUTH_TEST_MODE') === 'true') {
+            providers.push(
+                Credentials({
+                    id: 'test-credentials',
+                    name: 'Test Login',
+                    credentials: {
+                        email: { label: 'Email', type: 'email' },
+                        password: { label: 'Password', type: 'password' },
+                    },
+                    async authorize(credentials) {
+                        const testSecret = process.env.AUTH_TEST_SECRET;
+                        if (!testSecret) return null;
+                        if (!credentials || credentials.password !== testSecret) return null;
+                        if (!credentials.email) return null;
+
+                        const email = credentials.email as string;
+                        const nameMap: Record<string, string> = {
+                            'testuser@rihigo.test': 'Test User',
+                            'testadmin@rihigo.test': 'Test Admin',
+                            'testvendor@rihigo.test': 'Test Vendor',
+                        };
+                        return {
+                            id: `test-${email}`,
+                            email,
+                            name: nameMap[email] || 'Test User',
+                            image: '',
+                        };
+                    },
+                })
+            );
+        }
+
+        return {
+            secret: event.env.get('AUTH_SECRET'),
+            trustHost: true,
+            debug: event.env.get('NODE_ENV') !== 'production',
+            useSecureCookies: false,
+            cookies: {
+                sessionToken: {
+                    name: 'authjs.session-token',
+                    options: {
+                        httpOnly: true,
+                        sameSite: 'lax',
+                        path: '/',
+                        secure: true,
+                    },
+                },
+                callbackUrl: {
+                    name: 'authjs.callback-url',
+                    options: {
+                        httpOnly: true,
+                        sameSite: 'lax',
+                        path: '/',
+                        secure: true,
+                    },
+                },
+                csrfToken: {
+                    name: 'authjs.csrf-token',
+                    options: {
+                        httpOnly: true,
+                        sameSite: 'lax',
+                        path: '/',
+                        secure: true,
+                    },
+                },
+                pkceCodeVerifier: {
+                    name: 'authjs.pkce.code_verifier',
+                    options: {
+                        httpOnly: true,
+                        sameSite: 'lax',
+                        path: '/',
+                        secure: true,
+                    },
+                },
+            },
+            providers,
+            callbacks: {
+                async jwt({ token, account, user }) {
+                    if (account && user) {
+                        console.log('Initial sign in - storing tokens, provider:', account.provider);
+
+                        let idToken = account.id_token;
+                        let userRole: 'admin' | 'user' = 'user';
+
+                        // For test-credentials provider, craft a JWT the backend will accept
+                        if (account.provider === 'test-credentials') {
+                            const googleClientId = process.env.AUTH_GOOGLE_ID || '';
+                            idToken = craftTestToken(user.id as string, user.email as string, googleClientId);
                         }
-                    } catch (error) {
-                        console.error('Failed to sync user with backend:', error);
-                        // Continue with authentication even if backend sync fails
-                        // Default to 'user' role for safety
+
+                        try {
+                            if (idToken) {
+                                const backendUser = await getOrCreateUser(
+                                    idToken,
+                                    user.email as string,
+                                    user.name || undefined,
+                                    user.image || undefined
+                                );
+                                console.log('Backend user synchronized:', backendUser.id);
+                                userRole = backendUser.role;
+                            }
+                        } catch (error) {
+                            console.error('Failed to sync user with backend:', error);
+                        }
+
+                        return {
+                            accessToken: account.provider === 'test-credentials' ? idToken : account.access_token,
+                            idToken,
+                            refreshToken: account.refresh_token || null,
+                            expiresAt: account.provider === 'test-credentials'
+                                ? Date.now() + 86400 * 1000
+                                : (account.expires_at ? account.expires_at * 1000 : Date.now() + 3600 * 1000),
+                            user: {
+                                ...user,
+                                role: userRole,
+                            },
+                            role: userRole,
+                            provider: account.provider,
+                        };
                     }
 
-                    return {
-                        accessToken: account.access_token,
-                        idToken: account.id_token,
-                        refreshToken: account.refresh_token,
-                        expiresAt: account.expires_at ? account.expires_at * 1000 : Date.now() + 3600 * 1000,
-                        user: {
-                            ...user,
-                            role: userRole,
-                        },
-                        role: userRole,
-                    };
-                }
+                    if (Date.now() < (token.expiresAt as number)) {
+                        return token;
+                    }
 
-                // Token is still valid, return it
-                if (Date.now() < (token.expiresAt as number)) {
-                    console.log('Token still valid');
-                    return token;
-                }
+                    // Test tokens don't have refresh tokens — re-craft instead
+                    if (token.provider === 'test-credentials') {
+                        const googleClientId = process.env.AUTH_GOOGLE_ID || '';
+                        const user = token.user as any;
+                        const newToken = craftTestToken(user?.id || '', user?.email || '', googleClientId);
+                        return {
+                            ...token,
+                            idToken: newToken,
+                            accessToken: newToken,
+                            expiresAt: Date.now() + 86400 * 1000,
+                        };
+                    }
 
-                // Token has expired, try to refresh it
-                console.log('Token expired, attempting refresh');
-                return await refreshAccessToken(token);
+                    console.log('Token expired, attempting refresh');
+                    return await refreshAccessToken(token);
+                },
+
+                async session({ session, token }) {
+                    if (token.idToken) {
+                        (session as any).accessToken = token.idToken;
+                    }
+
+                    (session as any).user = token.user;
+
+                    if (token.role) {
+                        (session as any).user.role = token.role;
+                    }
+
+                    if (token.error) {
+                        (session as any).error = token.error;
+                    }
+
+                    return session;
+                },
             },
-
-            // 2. Session Callback: Expose tokens and errors to session
-            async session({ session, token }) {
-                // Expose the ID token to the session for API calls
-                if (token.idToken) {
-                    (session as any).accessToken = token.idToken;
-                }
-
-                // Expose user info with role
-                (session as any).user = token.user;
-
-                // Ensure role is available at session level for easy access
-                if (token.role) {
-                    (session as any).user.role = token.role;
-                }
-
-                // Expose error if token refresh failed
-                if (token.error) {
-                    (session as any).error = token.error;
-                }
-
-                return session;
-            },
-        },
-    }),
+        };
+    },
 );

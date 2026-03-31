@@ -7,6 +7,7 @@ export interface Atoll {
     code: string;
     name: string;
     is_active: boolean;
+    island_count?: number;
     created_at: string;
     updated_at: string;
 }

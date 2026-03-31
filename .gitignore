@@ -61,3 +61,5 @@ qwik-speak-inline.log
 # Cloudflare
 functions/**/*.js
 wrangler.jsonc
+
+.claude/worktrees/

@@ -217,23 +217,23 @@ export default component$(() => {
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <div class="bg-base-200 rounded-xl p-4">
             <p class="text-base-content/60 text-sm">Total</p>
-            <p class="text-2xl font-bold mt-1">{summary.value.total}</p>
+            <p class="text-2xl font-bold mt-1">{summary.value.total ?? 0}</p>
           </div>
           <div class="bg-base-200 rounded-xl p-4">
             <p class="text-base-content/60 text-sm">Open</p>
-            <p class="text-2xl font-bold mt-1 text-info">{summary.value.by_status.open}</p>
+            <p class="text-2xl font-bold mt-1 text-info">{summary.value.by_status?.open ?? 0}</p>
           </div>
           <div class="bg-base-200 rounded-xl p-4">
             <p class="text-base-content/60 text-sm">In Progress</p>
-            <p class="text-2xl font-bold mt-1 text-warning">{summary.value.by_status.in_progress}</p>
+            <p class="text-2xl font-bold mt-1 text-warning">{summary.value.by_status?.in_progress ?? 0}</p>
           </div>
           <div class="bg-base-200 rounded-xl p-4">
             <p class="text-base-content/60 text-sm">Resolved</p>
-            <p class="text-2xl font-bold mt-1 text-success">{summary.value.by_status.resolved}</p>
+            <p class="text-2xl font-bold mt-1 text-success">{summary.value.by_status?.resolved ?? 0}</p>
           </div>
           <div class="bg-base-200 rounded-xl p-4">
             <p class="text-base-content/60 text-sm">Critical</p>
-            <p class="text-2xl font-bold mt-1 text-error">{summary.value.by_priority.critical}</p>
+            <p class="text-2xl font-bold mt-1 text-error">{summary.value.by_priority?.critical ?? 0}</p>
           </div>
         </div>
       )}

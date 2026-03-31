@@ -12,6 +12,10 @@ export const useAuthSession = routeLoader$(async (requestEvent) => {
   }
   return {
     callbackUrl: requestEvent.url.searchParams.get("callbackUrl") || "/",
+    testMode: requestEvent.env.get('AUTH_TEST_MODE') === 'true',
+    testSecret: requestEvent.env.get('AUTH_TEST_MODE') === 'true'
+      ? (requestEvent.env.get('AUTH_TEST_SECRET') || '')
+      : '',
   };
 });
 
@@ -22,6 +26,8 @@ export default component$(() => {
   const t = inlineTranslate();
   const isLoading = useSignal(false);
   const error = useSignal<string | null>(null);
+  const testEmail = useSignal('');
+  const testPassword = useSignal('');
 
   if (session.value?.user) {
     return null;
@@ -203,6 +209,87 @@ export default component$(() => {
               {t("auth.signIn.continueWithGoogle")}
             </button>
           </div>
+
+          {/* Test Login (dev/test only) */}
+          {authData.value.testMode && (
+            <div class="border-base-200 space-y-4 border-t pt-4">
+              <div class="alert alert-warning text-sm">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>TEST MODE - Development Only</span>
+              </div>
+
+              {/* Quick login buttons for preset test users */}
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline"
+                  data-testid="test-login-user"
+                  onClick$={() => {
+                    testEmail.value = 'testuser@rihigo.test';
+                    testPassword.value = authData.value.testSecret || '';
+                  }}
+                >
+                  User
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline btn-secondary"
+                  data-testid="test-login-admin"
+                  onClick$={() => {
+                    testEmail.value = 'testadmin@rihigo.test';
+                    testPassword.value = authData.value.testSecret || '';
+                  }}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline btn-accent"
+                  data-testid="test-login-vendor"
+                  onClick$={() => {
+                    testEmail.value = 'testvendor@rihigo.test';
+                    testPassword.value = authData.value.testSecret || '';
+                  }}
+                >
+                  Vendor
+                </button>
+              </div>
+
+              <input
+                type="email"
+                placeholder="Test email"
+                class="input input-bordered w-full"
+                bind:value={testEmail}
+                data-testid="test-email"
+              />
+              <input
+                type="password"
+                placeholder="Test password"
+                class="input input-bordered w-full"
+                bind:value={testPassword}
+                data-testid="test-password"
+              />
+              <button
+                type="button"
+                class="btn btn-warning w-full"
+                onClick$={() =>
+                  signIn.submit({
+                    providerId: 'test-credentials',
+                    options: {
+                      callbackUrl,
+                      email: testEmail.value,
+                      password: testPassword.value,
+                    },
+                  })
+                }
+                data-testid="test-login-button"
+              >
+                Test Login
+              </button>
+            </div>
+          )}
 
           {/* Terms */}
           <div class="text-center">

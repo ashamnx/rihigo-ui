@@ -56,8 +56,8 @@ export default component$(() => {
         const matchesSearch =
             searchTerm.value === '' ||
             payment.id.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-            payment.transaction_id.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-            payment.booking?.customer_info.name.toLowerCase().includes(searchTerm.value.toLowerCase());
+            (payment.provider_transaction_id ?? '').toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+            (payment.booking?.customer_info?.name ?? '').toLowerCase().includes(searchTerm.value.toLowerCase());
 
         return matchesStatus && matchesSearch;
     });
@@ -236,7 +236,7 @@ export default component$(() => {
                                         <td>
                                             <div>
                                                 <div class="font-mono text-xs">
-                                                    {payment.transaction_id?.substring(0, 12) ?? 'N/A'}...
+                                                    {payment.provider_transaction_id?.substring(0, 12) ?? 'N/A'}...
                                                 </div>
                                                 <div class="text-xs text-base-content/50">
                                                     {payment.id?.substring(0, 8) ?? ''}...
@@ -246,10 +246,10 @@ export default component$(() => {
                                         <td>
                                             <div>
                                                 <div class="font-medium">
-                                                    {payment.booking?.customer_info.name || 'N/A'}
+                                                    {payment.booking?.customer_info?.name || 'N/A'}
                                                 </div>
                                                 <div class="text-xs text-base-content/50">
-                                                    {payment.booking?.customer_info.email || ''}
+                                                    {payment.booking?.customer_info?.email || ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -257,10 +257,8 @@ export default component$(() => {
                                             <div class="font-semibold">
                                                 {formatCurrency(payment.amount, payment.currency)}
                                             </div>
-                                            {payment.refund_amount && payment.refund_amount > 0 && (
-                                                <div class="text-xs text-error">
-                                                    Refunded: {formatCurrency(payment.refund_amount, payment.currency)}
-                                                </div>
+                                            {payment.status === 'refunded' && (
+                                                <div class="text-xs text-error">Refunded</div>
                                             )}
                                         </td>
                                         <td>
@@ -269,7 +267,7 @@ export default component$(() => {
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="text-sm uppercase">{payment.provider}</span>
+                                            <span class="text-sm uppercase">{payment.payment_provider}</span>
                                         </td>
                                         <td>
                                             <div class="text-sm">{formatDate(payment.created_at)}</div>
