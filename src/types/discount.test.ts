@@ -5,7 +5,6 @@ import {
   hasUsageRemaining,
   isWithinValidityPeriod,
   type DiscountRule,
-  type DiscountStatus,
 } from './discount';
 
 const makeRule = (overrides: Partial<DiscountRule> = {}): DiscountRule => ({

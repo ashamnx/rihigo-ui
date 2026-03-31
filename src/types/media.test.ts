@@ -3,7 +3,6 @@ import {
   validateFile,
   getStorageProvider,
   canAccessMedia,
-  FILE_SIZE_LIMITS,
   type MediaItem,
 } from './media';
 

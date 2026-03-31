@@ -1,4 +1,4 @@
-import {component$, useSignal, useOnWindow, $, type QRL} from '@builder.io/qwik';
+import {component$, useSignal, useOnDocument, useOnWindow, $, type QRL} from '@builder.io/qwik';
 import {Link} from "@builder.io/qwik-city";
 import { LocaleSelector } from '~/components/locale-selector/locale-selector';
 import {inlineTranslate, localizePath, useSpeakLocale} from 'qwik-speak';
@@ -406,9 +406,19 @@ export const Header = component$<HeaderProps>(({ hasHero = true }) => {
 
 const NestedNav = component$(({item, isScrolled, locale}: {item: any, isScrolled: boolean, locale: any}) => {
     const isExpanded = useSignal(false);
+    const containerRef = useSignal<HTMLElement>();
+
+    useOnDocument(
+      'click',
+      $((e) => {
+        if (isExpanded.value && containerRef.value && !containerRef.value.contains(e.target as Node)) {
+          isExpanded.value = false;
+        }
+      }),
+    );
 
     return (
-      <div class="relative z-20">
+      <div ref={containerRef} class="relative z-20">
         <button
           type="button"
           class={`hover:text-primary flex cursor-pointer items-center gap-x-1 text-sm/6 font-semibold transition-colors duration-300 ${isScrolled ? "text-gray-900" : "text-white"}`}

@@ -1,4 +1,4 @@
-import { getCountryByCode, getCountryName, createEmptyTravelerData, COUNTRIES } from './imuga';
+import { getCountryByCode, getCountryName, createEmptyTravelerData } from './imuga';
 
 describe('getCountryByCode', () => {
   it('returns country object for valid code', () => {

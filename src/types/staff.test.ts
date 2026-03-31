@@ -3,7 +3,6 @@ import {
   mergePermissions,
   DEFAULT_PERMISSIONS,
   type VendorStaff,
-  type StaffPermissions,
 } from './staff';
 
 const makeStaff = (overrides: Partial<VendorStaff> = {}): VendorStaff => ({
