@@ -1,4 +1,4 @@
-import { component$, type QRL } from '@builder.io/qwik';
+import { component$, $, type QRL } from '@builder.io/qwik';
 import type { ImugaTraveler } from '~/types/imuga';
 import {
   TRAVELER_TITLES,
@@ -16,6 +16,18 @@ interface TravelerCardProps {
 
 export const TravelerCard = component$<TravelerCardProps>(
   ({ traveler, index, onEdit$, onDelete$ }) => {
+    const openImageInNewTab = $((url: string, title: string) => {
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write(
+          `<!DOCTYPE html><html><head><title>${title}</title></head>` +
+          `<body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#111;">` +
+          `<img src="${url}" style="max-width:100%;max-height:100vh;object-fit:contain;" />` +
+          `</body></html>`
+        );
+        w.document.close();
+      }
+    });
 
     const formatDate = (dateStr: string) => {
       if (!dateStr) return '-';
@@ -203,7 +215,7 @@ export const TravelerCard = component$<TravelerCardProps>(
                       class="w-20 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                       width={80}
                       height={96}
-                      onClick$={() => { window.open(traveler.photo_url!, '_blank'); }}
+                      onClick$={() => openImageInNewTab(traveler.photo_url!, 'Traveler Photo')}
                     />
                   </div>
                 )}
@@ -216,7 +228,7 @@ export const TravelerCard = component$<TravelerCardProps>(
                       class="w-32 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                       width={128}
                       height={96}
-                      onClick$={() => { window.open(traveler.passport_image_url!, '_blank'); }}
+                      onClick$={() => openImageInNewTab(traveler.passport_image_url!, 'Passport')}
                     />
                   </div>
                 )}

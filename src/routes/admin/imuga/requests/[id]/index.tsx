@@ -503,7 +503,18 @@ export default component$(() => {
                               class="w-20 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                               width={80}
                               height={96}
-                              onClick$={() => { window.open(traveler.photo_url!, '_blank'); }}
+                              onClick$={() => {
+                                const w = window.open('', '_blank');
+                                if (w) {
+                                  w.document.write(
+                                    `<!DOCTYPE html><html><head><title>Traveler Photo</title></head>` +
+                                    `<body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#111;">` +
+                                    `<img src="${traveler.photo_url}" style="max-width:100%;max-height:100vh;object-fit:contain;" />` +
+                                    `</body></html>`
+                                  );
+                                  w.document.close();
+                                }
+                              }}
                             />
                           </div>
                         )}
@@ -516,7 +527,18 @@ export default component$(() => {
                               class="w-32 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                               width={128}
                               height={96}
-                              onClick$={() => { window.open(traveler.passport_image_url!, '_blank'); }}
+                              onClick$={() => {
+                                const w = window.open('', '_blank');
+                                if (w) {
+                                  w.document.write(
+                                    `<!DOCTYPE html><html><head><title>Passport</title></head>` +
+                                    `<body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#111;">` +
+                                    `<img src="${traveler.passport_image_url}" style="max-width:100%;max-height:100vh;object-fit:contain;" />` +
+                                    `</body></html>`
+                                  );
+                                  w.document.close();
+                                }
+                              }}
                             />
                           </div>
                         )}
