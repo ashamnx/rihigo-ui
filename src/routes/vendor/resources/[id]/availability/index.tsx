@@ -43,7 +43,7 @@ export const useResourceAvailabilityLoader = routeLoader$(async (requestEvent) =
 
             return {
                 success: true,
-                resource,
+                resource: resource.data || null,
                 availability: availability.data || [],
                 year,
                 month,
@@ -171,7 +171,8 @@ export default component$(() => {
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    const formatCurrency = (amount: number, currency: string = 'USD') => {
+    const formatCurrency = (amount: number | null | undefined, currency: string = 'USD') => {
+        if (amount == null || isNaN(amount)) return '$0.00';
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency,
@@ -347,7 +348,7 @@ export default component$(() => {
 
                                 {/* Calendar days */}
                                 {calendarDays.value.map((dayInfo) => {
-                                    const avail = availabilityMap.value[dayInfo.date];
+                                    const avail = availabilityMap.value[dayInfo.date] || { status: 'available' };
                                     const isSelected = selectedDates.value.includes(dayInfo.date);
                                     const today = isToday(dayInfo.date);
                                     const past = isPast(dayInfo.date);
@@ -546,7 +547,7 @@ export default component$(() => {
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-base-content/60">Max Occupancy</span>
-                                            <span>{resource.max_occupancy} guests</span>
+                                            <span>{resource.max_occupancy ?? 0} guests</span>
                                         </div>
                                     </div>
                                 </div>

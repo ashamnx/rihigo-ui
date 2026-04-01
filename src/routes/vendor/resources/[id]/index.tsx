@@ -44,7 +44,10 @@ export const useUpdateStatus = routeAction$(async (data, requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const result = await apiClient.vendorPortal.resources.update(resourceId, { status }, token);
-            return { success: true, data: result };
+            if (!result.success) {
+                return { success: false, error: result.error_message || 'Failed to update status' };
+            }
+            return { success: true, data: result.data };
         } catch (error) {
             console.error('Failed to update status:', error);
             return {

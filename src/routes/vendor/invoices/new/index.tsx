@@ -97,7 +97,10 @@ export const useCreateInvoice = routeAction$(
                 };
 
                 const result = await apiClient.vendorPortal.invoices.create(invoiceData, token);
-                return { success: true, data: result };
+                if (!result.success) {
+                    return { success: false, error: result.error_message || 'Failed to create invoice' };
+                }
+                return { success: true, data: result.data };
             } catch (error) {
                 console.error('Failed to create invoice:', error);
                 return {

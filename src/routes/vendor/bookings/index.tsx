@@ -209,15 +209,23 @@ export default component$(() => {
         navigate('/vendor/bookings', { forceReload: true });
     });
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+    const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return '—';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '—';
+        return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
         });
     };
 
-    const formatCurrency = (amount: number, currency: string = 'USD') => {
+    const formatCurrency = (amount: number | null | undefined, currency: string = 'USD') => {
+        if (amount == null || isNaN(amount)) return formatCurrencyValue(0, currency);
+        return formatCurrencyValue(amount, currency);
+    };
+
+    const formatCurrencyValue = (amount: number, currency: string) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency,
@@ -369,7 +377,7 @@ export default component$(() => {
                                             {formatDate(booking.check_in_date)}
                                         </div>
                                         <div class="text-xs text-base-content/60">
-                                            to {formatDate(booking.check_out_date)} ({booking.nights_count} night{booking.nights_count !== 1 ? 's' : ''})
+                                            to {formatDate(booking.check_out_date)} ({booking.nights_count ?? 0} night{booking.nights_count !== 1 ? 's' : ''})
                                         </div>
                                     </td>
                                     <td>

@@ -42,7 +42,10 @@ export const useApproveRefund = routeAction$(async (data, requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const result = await apiClient.vendorPortal.refunds.approve(refundId, token);
-            return { success: true, data: result };
+            if (!result.success) {
+                return { success: false, error: result.error_message || 'Failed to approve refund' };
+            }
+            return { success: true, data: result.data };
         } catch (error) {
             console.error('Failed to approve refund:', error);
             return {
@@ -60,7 +63,10 @@ export const useRejectRefund = routeAction$(async (data, requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const result = await apiClient.vendorPortal.refunds.reject(refundId, reason, token);
-            return { success: true, data: result };
+            if (!result.success) {
+                return { success: false, error: result.error_message || 'Failed to reject refund' };
+            }
+            return { success: true, data: result.data };
         } catch (error) {
             console.error('Failed to reject refund:', error);
             return {
@@ -77,7 +83,10 @@ export const useProcessRefund = routeAction$(async (data, requestEvent) => {
     return authenticatedRequest(requestEvent, async (token) => {
         try {
             const result = await apiClient.vendorPortal.refunds.process(refundId, token);
-            return { success: true, data: result };
+            if (!result.success) {
+                return { success: false, error: result.error_message || 'Failed to process refund' };
+            }
+            return { success: true, data: result.data };
         } catch (error) {
             console.error('Failed to process refund:', error);
             return {

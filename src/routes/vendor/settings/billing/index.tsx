@@ -107,7 +107,7 @@ export default component$(() => {
         auto_generate_invoice_on_booking: billingSettings.value.auto_generate_invoice_on_booking ?? DEFAULT_BILLING_SETTINGS.auto_generate_invoice_on_booking,
         auto_send_invoice_on_generation: billingSettings.value.auto_send_invoice_on_generation ?? DEFAULT_BILLING_SETTINGS.auto_send_invoice_on_generation,
         send_payment_reminders: billingSettings.value.send_payment_reminders ?? DEFAULT_BILLING_SETTINGS.send_payment_reminders,
-        reminder_days_before_due: billingSettings.value.reminder_days_before_due || DEFAULT_BILLING_SETTINGS.reminder_days_before_due,
+        reminder_days_before_due: Array.isArray(billingSettings.value.reminder_days_before_due) ? billingSettings.value.reminder_days_before_due : (DEFAULT_BILLING_SETTINGS.reminder_days_before_due || []),
     }));
 
     // Selected reminder days

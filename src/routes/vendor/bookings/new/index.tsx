@@ -114,7 +114,10 @@ export const useCreateBooking = routeAction$(
                 };
 
                 const result = await apiClient.vendorPortal.bookings.create(bookingData, token);
-                return { success: true, data: result };
+                if (!result.success) {
+                    return { success: false, error: result.error_message || 'Failed to create booking' };
+                }
+                return { success: true, data: result.data };
             } catch (error) {
                 console.error('Failed to create booking:', error);
                 return {

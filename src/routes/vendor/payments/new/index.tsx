@@ -92,7 +92,10 @@ export const useCreatePayment = routeAction$(
                 };
 
                 const result = await apiClient.vendorPortal.payments.create(paymentData, token);
-                return { success: true, data: result };
+                if (!result.success) {
+                    return { success: false, error: result.error_message || 'Failed to create payment' };
+                }
+                return { success: true, data: result.data };
             } catch (error) {
                 console.error('Failed to create payment:', error);
                 return {

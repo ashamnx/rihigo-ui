@@ -96,7 +96,10 @@ export const useCreateResource = routeAction$(
                 }
 
                 const result = await apiClient.vendorPortal.resources.create(resourceData, token);
-                return { success: true, data: result };
+                if (!result.success) {
+                    return { success: false, error: result.error_message || 'Failed to create resource' };
+                }
+                return { success: true, data: result.data };
             } catch (error) {
                 console.error('Failed to create resource:', error);
                 return {

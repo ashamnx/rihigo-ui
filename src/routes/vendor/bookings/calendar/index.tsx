@@ -425,7 +425,7 @@ export default component$(() => {
 
 
 export const head: DocumentHead = {
-  title: 'Booking Calender | Vendor Portal',
+  title: 'Booking Calendar | Vendor Portal',
   meta: [
     {
       name: 'robots',

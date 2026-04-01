@@ -65,7 +65,10 @@ export const useCreateRefund = routeAction$(
                 };
 
                 const result = await apiClient.vendorPortal.refunds.create(refundData, token);
-                return { success: true, data: result };
+                if (!result.success) {
+                    return { success: false, error: result.error_message || 'Failed to create refund' };
+                }
+                return { success: true, data: result.data };
             } catch (error) {
                 console.error('Failed to create refund:', error);
                 return {

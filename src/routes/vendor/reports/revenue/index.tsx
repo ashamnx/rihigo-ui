@@ -71,7 +71,12 @@ export default component$(() => {
         }
     });
 
-    const maxTrendValue = Math.max(...reportData.value.trend.map((t) => t.revenue), 1);
+    const trend = reportData.value?.trend || [];
+    const summary = reportData.value?.summary || { total_revenue: 0, commission_paid: 0, net_revenue: 0, average_daily_revenue: 0, total_bookings: 0 };
+    const by_source = reportData.value?.by_source || [];
+    const by_resource = reportData.value?.by_resource || [];
+    const by_service_type = reportData.value?.by_service_type || [];
+    const maxTrendValue = trend.length > 0 ? Math.max(...trend.map((t) => t.revenue), 1) : 1;
 
     return (
         <div class="p-6">
@@ -196,30 +201,30 @@ export default component$(() => {
                 <div class="stat bg-base-100 rounded-box shadow">
                     <div class="stat-title">Total Revenue</div>
                     <div class="stat-value text-lg text-success">
-                        {formatReportCurrency(reportData.value.summary.total_revenue, currency.value)}
+                        {formatReportCurrency(summary.total_revenue, currency.value)}
                     </div>
                 </div>
                 <div class="stat bg-base-100 rounded-box shadow">
                     <div class="stat-title">Commission Paid</div>
                     <div class="stat-value text-lg text-error">
-                        {formatReportCurrency(reportData.value.summary.commission_paid, currency.value)}
+                        {formatReportCurrency(summary.commission_paid, currency.value)}
                     </div>
                 </div>
                 <div class="stat bg-base-100 rounded-box shadow">
                     <div class="stat-title">Net Revenue</div>
                     <div class="stat-value text-lg text-primary">
-                        {formatReportCurrency(reportData.value.summary.net_revenue, currency.value)}
+                        {formatReportCurrency(summary.net_revenue, currency.value)}
                     </div>
                 </div>
                 <div class="stat bg-base-100 rounded-box shadow">
                     <div class="stat-title">Avg. Daily Revenue</div>
                     <div class="stat-value text-lg">
-                        {formatReportCurrency(reportData.value.summary.average_daily_revenue, currency.value)}
+                        {formatReportCurrency(summary.average_daily_revenue, currency.value)}
                     </div>
                 </div>
                 <div class="stat bg-base-100 rounded-box shadow">
                     <div class="stat-title">Total Bookings</div>
-                    <div class="stat-value text-lg">{reportData.value.summary.total_bookings}</div>
+                    <div class="stat-value text-lg">{summary.total_bookings}</div>
                 </div>
             </div>
 
@@ -228,9 +233,9 @@ export default component$(() => {
                 <div class="card-body">
                     <h3 class="card-title">Revenue Trend</h3>
 
-                    {reportData.value.trend.length > 0 ? (
+                    {trend.length > 0 ? (
                         <div class="h-64 flex items-end gap-1 mt-4">
-                            {reportData.value.trend.map((item, index) => {
+                            {trend.map((item, index) => {
                                 const height = (item.revenue / maxTrendValue) * 100;
                                 return (
                                     <div key={index} class="flex-1 flex flex-col items-center group">
@@ -267,7 +272,7 @@ export default component$(() => {
                     <div class="card-body">
                         <h3 class="card-title text-lg">Revenue by Source</h3>
 
-                        {reportData.value.by_source.length > 0 ? (
+                        {by_source.length > 0 ? (
                             <div class="overflow-x-auto">
                                 <table class="table table-sm">
                                     <thead>
@@ -279,7 +284,7 @@ export default component$(() => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reportData.value.by_source.map((source, index) => (
+                                        {by_source.map((source, index) => (
                                             <tr key={index}>
                                                 <td>{source.source}</td>
                                                 <td class="text-right">{formatReportCurrency(source.revenue, currency.value)}</td>
@@ -301,7 +306,7 @@ export default component$(() => {
                     <div class="card-body">
                         <h3 class="card-title text-lg">Revenue by Service Type</h3>
 
-                        {reportData.value.by_service_type.length > 0 ? (
+                        {by_service_type.length > 0 ? (
                             <div class="overflow-x-auto">
                                 <table class="table table-sm">
                                     <thead>
@@ -313,7 +318,7 @@ export default component$(() => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reportData.value.by_service_type.map((type, index) => (
+                                        {by_service_type.map((type, index) => (
                                             <tr key={index}>
                                                 <td class="capitalize">{type.service_type}</td>
                                                 <td class="text-right">{formatReportCurrency(type.revenue, currency.value)}</td>
@@ -336,7 +341,7 @@ export default component$(() => {
                 <div class="card-body">
                     <h3 class="card-title text-lg">Revenue by Resource/Activity</h3>
 
-                    {reportData.value.by_resource.length > 0 ? (
+                    {by_resource.length > 0 ? (
                         <div class="overflow-x-auto">
                             <table class="table">
                                 <thead>
@@ -348,7 +353,7 @@ export default component$(() => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reportData.value.by_resource.map((resource) => (
+                                    {by_resource.map((resource) => (
                                         <tr key={resource.resource_id}>
                                             <td>{resource.resource_name}</td>
                                             <td class="text-right">{formatReportCurrency(resource.revenue, currency.value)}</td>
@@ -367,12 +372,12 @@ export default component$(() => {
                                         <td>Total</td>
                                         <td class="text-right">
                                             {formatReportCurrency(
-                                                reportData.value.by_resource.reduce((sum, r) => sum + r.revenue, 0),
+                                                by_resource.reduce((sum, r) => sum + r.revenue, 0),
                                                 currency.value
                                             )}
                                         </td>
                                         <td class="text-right">
-                                            {reportData.value.by_resource.reduce((sum, r) => sum + r.bookings, 0)}
+                                            {by_resource.reduce((sum, r) => sum + r.bookings, 0)}
                                         </td>
                                         <td></td>
                                     </tr>
