@@ -93,6 +93,7 @@ export default component$(() => {
 
     const activities = activitiesData.value.activities;
 
+     
     const filteredActivities = activities.filter((activity: Activity) => {
         const matchesStatus = filterStatus.value === "all" || activity.status === filterStatus.value;
         const title = activity.translations?.en?.title || activity.seo_metadata?.title || activity.slug;

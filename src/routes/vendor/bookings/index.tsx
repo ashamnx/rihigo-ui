@@ -1,7 +1,8 @@
 // @ts-nocheck
-import { component$, useSignal, useOnDocument, $ } from '@builder.io/qwik';
+import { component$, useSignal, $ } from '@builder.io/qwik';
 import {
   routeLoader$,
+  routeAction$,
   Link,
   useNavigate,
   type DocumentHead,
@@ -62,8 +63,38 @@ export const useBookingsLoader = routeLoader$(async (requestEvent) => {
     });
 });
 
+export const useConfirmBooking = routeAction$(async (data, requestEvent) => {
+    return authenticatedRequest(requestEvent, async (token) => {
+        const result = await apiClient.vendorPortal.bookings.confirm(
+            data.booking_id as string,
+            { notes: data.notes as string || undefined },
+            token
+        );
+        if (!result.success) {
+            return { success: false, error: result.error_message || 'Failed to confirm booking' };
+        }
+        return { success: true };
+    });
+});
+
+export const useUpdateBookingStatus = routeAction$(async (data, requestEvent) => {
+    return authenticatedRequest(requestEvent, async (token) => {
+        const result = await apiClient.vendorPortal.bookings.updateStatus(
+            data.booking_id as string,
+            { status: data.status as string, notes: data.notes as string || undefined },
+            token
+        );
+        if (!result.success) {
+            return { success: false, error: result.error_message || 'Failed to update booking status' };
+        }
+        return { success: true };
+    });
+});
+
 export default component$(() => {
     const bookingsData = useBookingsLoader();
+    const confirmAction = useConfirmBooking();
+    const statusAction = useUpdateBookingStatus();
     const navigate = useNavigate();
 
     const filters = useSignal<Record<string, string>>({});
@@ -73,41 +104,6 @@ export default component$(() => {
     const bookings = bookingsData.value.data || [];
     const total = bookingsData.value.total || 0;
 
-    // Staggered animation for booking table rows
-    useOnDocument(
-        'qviewTransition',
-        $(async (event: CustomEvent<{ ready: Promise<void> }>) => {
-            const rows = document.querySelectorAll<HTMLElement>('[data-booking-row]');
-            const visibleRows = Array.from(rows).filter((row) => {
-                const rect = row.getBoundingClientRect();
-                return rect.top < window.innerHeight && rect.bottom > 0;
-            });
-
-            if (visibleRows.length === 0) return;
-
-            const transition = event.detail;
-            await transition.ready;
-
-            visibleRows.forEach((row, i) => {
-                const name = row.style.viewTransitionName;
-                if (name) {
-                    document.documentElement.animate(
-                        {
-                            opacity: [0, 1],
-                            transform: ['translateX(-10px)', 'translateX(0)'],
-                        },
-                        {
-                            pseudoElement: `::view-transition-new(${name})`,
-                            duration: 200,
-                            delay: i * 25,
-                            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-                            fill: 'forwards',
-                        }
-                    );
-                }
-            });
-        })
-    );
 
     const filterDefinitions: FilterDefinition[] = [
         {
@@ -187,25 +183,25 @@ export default component$(() => {
 
     const handleConfirmBooking = $(async () => {
         if (!selectedBooking.value) return;
-        console.log('Confirming booking:', selectedBooking.value.id);
+        await confirmAction.submit({ booking_id: selectedBooking.value.id });
         navigate('/vendor/bookings', { forceReload: true });
     });
 
     const handleCheckIn = $(async () => {
         if (!selectedBooking.value) return;
-        console.log('Checking in booking:', selectedBooking.value.id);
+        await statusAction.submit({ booking_id: selectedBooking.value.id, status: 'checked_in' });
         navigate('/vendor/bookings', { forceReload: true });
     });
 
     const handleCheckOut = $(async () => {
         if (!selectedBooking.value) return;
-        console.log('Checking out booking:', selectedBooking.value.id);
+        await statusAction.submit({ booking_id: selectedBooking.value.id, status: 'checked_out' });
         navigate('/vendor/bookings', { forceReload: true });
     });
 
     const handleCancelBooking = $(async () => {
         if (!selectedBooking.value) return;
-        console.log('Cancelling booking:', selectedBooking.value.id);
+        await statusAction.submit({ booking_id: selectedBooking.value.id, status: 'cancelled' });
         navigate('/vendor/bookings', { forceReload: true });
     });
 
@@ -232,25 +228,6 @@ export default component$(() => {
         }).format(amount);
     };
 
-    // Format booking amount with display currency
-    const formatBookingAmount = (booking: VendorBooking) => {
-        const displayCurrency = booking.display_currency || booking.currency || 'USD';
-        const exchangeRate = booking.exchange_rate_at_booking;
-
-        if (displayCurrency !== 'USD' && exchangeRate) {
-            const displayAmount = booking.total * exchangeRate;
-            return {
-                primary: formatCurrency(displayAmount, displayCurrency),
-                secondary: `${formatCurrency(booking.total, 'USD')} USD`,
-                hasExchange: true,
-            };
-        }
-        return {
-            primary: formatCurrency(booking.total, displayCurrency),
-            secondary: null,
-            hasExchange: false,
-        };
-    };
 
     return (
         <div>
@@ -321,7 +298,7 @@ export default component$(() => {
                     </Link>
                 </EmptyState>
             ) : (
-                <div class="overflow-x-auto">
+                <div class="w-full">
                     <table class="table table-zebra bg-base-100">
                         <thead>
                             <tr>
@@ -336,36 +313,44 @@ export default component$(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            {bookings.map((booking) => (
+                            {bookings.map((booking) => {
+                                // Handle both PMS bookings (check_in_date/total) and platform bookings (booking_date/total_price)
+                                const b = booking as any;
+                                const bookingNumber = b.booking_number || b.id?.substring(0, 8);
+                                const guestName = b.primary_guest
+                                    ? getGuestFullName(b.primary_guest)
+                                    : b.customer_info?.full_name || b.customer_info?.name || null;
+                                const guestEmail = b.primary_guest?.email || b.customer_info?.email || null;
+                                const checkIn = b.check_in_date || b.booking_date;
+                                const checkOut = b.check_out_date;
+                                const nights = b.nights_count ?? (checkOut ? null : undefined);
+                                const totalAmount = b.total ?? b.total_price ?? 0;
+                                const peopleCount = b.adults || b.number_of_people || 0;
+
+                                return (
                                 <tr
                                     key={booking.id}
                                     data-booking-row
-                                    style={{ viewTransitionName: `booking-row-${booking.id}` }}
                                 >
                                     <td>
                                         <Link
                                             href={`/vendor/bookings/${booking.id}`}
                                             class="font-medium hover:text-primary"
-                                            style={{ viewTransitionName: `booking-number-${booking.id}` }}
                                         >
-                                            #{booking.booking_number}
+                                            #{bookingNumber}
                                         </Link>
                                         <div class="text-xs text-base-content/60">
-                                            {booking.resource?.name || booking.activity?.title || 'N/A'}
+                                            {b.resource?.name || b.activity?.title || 'N/A'}
                                         </div>
                                     </td>
                                     <td>
-                                        {booking.primary_guest ? (
+                                        {guestName ? (
                                             <div>
-                                                <Link
-                                                    href={`/vendor/guests/${booking.primary_guest_id}`}
-                                                    class="hover:text-primary"
-                                                >
-                                                    {getGuestFullName(booking.primary_guest)}
-                                                </Link>
+                                                <span class="hover:text-primary">
+                                                    {guestName}
+                                                </span>
                                                 <div class="text-xs text-base-content/60">
-                                                    {booking.adults} adult{booking.adults !== 1 ? 's' : ''}
-                                                    {booking.children > 0 && `, ${booking.children} child${booking.children !== 1 ? 'ren' : ''}`}
+                                                    {guestEmail || `${peopleCount} person${peopleCount !== 1 ? 's' : ''}`}
                                                 </div>
                                             </div>
                                         ) : (
@@ -374,11 +359,17 @@ export default component$(() => {
                                     </td>
                                     <td>
                                         <div class="text-sm">
-                                            {formatDate(booking.check_in_date)}
+                                            {formatDate(checkIn)}
                                         </div>
-                                        <div class="text-xs text-base-content/60">
-                                            to {formatDate(booking.check_out_date)} ({booking.nights_count ?? 0} night{booking.nights_count !== 1 ? 's' : ''})
-                                        </div>
+                                        {checkOut ? (
+                                            <div class="text-xs text-base-content/60">
+                                                to {formatDate(checkOut)} ({nights ?? 0} night{nights !== 1 ? 's' : ''})
+                                            </div>
+                                        ) : (
+                                            <div class="text-xs text-base-content/60">
+                                                {peopleCount} person{peopleCount !== 1 ? 's' : ''}
+                                            </div>
+                                        )}
                                     </td>
                                     <td>
                                         <span class={`badge badge-sm ${bookingStatusColors[booking.status]}`}>
@@ -392,22 +383,17 @@ export default component$(() => {
                                     </td>
                                     <td>
                                         <div class="font-medium">
-                                            {formatBookingAmount(booking).primary}
+                                            {formatCurrency(totalAmount, b.display_currency || b.currency || 'USD')}
                                         </div>
-                                        {formatBookingAmount(booking).hasExchange && (
-                                            <div class="text-xs text-base-content/50">
-                                                {formatBookingAmount(booking).secondary}
-                                            </div>
-                                        )}
-                                        {booking.net_revenue !== booking.total && (
+                                        {b.tax_amount > 0 && (
                                             <div class="text-xs text-base-content/60">
-                                                Net: {formatCurrency(booking.net_revenue, 'USD')}
+                                                incl. {formatCurrency(b.tax_amount, 'USD')} tax
                                             </div>
                                         )}
                                     </td>
                                     <td>
                                         <span class="badge badge-sm badge-ghost">
-                                            {bookingSourceLabels[booking.source_type]}
+                                            {bookingSourceLabels[b.source_type] || 'Platform'}
                                         </span>
                                     </td>
                                     <td>
@@ -472,7 +458,8 @@ export default component$(() => {
                                         ]} />
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -482,7 +469,8 @@ export default component$(() => {
             <ConfirmModal
                 id="confirm-booking-modal"
                 title="Confirm Booking"
-                message={`Are you sure you want to confirm booking #${selectedBooking.value?.booking_number}?`}
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                message={`Are you sure you want to confirm booking #${selectedBooking.value?.booking_number || selectedBooking.value?.id?.substring(0, 8)}?`}
                 confirmText="Confirm"
                 onConfirm$={handleConfirmBooking}
             />
@@ -491,7 +479,7 @@ export default component$(() => {
             <ConfirmModal
                 id="checkin-booking-modal"
                 title="Check In Guest"
-                message={`Check in ${selectedBooking.value?.primary_guest ? getGuestFullName(selectedBooking.value.primary_guest) : 'guest'} for booking #${selectedBooking.value?.booking_number}?`}
+                message={`Check in guest for booking #${selectedBooking.value?.booking_number || selectedBooking.value?.id?.substring(0, 8)}?`}
                 confirmText="Check In"
                 onConfirm$={handleCheckIn}
             />
@@ -500,7 +488,7 @@ export default component$(() => {
             <ConfirmModal
                 id="checkout-booking-modal"
                 title="Check Out Guest"
-                message={`Check out ${selectedBooking.value?.primary_guest ? getGuestFullName(selectedBooking.value.primary_guest) : 'guest'} from booking #${selectedBooking.value?.booking_number}?`}
+                message={`Check out guest from booking #${selectedBooking.value?.booking_number || selectedBooking.value?.id?.substring(0, 8)}?`}
                 confirmText="Check Out"
                 onConfirm$={handleCheckOut}
             />
@@ -509,7 +497,7 @@ export default component$(() => {
             <ConfirmModal
                 id="cancel-booking-modal"
                 title="Cancel Booking"
-                message={`Are you sure you want to cancel booking #${selectedBooking.value?.booking_number}? This action cannot be undone.`}
+                message={`Are you sure you want to cancel booking #${selectedBooking.value?.booking_number || selectedBooking.value?.id?.substring(0, 8)}? This action cannot be undone.`}
                 confirmText="Cancel Booking"
                 danger={true}
                 onConfirm$={handleCancelBooking}

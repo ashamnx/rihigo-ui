@@ -78,7 +78,7 @@ export const useCreateBooking = routeAction$(async (data, requestEvent) => {
         booking_date: bookingDate,
         number_of_people: data.number_of_people ? parseInt(data.number_of_people as string) : 1,
         customer_info: {
-            name: data.name as string,  // API expects 'name' not 'name'
+            full_name: data.name as string,
             email: data.email as string,
             phone: data.phone as string,
         },

@@ -71,10 +71,15 @@ export default component$(() => {
         }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- API may return incomplete data
     const trend = reportData.value?.trend || [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const summary = reportData.value?.summary || { total_revenue: 0, commission_paid: 0, net_revenue: 0, average_daily_revenue: 0, total_bookings: 0 };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const by_source = reportData.value?.by_source || [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const by_resource = reportData.value?.by_resource || [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const by_service_type = reportData.value?.by_service_type || [];
     const maxTrendValue = trend.length > 0 ? Math.max(...trend.map((t) => t.revenue), 1) : 1;
 

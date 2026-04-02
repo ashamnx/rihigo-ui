@@ -127,7 +127,7 @@ export function useCurrency() {
  * Hook to format a price using the current currency context
  * Note: Not currently used but exported for future use cases
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export function useFormatPrice() {
   const { selectedCurrency, currencies } = useCurrency();
 

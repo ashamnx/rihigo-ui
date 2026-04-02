@@ -70,7 +70,7 @@ export const NotificationProvider = component$<NotificationProviderProps>(
     const toastContext = useToast();
 
     // Store the addToast function reference for use in useVisibleTask$
-    // eslint-disable-next-line qwik/valid-lexical-scope
+     
     if (!addToastRef.value) {
       addToastRef.value = noSerialize((toast: Omit<Toast, "id">) => {
         void toastContext.addToast(toast);

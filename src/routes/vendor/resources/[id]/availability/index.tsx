@@ -348,6 +348,7 @@ export default component$(() => {
 
                                 {/* Calendar days */}
                                 {calendarDays.value.map((dayInfo) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- not all dates have availability data
                                     const avail = availabilityMap.value[dayInfo.date] || { status: 'available' };
                                     const isSelected = selectedDates.value.includes(dayInfo.date);
                                     const today = isToday(dayInfo.date);
