@@ -102,7 +102,21 @@ export default component$(() => {
     const selectedBooking = useSignal<VendorBooking | null>(null);
 
     const bookings = bookingsData.value.data || [];
-    const total = bookingsData.value.total || 0;
+    const raw = bookingsData.value as any;
+    const total = raw.pagination_data?.total_count ?? raw.total ?? bookings.length;
+
+    // Compute stats from bookings data
+    const today = new Date().toISOString().split('T')[0];
+    const pendingCount = bookings.filter((b: any) => b.status === 'pending').length;
+    const unpaidCount = bookings.filter((b: any) => b.payment_status === 'pending' || b.payment_status === 'unpaid').length;
+    const todayCheckIns = bookings.filter((b: any) => {
+        const date = (b.check_in_date || b.booking_date || '').split('T')[0];
+        return date === today && (b.status === 'confirmed' || b.status === 'checked_in');
+    }).length;
+    const todayCheckOuts = bookings.filter((b: any) => {
+        const date = (b.check_out_date || '').split('T')[0];
+        return date === today && b.status === 'checked_in';
+    }).length;
 
 
     const filterDefinitions: FilterDefinition[] = [
@@ -270,19 +284,19 @@ export default component$(() => {
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="stat bg-base-100 shadow-sm rounded-lg border border-base-200 py-3 px-4">
                     <div class="stat-title text-xs">Today's Check-ins</div>
-                    <div class="stat-value text-xl">0</div>
+                    <div class="stat-value text-xl">{todayCheckIns}</div>
                 </div>
                 <div class="stat bg-base-100 shadow-sm rounded-lg border border-base-200 py-3 px-4">
                     <div class="stat-title text-xs">Today's Check-outs</div>
-                    <div class="stat-value text-xl">0</div>
+                    <div class="stat-value text-xl">{todayCheckOuts}</div>
                 </div>
                 <div class="stat bg-base-100 shadow-sm rounded-lg border border-base-200 py-3 px-4">
                     <div class="stat-title text-xs">Pending Confirmation</div>
-                    <div class="stat-value text-xl text-warning">0</div>
+                    <div class="stat-value text-xl text-warning">{pendingCount}</div>
                 </div>
                 <div class="stat bg-base-100 shadow-sm rounded-lg border border-base-200 py-3 px-4">
                     <div class="stat-title text-xs">Unpaid Bookings</div>
-                    <div class="stat-value text-xl text-error">0</div>
+                    <div class="stat-value text-xl text-error">{unpaidCount}</div>
                 </div>
             </div>
 
